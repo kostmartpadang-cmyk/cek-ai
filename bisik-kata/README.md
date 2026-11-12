@@ -54,8 +54,9 @@ Jangan buka lewat `file://` — WebRTC dan `localStorage` rewel di protokol itu.
 
 1. Upload folder ini ke repo GitHub (mis. `nama-akun/bisik-kata`).
 2. Di [vercel.com/new](https://vercel.com/new), pilih repo itu.
-3. Framework Preset: **Other**. Build Command: **kosongkan**. Output Directory: **kosongkan** (atau `.`).
-4. Deploy. Selesai — file statis saja, tidak perlu environment variable.
+3. **Root Directory: `bisik-kata`** — kalau folder game berada di root repo, biarkan `./`. Ini langkah yang paling sering terlewat.
+4. Framework Preset: **Other**. Build Command: **kosongkan**. Output Directory: **kosongkan** (atau `.`).
+5. Deploy. Selesai — file statis saja, tidak perlu environment variable.
 
 **Cara B — terminal**
 
@@ -66,6 +67,11 @@ vercel              # follow wizard, --prod untuk versi produksi
 ```
 
 Setelah live, bagikan link `https://nama-project.vercel.app/?k=KODE` — tapi ingat kode berubah tiap kali kamar dibuat, jadi lebih praktis share kodenya saja dari dalam game.
+
+**Kalau muncul `404 NOT_FOUND` di root tapi game-nya sebenarnya sudah ke-deploy**, artinya Vercel memakai root repo sebagai direktori utama sementara `index.html` game ada di subfolder. Coba akses `https://nama-project.vercel.app/bisik-kata/` — kalau muncul, itu penyebabnya. Dua solusi:
+
+- Set **Root Directory** ke `bisik-kata` di Project Settings → Deployment Options (paling bersih; tapi file lain di luar folder itu jadi tidak ter-serve), atau
+- Biarkan apa adanya dan pakai `vercel.json` di root repo yang me-redirect `/` ke subfolder — inilah yang terpasang di repo ini, plus `index.html` root tetap bisa diakses lewat `/peramal.html`.
 
 ## Uji otomatis
 

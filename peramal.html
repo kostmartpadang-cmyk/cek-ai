@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Young+Serif&display=swap" rel="stylesheet">
+<title>Peramal Nusantara</title>
+<style>
+  :root {
+    --paper:#eee3ca; --sheet:#f7f0de; --ink:#2a2017; --muted:#6b5c49; --line:#cdbb96;
+    --red:#a1301c; --ochre:#94661a; --green:#456a4a;
+    --bg:var(--paper); --fg:var(--ink); --card:var(--sheet); --accent:var(--red); --accent2:var(--ink);
+    --good:var(--green); --mid:var(--ochre); --low:var(--red);
+    --disp:'Young Serif','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+    --text:'Newsreader','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+  }
+  * { box-sizing:border-box; }
+  ::selection { background:var(--red); color:var(--sheet); }
+  body { margin:0; color:var(--fg); font:17px/1.65 var(--text); font-optical-sizing:auto; background-color:var(--paper);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .1  0 0 0 .09 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"); }
+  main { max-width:780px; margin:0 auto; padding:28px 16px 64px; }
+  p { margin:0 0 .75em; }
+  h1, h2 { font-family:var(--disp); font-weight:400; margin:0; }
+  h2 { font-size:23px; line-height:1.2; padding-bottom:8px; margin-bottom:14px; border-bottom:1px solid var(--line); }
+
+  .cover { position:relative; border:1.5px solid var(--ink); outline:1px solid var(--ink); outline-offset:5px; background:var(--sheet); text-align:center; padding:34px 20px 0; margin:6px 6px 36px; }
+  .kicker { font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--red); font-weight:600; }
+  h1 { font-size:clamp(42px,9vw,68px); line-height:1; margin:10px 0 12px; letter-spacing:-.01em; }
+  .methods { font-size:14px; font-style:italic; color:var(--muted); max-width:560px; margin:0 auto 22px; }
+  .tumpal { height:14px; margin:0 -20px; background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='14'><path d='M0 14h20L10 2z' fill='%232a2017'/></svg>") repeat-x bottom/20px 14px; }
+
+  .card { background:var(--sheet); border:1px solid var(--ink); padding:22px; margin-bottom:22px; }
+  .fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:22px 24px; }
+  label { display:block; font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+  label small { font-weight:400; letter-spacing:.04em; text-transform:none; font-style:italic; }
+  input, select { width:100%; padding:7px 2px; font:inherit; font-size:17px; color:var(--ink); background:transparent; border:0; border-bottom:1.5px solid var(--ink); border-radius:0; color-scheme:light; }
+  input:focus, select:focus { outline:none; border-bottom-color:var(--red); box-shadow:0 1.5px 0 var(--red); }
+  option { background:var(--sheet); color:var(--ink); }
+  .hint { font-size:13px; color:var(--muted); margin-top:4px; font-style:italic; }
+  details { margin-top:6px; font-size:14px; color:var(--muted); }
+  details summary { cursor:pointer; color:var(--red); font-style:italic; }
+  .live { display:none; margin-top:20px; padding:10px 14px; border-left:3px solid var(--red); background:var(--paper); font-size:15px; }
+
+  button { font:600 12.5px/1 var(--text); letter-spacing:.16em; text-transform:uppercase; background:var(--ink); color:var(--sheet); border:1.5px solid var(--ink); border-radius:0; padding:13px 20px; cursor:pointer; }
+  button:hover { background:var(--red); border-color:var(--red); }
+  button.ghost { background:transparent; color:var(--ink); }
+  button.ghost:hover { background:var(--ink); color:var(--sheet); border-color:var(--ink); }
+
+  .reg { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); border-top:1px solid var(--line); border-left:1px solid var(--line); margin-top:14px; }
+  .reg > div { padding:10px 12px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .reg .k, .box .k { font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .reg .v { font-family:var(--disp); font-size:19px; line-height:1.25; }
+  .profil-name { font-family:var(--disp); font-size:30px; line-height:1.1; border:0; padding:0; margin:0; }
+
+  .dlbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .tabs { display:flex; gap:0; overflow-x:auto; border-bottom:1.5px solid var(--ink); position:sticky; top:0; z-index:5; background:var(--paper); margin-bottom:22px; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { flex:none; background:transparent; color:var(--ink); border:0; border-bottom:4px solid transparent; margin-bottom:-1.5px; padding:12px 14px 9px; font-size:12px; }
+  .tab:hover { background:transparent; color:var(--red); }
+  .tab.on { color:var(--red); border-bottom-color:var(--red); background:transparent; }
+
+  .box { border:1px solid var(--line); padding:10px 12px; background:transparent; }
+  .box .v { font-family:var(--disp); font-size:18px; line-height:1.3; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+
+  .score { display:flex; align-items:center; gap:12px; margin:6px 0 14px; }
+  .ruler { flex:1; display:flex; gap:3px; min-width:90px; }
+  .ruler i { flex:1; height:13px; background:var(--line); }
+  .ruler i.on { background:var(--c); }
+  .num { font-family:var(--disp); font-size:22px; min-width:36px; text-align:right; }
+  .lbl { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); min-width:96px; }
+
+  .why { font-size:13.5px; font-style:italic; color:var(--muted); border-top:1px solid var(--line); margin-top:16px; padding-top:9px; }
+  .mbti-big { font-family:var(--disp); font-size:54px; line-height:1; letter-spacing:.08em; color:var(--red); margin:4px 0; }
+
+  .tarot { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin:14px 0; }
+  .tcard { border:1.5px solid var(--ink); outline:1px solid var(--ink); outline-offset:-6px; padding:16px 16px 14px; text-align:center; background:var(--paper); }
+  .tcard .pos { font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .tcard .sym { font-family:var(--disp); font-size:44px; line-height:1.1; color:var(--red); margin:6px 0 2px; }
+  .tcard .nm { font-family:var(--disp); font-size:17px; line-height:1.2; }
+  .tcard p { font-size:14px; margin:8px 0 0; text-align:left; font-style:italic; }
+
+  dialog { border:1.5px solid var(--ink); background:var(--sheet); color:var(--ink); max-width:580px; width:92vw; padding:22px; border-radius:0; }
+  dialog::backdrop { background:rgba(42,32,23,.55); }
+  .q { margin:0 0 16px; } .q p { font-weight:600; margin-bottom:6px; }
+  .q label { display:flex; gap:10px; align-items:flex-start; padding:7px 10px; border:1px solid var(--line); margin-bottom:6px; cursor:pointer; font-size:16px; text-transform:none; letter-spacing:0; color:var(--ink); font-weight:400; }
+  .q input { width:auto; margin-top:5px; accent-color:var(--red); }
+  #out { display:none; }
+  #err { color:var(--red); font-style:normal; }
+  .foot { font-size:13px; color:var(--muted); text-align:center; font-style:italic; margin-top:30px; }
+  @media (max-width:520px) { .card { padding:16px; } .lbl { display:none; } }
+
+  /* Kuis Skenario Kocak Styles */
+  .fun-banner { border:1.5px dashed var(--red); background:var(--sheet); padding:16px 18px; margin-bottom:22px; display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; }
+  .fun-banner-title { font-family:var(--disp); font-size:21px; color:var(--red); line-height:1.2; }
+  .fun-banner-sub { font-size:14.5px; color:var(--muted); margin-top:3px; }
+  .scenario-opt { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border:1.5px solid var(--line); background:var(--sheet); margin-bottom:10px; cursor:pointer; font-size:15.5px; transition:all .15s ease; text-align:left; width:100%; color:var(--ink); font-family:var(--text); line-height:1.45; }
+  .scenario-opt:hover { border-color:var(--red); background:var(--paper); transform:translateX(3px); }
+  .scenario-opt.selected { border-color:var(--red); background:var(--paper); outline:1.5px solid var(--red); }
+  .scenario-opt .opt-tag { font-family:var(--disp); font-size:17px; color:var(--red); font-weight:600; min-width:24px; }
+  .scenario-title { font-family:var(--disp); font-size:21px; line-height:1.25; margin-bottom:8px; color:var(--ink); }
+  .scenario-desc { font-size:15.5px; font-style:italic; color:var(--muted); margin-bottom:16px; padding:10px 14px; border-left:3px solid var(--ochre); background:var(--paper); line-height:1.5; }
+  .archetype-title { font-family:var(--disp); font-size:clamp(26px,5vw,34px); line-height:1.15; color:var(--red); margin:6px 0 10px; }
+  .quote-box { font-style:italic; font-size:16px; color:var(--ink); padding:10px 14px; border-left:3px solid var(--red); background:var(--paper); margin:12px 0 16px; }
+</style>
+</head>
+<body>
+<main>
+  <header class="cover">
+    <div class="kicker">Primbon Digital</div>
+    <h1>Peramal Nusantara</h1>
+    <p class="methods">Numerologi, zodiak, shio dan lima unsur, weton Jawa, MBTI, Enneagram, dan tarot. Dihitung di browser, tidak ada data yang disimpan.</p>
+    <div class="tumpal"></div>
+  </header>
+
+  <div class="card">
+    <div class="fun-banner">
+      <div>
+        <div class="fun-banner-title">🎲 Kuis Skenario: Tebak Personality &amp; Nasibmu</div>
+        <div class="fun-banner-sub">Pilih caramu bertindak dalam 8 contoh situasi nyata sehari-hari! Tidak kaku, seru, dan penuh kejutan.</div>
+      </div>
+      <button type="button" id="openScenarioBtn" style="background:var(--red);border-color:var(--red);color:var(--sheet);padding:10px 18px;white-space:nowrap">Mulai Kuis Seru &rarr;</button>
+    </div>
+
+    <div class="fields">
+      <div>
+        <label for="nama">Nama lengkap</label>
+        <input id="nama" placeholder="Sesuai akta/KTP" autocomplete="off">
+        <details><summary>Bingung isi apa?</summary>Pakai nama lengkap di akta kelahiran. Kalau dipanggil nama lain dan mau dilihat juga, isi nama panggilan di bawah.</details>
+      </div>
+      <div>
+        <label for="panggil">Nama panggilan <small>(opsional)</small></label>
+        <input id="panggil" autocomplete="off">
+      </div>
+      <div>
+        <label for="tgl">Tanggal lahir</label>
+        <input id="tgl" type="date" max="">
+        <details><summary>Tidak tahu tanggal lahir pasti?</summary>Lihat akta kelahiran, KTP, atau KK. Kalau hanya tahu tahun/umur, pilih perkiraan terdekat: hasil zodiak, shio, dan numerologi tanggal akan kurang akurat, tapi nama dan tahun tetap terbaca.</details>
+      </div>
+      <div>
+        <label for="jam">Jam lahir <small>(opsional)</small></label>
+        <input id="jam" type="time">
+        <details><summary>Tidak tahu jam lahir?</summary>Biarkan kosong, tidak masalah. Kalau mau dicari: tanya orang tua, lihat surat keterangan lahir dari bidan/rumah sakit. Perkiraan "pagi/siang/malam" juga boleh, isi saja jam tengahnya.</details>
+      </div>
+      <div>
+        <label for="gender">Jenis kelamin <small>(opsional)</small></label>
+        <select id="gender"><option value="">Tidak disebut</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
+      </div>
+      <div>
+        <label for="status">Status saat ini <small>(opsional)</small></label>
+        <select id="status"><option value="">Tidak disebut</option><option value="single">Lajang</option><option value="pacaran">Berpasangan</option><option value="menikah">Menikah</option></select>
+      </div>
+      <div>
+        <label for="mbti">MBTI <small>(opsional)</small></label>
+        <select id="mbti"><option value="">Belum tahu / lewati</option></select>
+        <details open><summary>Tidak tahu MBTI-mu?</summary>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+            <button type="button" class="ghost" id="quizBtn" style="padding:6px 12px">Tes singkat 12 pertanyaan</button>
+            <button type="button" class="ghost" id="quizScenarioBtn2" style="padding:6px 12px;border-color:var(--red);color:var(--red)">🎲 Kuis Skenario (Santai &amp; Seru)</button>
+          </div>
+        </details>
+      </div>
+      <div>
+        <label for="enne">Enneagram <small>(opsional)</small></label>
+        <select id="enne"><option value="">Belum tahu / lewati</option></select>
+        <div class="hint">Tidak tahu? Lewati saja, atau pilih yang paling cocok dengan deskripsinya.</div>
+      </div>
+      <div>
+        <label for="darah">Golongan darah <small>(opsional)</small></label>
+        <select id="darah"><option value="">Tidak tahu / lewati</option><option>A</option><option>B</option><option>AB</option><option>O</option></select>
+      </div>
+    </div>
+
+    <div class="live" id="live"></div>
+
+    <details style="margin-top:14px" id="pasanganBox">
+      <summary>+ Cek kecocokan dengan seseorang (opsional)</summary>
+      <div class="fields" style="margin-top:10px">
+        <div><label for="nama2">Nama pasangan/teman</label><input id="nama2" autocomplete="off"></div>
+        <div><label for="tgl2">Tanggal lahirnya</label><input id="tgl2" type="date"></div>
+      </div>
+    </details>
+
+    <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap">
+      <button id="go">Ramal sekarang</button>
+      <button id="reset" class="ghost">Reset</button>
+    </div>
+    <div class="hint" id="err" style="color:var(--low)"></div>
+  </div>
+
+  <div id="out">
+    <div class="card" id="profil"></div>
+    <div class="dlbar">
+      <button id="dlPng">Unduh kartu (PNG)</button>
+      <button id="dlTxt" class="ghost">Unduh teks lengkap (.txt)</button>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="card" id="panel"></div>
+  </div>
+
+  <dialog id="quiz">
+    <h2>Tes MBTI singkat</h2>
+    <p class="hint">Pilih yang paling menggambarkan kamu secara umum, bukan yang kamu inginkan.</p>
+    <form id="quizForm"></form>
+    <div style="display:flex;gap:10px;margin-top:10px"><button type="button" id="quizDone">Lihat hasil</button><button type="button" class="ghost" id="quizCancel">Batal</button></div>
+    <div class="hint" id="quizErr" style="color:var(--low)"></div>
+  </dialog>
+
+  <dialog id="scenarioDialog" style="max-width:640px;width:95vw">
+    <div id="scenarioQuizView">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px">
+        <span class="kicker" style="font-size:11px">Kuis Skenario · Tebak Personality &amp; Nasib</span>
+        <span id="scenarioStepNum" style="font-family:var(--disp);font-size:16px;color:var(--red)">1 / 8</span>
+      </div>
+      <div class="ruler" id="scenarioProgressBar" style="--c:var(--red);margin-bottom:18px;height:5px">
+        <i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      
+      <div id="scenarioQuestionBox"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;border-top:1px solid var(--line);padding-top:12px">
+        <button type="button" class="ghost" id="scenarioPrev" style="padding:8px 14px;visibility:hidden">&larr; Sebelumnya</button>
+        <button type="button" class="ghost" id="scenarioClose" style="padding:8px 14px">Tutup</button>
+      </div>
+    </div>
+
+    <div id="scenarioResultView" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px">
+        <span class="kicker" style="font-size:11px">Hasil Tebakan Kepribadian &amp; Nasib</span>
+        <span id="scenarioResultBadge" class="kicker" style="color:var(--ink)"></span>
+      </div>
+      <div id="scenarioResultContent"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;border-top:1px solid var(--line);padding-top:14px">
+        <button type="button" id="scenarioApplyMbti" style="background:var(--red);border-color:var(--red);padding:10px 16px">Terapkan MBTI ke Form</button>
+        <button type="button" class="ghost" id="scenarioCopyBtn" style="padding:10px 16px">Salin Teks Hasil</button>
+        <button type="button" class="ghost" id="scenarioRetryBtn" style="padding:10px 16px">Ulangi Kuis</button>
+        <button type="button" class="ghost" id="scenarioResultClose" style="padding:10px 16px;margin-left:auto">Tutup</button>
+      </div>
+    </div>
+  </dialog>
+
+  <p class="foot">Hanya untuk hiburan dan refleksi diri, bukan prediksi pasti. Keputusan penting tetap berdasarkan pertimbangan nyata.</p>
+</main>
+
+<script>
+/* ================= DATA ================= */
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const NEPTU_HARI = [5,4,3,7,8,6,9];
+const PASARAN = ['Legi','Pahing','Pon','Wage','Kliwon'];
+const NEPTU_PAS = [5,9,7,4,8];
+
+const PASARAN_INFO = {
+  Legi:  'ramah, murah hati, mudah bergaul, tapi kadang terlalu mudah percaya',
+  Pahing:'tegas, ambisius, pekerja keras, sedikit keras kepala',
+  Pon:   'tenang, setia, berpikir panjang, cenderung tertutup soal perasaan',
+  Wage:  'mandiri, teguh pendirian, penyendiri tapi bisa diandalkan',
+  Kliwon:'peka, intuitif, karismatik, punya daya tarik spiritual'
+};
+const HARI_INFO = {
+  Minggu:'bersinar, ingin jadi pusat perhatian, pemimpin alami',
+  Senin:'lembut, perasa, penyayang, mudah terpengaruh suasana',
+  Selasa:'berani, penuh semangat, tidak suka diatur',
+  Rabu:'cerdas, komunikatif, cepat belajar',
+  Kamis:'bijak, dermawan, dihormati lingkungan',
+  Jumat:'menawan, cinta keindahan, pandai menjaga hubungan',
+  Sabtu:'disiplin, tahan banting, serius dalam bekerja'
+};
+const JODOH = {
+  1:['Pegat','rawan berpisah atau sering beda pendapat; butuh komunikasi ekstra dan saling mengalah.'],
+  2:['Ratu','dihormati dan disegani lingkungan; hubungan membawa kewibawaan.'],
+  3:['Jodoh','cocok dan saling melengkapi; hubungan cenderung langgeng.'],
+  4:['Topo','awal terasa berat, tapi bahagia setelah melewati ujian bersama.'],
+  5:['Tinari','rezeki lancar dan hidup berkecukupan sebagai pasangan.'],
+  6:['Padu','sering berselisih kecil, tapi mudah berbaikan kalau mau mengalah.'],
+  7:['Sujanan','rawan godaan dan kecemburuan; kepercayaan harus dijaga.'],
+  0:['Pesthi','rukun, tenteram, dan damai sampai tua.']
+};
+
+const ZODIAK = [
+  {n:'Capricorn',  el:'Tanah',  m:[12,22,1,19], sym:'♑', t:'ambisius, disiplin, realistis dan bertanggung jawab', love:'serius dan setia, tapi lambat membuka hati', work:'strategis dan tahan lama; cocok jadi manajer atau pemilik usaha', stone:'Garnet'},
+  {n:'Aquarius',   el:'Udara',  m:[1,20,2,18],  sym:'♒', t:'orisinal, mandiri, visioner, dan humanis', love:'butuh teman bicara dan kebebasan dalam hubungan', work:'inovatif; cocok di teknologi, riset, atau kegiatan sosial', stone:'Amethyst'},
+  {n:'Pisces',     el:'Air',    m:[2,19,3,20],  sym:'♓', t:'empatik, imajinatif, artistik, dan berhati lembut', love:'romantis dan penuh pengorbanan', work:'berbakat di seni, penyembuhan, dan pelayanan', stone:'Aquamarine'},
+  {n:'Aries',      el:'Api',    m:[3,21,4,19],  sym:'♈', t:'berani, spontan, kompetitif, dan penuh energi', love:'agresif dalam mengejar, mudah bosan kalau tak ada tantangan', work:'pemimpin dan pembuka jalan; cocok di bidang yang cepat dan menantang', stone:'Diamond'},
+  {n:'Taurus',     el:'Tanah',  m:[4,20,5,20],  sym:'♉', t:'sabar, setia, praktis, menyukai kenyamanan', love:'stabil dan sensual, setia sekali jatuh cinta', work:'tekun mengumpulkan aset; cocok di keuangan, kuliner, atau seni', stone:'Emerald'},
+  {n:'Gemini',     el:'Udara',  m:[5,21,6,20],  sym:'♊', t:'penasaran, luwes, cerdas, dan pandai bicara', love:'menyenangkan dan penuh candaan, butuh variasi', work:'komunikasi, media, penjualan, dan pengajaran', stone:'Pearl'},
+  {n:'Cancer',     el:'Air',    m:[6,21,7,22],  sym:'♋', t:'penyayang, protektif, intuitif, dan sentimental', love:'mengayomi, mementingkan keluarga', work:'cocok di bidang perawatan, kuliner, properti, dan pendidikan', stone:'Ruby'},
+  {n:'Leo',        el:'Api',    m:[7,23,8,22],  sym:'♌', t:'percaya diri, dermawan, hangat, dan suka tampil', love:'setia dan dramatis, butuh dihargai', work:'pemimpin kreatif; cocok di panggung, bisnis, dan manajemen', stone:'Peridot'},
+  {n:'Virgo',      el:'Tanah',  m:[8,23,9,22],  sym:'♍', t:'teliti, analitis, rendah hati, dan suka membantu', love:'perhatian lewat tindakan, terlalu kritis kadang', work:'analis, kesehatan, editor, dan pekerjaan detail', stone:'Sapphire'},
+  {n:'Libra',      el:'Udara',  m:[9,23,10,22], sym:'♎', t:'diplomatis, adil, romantis, dan pencinta harmoni', love:'mencari kemitraan seimbang, sulit memutuskan', work:'hukum, desain, diplomasi, dan layanan pelanggan', stone:'Opal'},
+  {n:'Scorpio',    el:'Air',    m:[10,23,11,21],sym:'♏', t:'intens, misterius, gigih, dan tajam membaca orang', love:'dalam dan posesif, loyal luar biasa', work:'investigasi, riset, keuangan, dan penyembuhan', stone:'Topaz'},
+  {n:'Sagittarius',el:'Api',    m:[11,22,12,21],sym:'♐', t:'optimis, petualang, jujur, dan suka kebebasan', love:'hangat dan terus terang, takut terikat', work:'perjalanan, pendidikan, bisnis internasional', stone:'Turquoise'}
+];
+
+const SHIO = ['Tikus','Kerbau','Macan','Kelinci','Naga','Ular','Kuda','Kambing','Monyet','Ayam','Anjing','Babi'];
+const SHIO_INFO = {
+  Tikus:  {t:'cerdik, adaptif, pandai melihat peluang', work:'perdagangan, riset, dan pekerjaan yang butuh akal', love:'menarik dan perhatian, sedikit pencemas'},
+  Kerbau: {t:'tekun, jujur, dan bisa diandalkan', work:'pekerjaan jangka panjang yang stabil seperti pertanian, keuangan, teknik', love:'setia dan kuno dalam arti baik, kurang ekspresif'},
+  Macan:  {t:'berani, karismatik, dan suka tantangan', work:'kepemimpinan, olahraga, dan usaha berisiko terukur', love:'bergairah dan protektif, tak suka dikekang'},
+  Kelinci:{t:'lembut, diplomatis, dan berselera tinggi', work:'seni, diplomasi, dan layanan', love:'romantis dan menghindari konflik'},
+  Naga:   {t:'energik, penuh percaya diri, dan berkarisma', work:'wirausaha dan posisi puncak', love:'memikat dan menuntut, butuh pasangan yang mendukung'},
+  Ular:   {t:'bijak, intuitif, dan tenang menyimpan rahasia', work:'riset, spiritual, konsultan, dan keuangan', love:'dalam, misterius, dan cemburuan'},
+  Kuda:   {t:'bebas, ceria, dan penuh semangat', work:'penjualan, perjalanan, dan hiburan', love:'ceria namun sulit diam di satu tempat'},
+  Kambing:{t:'kreatif, penyayang, dan cinta damai', work:'seni, kerajinan, dan pekerjaan kolaboratif', love:'manis dan butuh rasa aman'},
+  Monyet: {t:'jenaka, pintar memecahkan masalah, dan lincah', work:'teknologi, hiburan, dan negosiasi', love:'menyenangkan, mudah tergoda hal baru'},
+  Ayam:   {t:'teliti, rajin, dan terus terang', work:'administrasi, pelayanan, dan pekerjaan detail', love:'setia dan perfeksionis, suka mengoreksi'},
+  Anjing: {t:'jujur, loyal, dan punya rasa keadilan', work:'hukum, sosial, keamanan, dan pelayanan publik', love:'setia total, kadang khawatir berlebihan'},
+  Babi:   {t:'murah hati, tulus, dan menikmati hidup', work:'kuliner, pelayanan, dan hubungan masyarakat', love:'hangat dan mudah percaya'}
+};
+const SHIO_TRINE = [[0,4,8],[1,5,9],[2,6,10],[3,7,11]]; // rukun
+const UNSUR = ['Logam','Logam','Air','Air','Kayu','Kayu','Api','Api','Tanah','Tanah']; // dari digit batang (tahun%10): 0,1 Logam...
+const UNSUR_INFO = {
+  Kayu:  {t:'tumbuh, kreatif, dan murah hati', color:'hijau & biru kehijauan', dir:'Timur', fix:'rajin belajar dan jangan menyebar energi terlalu luas'},
+  Api:   {t:'bersemangat, hangat, dan penuh gairah', color:'merah & oranye', dir:'Selatan', fix:'latih sabar sebelum bertindak'},
+  Tanah: {t:'stabil, dapat dipercaya, dan membumi', color:'kuning & cokelat', dir:'Tengah / Timur Laut', fix:'berani mencoba hal baru, jangan terlalu menunda'},
+  Logam: {t:'tegas, rapi, dan berprinsip', color:'putih, perak & emas', dir:'Barat', fix:'lembutkan sikap supaya tidak terasa dingin'},
+  Air:   {t:'fleksibel, intuitif, dan pandai berkomunikasi', color:'biru & hitam', dir:'Utara', fix:'jaga fokus dan jangan terlalu terbawa perasaan'}
+};
+const ELEMEN_COCOK = { // unsur menghasilkan
+  Kayu:'Api', Api:'Tanah', Tanah:'Logam', Logam:'Air', Air:'Kayu'
+};
+
+const LP = {
+  1:{t:'pemimpin, mandiri, dan berani memulai', work:'Kamu cocok memimpin atau merintis sesuatu sendiri. Hindari posisi yang terlalu banyak diatur.', love:'Kamu tegas dalam cinta; belajar mendengar akan memperdalam hubungan.', friend:'Kamu inisiator di lingkaran pertemanan, tapi hati-hati supaya tidak terkesan mendominasi.', money:'Insting bisnismu kuat. Berani ambil risiko yang terukur.', luck:'Awali sesuatu di tanggal 1, 10, 19, atau 28.'},
+  2:{t:'penengah, peka, dan kooperatif', work:'Kamu bersinar dalam tim, mediasi, dan pekerjaan yang butuh ketelitian emosional.', love:'Kamu romantis dan setia; jangan terlalu mengalah demi damai.', friend:'Kamu pendengar yang baik dan jadi tempat curhat favorit.', money:'Stabil kalau ada partner yang dipercaya. Hindari utang karena sungkan.', luck:'Keberuntungan datang lewat kerja sama dan relasi.'},
+  3:{t:'kreatif, ekspresif, dan menyenangkan', work:'Karirmu menonjol di kreatif, komunikasi, hiburan, dan pengajaran.', love:'Kamu hangat dan flirty; pastikan perkataanmu sejalan dengan perbuatan.', friend:'Kamu penghidup suasana dengan banyak kenalan.', money:'Pemasukan naik turun mengikuti mood; buat anggaran tetap.', luck:'Tampil dan bersuara akan membuka pintu rezeki.'},
+  4:{t:'tertib, tekun, dan membangun fondasi', work:'Cocok di teknik, keuangan, pengelolaan, dan pekerjaan sistematis.', love:'Kamu setia dan serius, kurang spontan. Sesekali buat kejutan.', friend:'Teman sedikit tapi awet dan saling bisa diandalkan.', money:'Pandai menabung dan menumpuk aset pelan-pelan.', luck:'Hasil besar datang dari kerja konsisten, bukan jalan pintas.'},
+  5:{t:'bebas, adaptif, dan haus pengalaman', work:'Cocok di pekerjaan dinamis: penjualan, travel, media, dan wirausaha.', love:'Kamu butuh ruang gerak; pasangan yang terlalu mengekang akan kamu tinggalkan.', friend:'Pergaulanmu luas dan selalu ada cerita baru.', money:'Peluang banyak tapi pengeluaran impulsif; sisihkan dana darurat.', luck:'Perubahan mendadak biasanya justru membawa peluang.'},
+  6:{t:'penyayang, bertanggung jawab, dan pelindung', work:'Cocok di pendidikan, kesehatan, desain, dan pelayanan keluarga atau masyarakat.', love:'Kamu pasangan yang mengayomi; jangan terlalu mengorbankan diri.', friend:'Kamu penjaga kelompok yang peduli pada semua orang.', money:'Pengeluaran banyak untuk orang tersayang; atur prioritas.', luck:'Kebaikanmu kembali lewat orang di sekitar.'},
+  7:{t:'analitis, spiritual, dan pencari makna', work:'Cocok di riset, teknologi, penulisan, dan bidang spiritual atau akademik.', love:'Kamu butuh pasangan yang bisa diajak bicara dalam. Jangan terlalu menutup diri.', friend:'Kamu selektif; sedikit teman tapi mendalam.', money:'Rezeki datang dari keahlian khusus, bukan keramaian.', luck:'Ikuti intuisi setelah menimbang, bukan terburu-buru.'},
+  8:{t:'ambisius, berwibawa, dan berorientasi hasil', work:'Cocok di bisnis, manajemen, keuangan, dan posisi berkuasa.', love:'Kamu setia tapi sibuk; sediakan waktu khusus untuk pasangan.', friend:'Kamu dihormati dan sering jadi andalan; hindari menilai orang dari status.', money:'Potensi finansial besar; hati-hati workaholic.', luck:'Kekuatan dan kerja keras berbalas materi, terutama setelah ujian.'},
+  9:{t:'dermawan, idealis, dan welas asih', work:'Cocok di pekerjaan sosial, seni, pendidikan, dan kemanusiaan.', love:'Kamu mencintai dengan tulus; belajar melepaskan yang sudah berakhir.', friend:'Banyak yang merasa diterima olehmu.', money:'Mudah memberi; pastikan dirimu sendiri tetap aman.', luck:'Menutup satu bab dengan baik membuka bab besar berikutnya.'},
+  11:{t:'intuitif, inspiratif, dan sensitif (master number)', work:'Kamu cocok jadi inspirator, konselor, atau seniman. Jaga energi agar tidak mudah kewalahan.', love:'Kamu mencari belahan jiwa yang sefrekuensi; ekspektasi tinggi bisa melelahkan.', friend:'Orang merasa tercerahkan di dekatmu.', money:'Uang datang ketika kamu bekerja sesuai panggilan jiwa.', luck:'Mimpi dan firasat sering jadi petunjuk.'},
+  22:{t:'visioner pembangun besar (master number)', work:'Kamu mampu mewujudkan proyek besar; cocok di arsitektur, organisasi, dan bisnis skala besar.', love:'Kamu butuh pasangan yang mendukung ambisimu tanpa bersaing.', friend:'Kamu dikelilingi orang yang mau ikut mewujudkan visimu.', money:'Potensi besar kalau fokus dan tidak menunda.', luck:'Rencana jangka panjang yang matang akan terwujud.'},
+  33:{t:'guru welas asih (master number)', work:'Kamu cocok jadi pendidik, penyembuh, atau pemimpin pelayanan.', love:'Kasihmu besar; jangan jadi penyelamat bagi semua orang.', friend:'Kamu pengayom dan sumber ketenangan banyak orang.', money:'Rezeki datang lewat pelayanan, tapi ingat menghargai nilai dirimu.', luck:'Ketulusan menarik pertolongan tak terduga.'}
+};
+const PY = { // tahun pribadi
+  1:'tahun awal baru: mulai proyek, pekerjaan, atau hubungan. Ambil inisiatif.',
+  2:'tahun kesabaran dan kemitraan: tumbuh pelan lewat kerja sama.',
+  3:'tahun ekspresi dan sosial: kreativitas dan relasi meningkat.',
+  4:'tahun membangun fondasi: kerja keras, disiplin, dan penataan.',
+  5:'tahun perubahan: pindah, ganti arah, peluang tak terduga.',
+  6:'tahun keluarga dan tanggung jawab: cinta dan rumah jadi pusat.',
+  7:'tahun refleksi: belajar, istirahat, dan mencari makna.',
+  8:'tahun panen dan kekuatan: karir dan uang bergerak naik.',
+  9:'tahun penutupan: lepaskan yang tak lagi sesuai sebelum siklus baru.'
+};
+const WARNA_LP = {1:'merah',2:'putih',3:'kuning',4:'hijau',5:'abu-abu',6:'biru muda',7:'ungu',8:'hitam',9:'emas',11:'perak',22:'emas',33:'putih'};
+
+const MBTI = {
+  INTJ:{n:'Sang Arsitek', t:'strategis, mandiri, dan berpikir jauh ke depan', work:'strategi, riset, teknologi, dan manajemen proyek besar', love:'setia dan serius, jarang mengekspresikan perasaan secara terbuka', friend:'lingkaran kecil tapi mendalam; menghargai teman yang jujur dan cerdas', up:'visi jangka panjang dan keteguhan', down:'terlalu perfeksionis dan sulit minta tolong'},
+  INTP:{n:'Sang Pemikir', t:'penasaran, logis, dan suka menganalisis ide', work:'sains, pemrograman, penulisan, dan riset', love:'butuh pasangan yang menghargai ruang berpikir dan obrolan dalam', friend:'teman diskusi seru, tapi kadang menghilang tanpa kabar', up:'kreativitas intelektual', down:'menunda eksekusi dan cuek pada detail sosial'},
+  ENTJ:{n:'Sang Komandan', t:'tegas, ambisius, dan pemimpin alami', work:'kepemimpinan, bisnis, hukum, dan konsultan', love:'mendukung ambisi pasangan, tetapi bisa terasa mendominasi', friend:'motivator yang menantang temannya untuk berkembang', up:'ketegasan dan kemampuan mengatur', down:'kurang sabar pada orang yang lambat'},
+  ENTP:{n:'Sang Penyanggah', t:'cerdik, spontan, dan suka berdebat ide', work:'wirausaha, pemasaran, inovasi produk, dan media', love:'menyenangkan dan penuh kejutan, bosan dengan rutinitas', friend:'teman yang lucu dan penuh ide gila', up:'kreativitas dan kelincahan berpikir', down:'sulit menyelesaikan satu hal sampai tuntas'},
+  INFJ:{n:'Sang Advokat', t:'idealis, intuitif, dan penuh empati', work:'konseling, penulisan, pendidikan, dan pekerjaan bermakna', love:'mencari hubungan mendalam dan setia sepenuh hati', friend:'pendengar yang baik; sedikit teman tapi sangat berarti', up:'wawasan tentang manusia', down:'terlalu memendam dan mudah lelah emosional'},
+  INFP:{n:'Sang Mediator', t:'lembut, kreatif, dan berpegang pada nilai', work:'seni, menulis, psikologi, dan pekerjaan sosial', love:'romantis dan setia, mendambakan koneksi jiwa', friend:'hangat dan menerima apa adanya', up:'imajinasi dan ketulusan', down:'terlalu idealis dan mudah terluka'},
+  ENFJ:{n:'Sang Protagonis', t:'karismatik, peduli, dan inspiratif', work:'mengajar, HR, kepemimpinan komunitas, dan hubungan masyarakat', love:'perhatian dan suportif, ingin tumbuh bersama', friend:'perekat kelompok yang peduli semua orang', up:'kemampuan memotivasi orang', down:'sulit berkata tidak dan lupa diri sendiri'},
+  ENFP:{n:'Sang Juru Kampanye', t:'antusias, kreatif, dan penuh semangat', work:'kreatif, pemasaran, pelatihan, dan startup', love:'penuh warna dan romantis, butuh kebebasan', friend:'hidup suasana dan mudah berteman', up:'energi dan imajinasi', down:'mudah teralihkan dan kewalahan komitmen'},
+  ISTJ:{n:'Sang Logistik', t:'teliti, dapat diandalkan, dan bertanggung jawab', work:'akuntansi, administrasi, hukum, militer, dan teknik', love:'setia dan stabil, mengungkapkan cinta lewat tindakan', friend:'sedikit tapi setia dan konsisten', up:'disiplin dan konsistensi', down:'kaku terhadap perubahan'},
+  ISFJ:{n:'Sang Pembela', t:'penyayang, rendah hati, dan pelindung', work:'kesehatan, pendidikan, administrasi, dan pelayanan', love:'penuh perhatian dan pengorbanan', friend:'selalu hadir membantu saat dibutuhkan', up:'kesetiaan dan kepedulian', down:'sulit mengatakan tidak dan memendam rasa kesal'},
+  ESTJ:{n:'Sang Eksekutif', t:'teratur, tegas, dan berprinsip', work:'manajemen operasional, keuangan, pemerintahan, dan hukum', love:'bertanggung jawab dan tradisional, kurang ekspresif', friend:'setia dan suka mengorganisir acara', up:'ketertiban dan kepemimpinan', down:'kurang fleksibel dan cenderung menghakimi'},
+  ESFJ:{n:'Sang Konsul', t:'hangat, sosial, dan senang menolong', work:'pendidikan, kesehatan, event, dan layanan pelanggan', love:'penyayang dan menghargai tradisi keluarga', friend:'tuan rumah yang ramah dan suka kumpul', up:'kepedulian sosial', down:'terlalu peduli pada penilaian orang'},
+  ISTP:{n:'Sang Virtuoso', t:'praktis, tenang, dan ahli memecahkan masalah', work:'teknik, mekanik, IT, olahraga, dan pekerjaan lapangan', love:'santai, tak suka drama, mengekspresikan cinta dengan membantu', friend:'asyik diajak melakukan aktivitas bersama', up:'ketenangan di bawah tekanan', down:'sulit terbuka secara emosional'},
+  ISFP:{n:'Sang Petualang', t:'lembut, artistik, dan hidup di saat ini', work:'seni, desain, kuliner, dan kegiatan alam', love:'hangat dan pengertian, butuh ruang pribadi', friend:'santai dan menerima orang apa adanya', up:'sensitivitas estetika', down:'menghindari konflik dan perencanaan jangka panjang'},
+  ESTP:{n:'Sang Pengusaha', t:'energik, berani, dan pandai membaca situasi', work:'penjualan, olahraga, bisnis, dan pekerjaan dinamis', love:'seru dan spontan, cepat bosan pada rutinitas', friend:'ramai, humoris, dan suka tantangan bersama', up:'tindakan cepat dan karisma', down:'impulsif dan kurang sabar pada rencana panjang'},
+  ESFP:{n:'Sang Penghibur', t:'ceria, spontan, dan suka menjadi pusat suasana', work:'hiburan, event, pelayanan, dan penjualan', love:'penuh kasih dan perhatian, suka kejutan', friend:'jiwa pesta yang membuat orang nyaman', up:'keceriaan dan kehangatan', down:'sulit mengelola keuangan dan menghindari hal serius'}
+};
+const QUIZ = [
+  ['EI','Setelah acara ramai, kamu biasanya…','Segar dan ingin lanjut ngobrol','Butuh menyendiri untuk mengisi tenaga','E','I'],
+  ['EI','Di kelompok baru, kamu…','Gampang mulai ngobrol dengan siapa saja','Mengamati dulu, bicara kalau sudah nyaman','E','I'],
+  ['EI','Kamu lebih suka akhir pekan…','Bertemu banyak orang','Santai di rumah atau dengan 1–2 orang dekat','E','I'],
+  ['SN','Kamu lebih mempercayai…','Fakta dan pengalaman nyata','Firasat dan pola di balik kejadian','S','N'],
+  ['SN','Saat belajar hal baru, kamu…','Ingin contoh konkret dan langkah jelas','Ingin paham konsep besarnya dulu','S','N'],
+  ['SN','Kamu lebih tertarik pada…','Apa yang ada sekarang','Kemungkinan di masa depan','S','N'],
+  ['TF','Saat memutuskan sesuatu, kamu mengutamakan…','Logika dan keadilan','Perasaan orang yang terlibat','T','F'],
+  ['TF','Saat teman curhat, kamu cenderung…','Memberi solusi praktis','Mendengarkan dan menenangkan','T','F'],
+  ['TF','Kritik terbaik menurutmu…','Jujur dan apa adanya','Disampaikan dengan lembut','T','F'],
+  ['JP','Rencana liburan, kamu…','Susun jadwal rinci dari awal','Ikuti suasana, fleksibel','J','P'],
+  ['JP','Tugas dengan tenggat, kamu…','Selesaikan jauh-jauh hari','Produktif mendekati tenggat','J','P'],
+  ['JP','Mejamu biasanya…','Rapi dan tertata','Berantakan tapi aku tahu letaknya','J','P']
+];
+
+/* ===== DATA KUIS SKENARIO (TEBAK PERSONALITY & NASIB) ===== */
+const SCENARIO_QUESTIONS = [
+  {
+    title: 'Pesanan Tertukar di Warung / Kafe',
+    desc: 'Kamu lagi lapar dan haus, sudah menunggu 20 menit. Pas pesanan datang ternyata salah total: pesan Es Teh Manis Jumbo, yang datang Kopi Hitam Pahit tanpa gula.',
+    options: [
+      { text: 'Yaudah diminum saja sambil pasrah... Malas manggil pelayannya lagi takut ngerepotin.', arch: 'KASUR' },
+      { text: 'Langsung angkat tangan ramah: "Mas punten, kayaknya ini jodohnya bukan ke meja saya deh, boleh tukar?"', arch: 'DIPLOMAT' },
+      { text: 'Foto dulu buat story: "Dikasih kopi pahit, apakah semesta menyuruhku melek?" baru panggil pelayan.', arch: 'CHAOS' },
+      { text: 'Tawarin ke teman semeja: "Eh lu mau kopi gak? Bayarin 5 ribu dah, gue pesan teh baru."', arch: 'SULTAN' }
+    ]
+  },
+  {
+    title: 'Sandal Putus di Tempat Ramai',
+    desc: 'Lagi jalan santai di mall atau tempat ramai, tiba-tiba "KREKK!" tali sandalmu putus sebelah sampai copot.',
+    options: [
+      { text: 'Jalan jinjit sebelah kaki dengan muka tanpa dosa seolah-olah itu teknik jalan sehat terbaru.', arch: 'CHAOS' },
+      { text: 'Cari karet gelang atau solasi darurat biar bisa jalan sampai ke toko sandal terdekat.', arch: 'DIPLOMAT' },
+      { text: 'Copot keduanya lalu nyeker dengan percaya diri tinggi ala model runway internasional.', arch: 'DEADLINER' },
+      { text: 'Duduk melas di pojokan, telepon teman/keluarga minta tolong dibawakan sandal ganti.', arch: 'OVERTHINKER' }
+    ]
+  },
+  {
+    title: 'Terjebak Obrolan Basa-Basi yang Tak Kunjung Usai',
+    desc: 'Ketemu kenalan lama di jalan. Obrolannya sudah garing banget, tapi dia terus bercerita panjang lebar soal sepupunya tetangganya yang beli kambing.',
+    options: [
+      { text: 'Pasang muka pura-pura antusias: "Oohh ya ampun iya kah?!" sambil batin menjerit minta tolong.', arch: 'OVERTHINKER' },
+      { text: 'Pura-pura HP getar, pasang muka kaget: "Waduh gawat bos/ibu manggil darurat!" terus pamit kabur.', arch: 'DEADLINER' },
+      { text: 'Potong ramah tapi tegas: "Wah seru banget ceritanya, tapi kebetulan gue sudah ditungguin nih, pamit duluan ya!"', arch: 'DIPLOMAT' },
+      { text: 'Balas ceritakan hal yang jauh lebih absurd sampai dia sendiri yang pusing dan pamit pergi duluan.', arch: 'CHAOS' }
+    ]
+  },
+  {
+    title: 'Paket Misterius Datang Tanpa Pernah Dipesan',
+    desc: 'Kurir berteriak "PAKEEETTT!", ada paket kardus rapi atas namamu padahal kamu yakin 100% tidak pernah checkout apa pun belakangan ini.',
+    options: [
+      { text: 'Buka pelan-pelan dengan rasa was-was takut isinya santet digital atau jebakan pinjol nyasar.', arch: 'OVERTHINKER' },
+      { text: 'Langsung sobek dengan girang: "Alhamdulillah rezeki anak sholeh, pasti ada secret admirer nih!"', arch: 'SULTAN' },
+      { text: 'Cek nomor resi, lacak barcode di internet, dan selidiki nama pengirimnya ala agen rahasia.', arch: 'DIPLOMAT' },
+      { text: 'Langsung heboh pamer di grup WhatsApp: "WOY NGAKU SIAPA YANG NGIRIM GINIAN?!"', arch: 'CHAOS' }
+    ]
+  },
+  {
+    title: 'Detik-Detik Menuju Deadline Esok Pagi',
+    desc: 'Jam 22.00 malam, besok jam 08.00 pagi ada tugas/laporan besar yang harus dikumpulkan dan kamu belum menyentuhnya sama sekali.',
+    options: [
+      { text: 'Nyalakan playlist lagu beat kencang/synthwave, seduh kopi hitam, mode dewa SKS diaktifkan!', arch: 'DEADLINER' },
+      { text: 'Tidur saja jam 22.30, niat bangun jam 04.00 subuh (meskipun biasanya bablas bangun jam 07.15).', arch: 'KASUR' },
+      { text: 'Kerjakan versi ringkas & to the point dalam 45 menit, sisanya dipoles pakai doa dan keyakinan.', arch: 'DIPLOMAT' },
+      { text: 'Panik scrolling tips cepat selesai di medsos sampai jam 2 pagi, tugasnya malah belum jalan.', arch: 'OVERTHINKER' }
+    ]
+  },
+  {
+    title: 'Chat Tengah Malam dari Sosok Masa Lalu',
+    desc: 'Jam 23.45 malam, ada notifikasi chat masuk dari mantan atau kenalan lama: "P... kamu belum tidur ya? Tiba-tiba kepikiran kamu..."',
+    options: [
+      { text: 'Langsung tangkap layar (screenshot), kirim ke bestie: "LIHAT MAHLUK INI TIBA-TIBA MUNCUL!"', arch: 'CHAOS' },
+      { text: 'Baca dari bilah notifikasi biar tidak centang biru, biarkan dia menunggu sampai besok siang.', arch: 'KASUR' },
+      { text: 'Balas singkat padat dingin: "Ada keperluan apa ya?" tanpa emoji, tanpa basa-basi.', arch: 'DIPLOMAT' },
+      { text: 'Kepikiran semalaman: "Maksud dia apa ya? Apa dia lagi sedih? Apa aku jahat kalau gak balas?"', arch: 'OVERTHINKER' }
+    ]
+  },
+  {
+    title: 'Teman Curhat Masalah yang Sama untuk Ke-100 Kalinya',
+    desc: 'Temanmu curhat berjam-jam tentang drama cinta/kerjanya yang itu-itu lagi, tapi tiap diberi masukan selalu bilang "Tapi kan susah..."',
+    options: [
+      { text: 'Tetap sabar elus pundaknya dan dengarkan: "Iya sabar ya, gue selalu ada buat nemenin lu kok."', arch: 'OVERTHINKER' },
+      { text: 'Alihkan topik: "Udah pusing mikirin itu, mending sekarang kita jajan seblak/mie ayam pedas yuk!"', arch: 'SULTAN' },
+      { text: 'Beri tamparan realita jujur: "Kalau kamu cuma ngeluh tapi gak mau ambil tindakan, ya bakal gini terus."', arch: 'DIPLOMAT' },
+      { text: 'Dengarkan sambil pasang mode autopilot, pikiran melayang memikirkan konspirasi piramida Mesir.', arch: 'KASUR' }
+    ]
+  },
+  {
+    title: 'Menang Undian Uang Kaget 100 Juta Bersih!',
+    desc: 'Mendadak nomor kuponmu tembus dan kamu resmi mendapatkan transferan 100 juta rupiah tunai bebas pajak!',
+    options: [
+      { text: 'Langsung simpan di deposito rahasia, jangan sampai ada tetangga atau saudara yang tahu.', arch: 'KASUR' },
+      { text: 'Bayar semua cicilan/utang, belikan hadiah buat orang tua, sisanya ditabung dengan rapi.', arch: 'OVERTHINKER' },
+      { text: 'Traktir bestie makan enak, checkout semua barang di wishlist, nikmati hidup selagi bisa!', arch: 'SULTAN' },
+      { text: 'Mulai kepikiran ide bisnis nyeleneh: "Gimana kalau bikin kafe kucing tapi kucingnya pakai jas hujan?"', arch: 'CHAOS' }
+    ]
+  }
+];
+
+const ARCHETYPES = {
+  SULTAN: {
+    badge: '👑 Sultan Santai',
+    title: 'Sultan Santai Berkah Semesta',
+    mbti: 'ESFP',
+    quote: 'Tenang, hidup itu kayak ombak... kalau gak bisa dilawan ya ikut ngambang aja biar gak capek.',
+    desc: 'Kamu memiliki aura ketenangan tingkat dewa. Tidak gampang terpancing emosi, anti drama yang melelahkan, dan punya insting bawaan bahwa segala hal pada akhirnya akan baik-baik saja. Di saat orang lain histeris, kamu biasanya jadi orang yang mengusulkan beli camilan dulu.',
+    actionStyle: 'Di situasi nyata, kamu bertindak luwes dan santai. Kamu tidak suka memaksakan kehendak dan lihai memanfaatkan momentum saat keberuntungan tiba-tiba lewat di depan mata.',
+    fate: {
+      fortune: 'Rezekimu punya pola unik: sering datang dari jalan tak terduga justru saat kamu sedang tidak ngoyo. Selalu ada pertolongan baik di saat genting.',
+      love: 'Paling cocok dengan pasangan yang hidupnya agak tegang atau gampang stres, karena kehadiranmu bisa menjadi obat penenang alami nomor satu.',
+      warning: 'Awas terlalu santai sampai menunda hal-hal penting seperti bayar tagihan atau periksa kesehatan berkala!',
+      amulet: 'Kopi susu gula aren less ice & voucher diskon makanan.',
+      color: 'Kuning Kunyit & Hijau Sage',
+      luckyNum: '5, 8, 14'
+    }
+  },
+  DEADLINER: {
+    badge: '⚡ Sang Alkemis Krisis',
+    title: 'Master Deadliner Adrenalin Dewa',
+    mbti: 'ENTP',
+    quote: 'Tekanan bukanlah beban, melainkan bahan bakar pendorong roket keberhasilanku.',
+    desc: 'Bakat terbesarmu muncul di detik-detik genting. Ketika orang lain panik dan menyerah karena waktu mepet, otakmu justru menyala 200%. Kamu memiliki refleks improvisasi yang luar biasa dan sanggup menyelesaikan tugas rumit dengan efisiensi kilat.',
+    actionStyle: 'Kamu bertindak cepat, spontan, dan tidak ragu mengambil jalan pintas cerdas yang tidak terpikirkan oleh orang lain. Bagimu, aturan kaku diciptakan untuk dinegosiasikan.',
+    fate: {
+      fortune: 'Nasibmu penuh lompatan dramatis! Karirmu akan berkembang pesat di lingkungan yang dinamis, menantang, dan membutuhkan kecepatan eksekusi tinggi.',
+      love: 'Cocok dengan pasangan yang sabar, setia, dan bisa menjadi jangkar penenang agar kamu tidak selalu hidup di jalur cepat.',
+      warning: 'Jangan terlalu sering menguji batas daya tahan tubuh dengan maraton begadang dan kafein berlebih!',
+      amulet: 'Minuman kopi tubruk hangat & playlist lagu bertempo tinggi.',
+      color: 'Merah Bata & Abu-abu Baja',
+      luckyNum: '1, 9, 27'
+    }
+  },
+  OVERTHINKER: {
+    badge: '🛡️ Penjaga Hati & Logika',
+    title: 'Detektif Overthinker Berhati Emas',
+    mbti: 'INFJ',
+    quote: 'Lebih baik aku lelah memikirkan antisipasi, daripada orang tersayangku terluka tanpa persiapan.',
+    desc: 'Kamu adalah orang dengan radar empati dan intuisi yang luar biasa tajam. Kamu selalu peduli pada perasaan orang lain, membaca suasana ruangan dalam sekejap, dan memikirkan segala konsekuensi sebelum melangkah. Hatimu tulus dan sangat bisa diandalkan.',
+    actionStyle: 'Kamu bertindak dengan kehati-hatian tingkat tinggi. Selalu punya rencana cadangan dan menjadi orang pertama yang mengulurkan tangan saat melihat sahabatmu kesulitan.',
+    fate: {
+      fortune: 'Rezeki besarmu mengalir dari kepercayaan orang lain atas integritas, ketelitian, dan ketulusanmu. Kebaikan yang kamu tanam diam-diam akan berbuah manis.',
+      love: 'Membutuhkan pasangan yang dewasa, komunikatif, transparan, dan tidak suka memainkan teka-teki emosional.',
+      warning: 'Berhentilah memikirkan kembali obrolan sepele masa lalu sebelum tidur. Istirahatkan pikiranmu yang berharga!',
+      amulet: 'Teh chamomile hangat, buku catatan kecil, & wangi aromaterapi.',
+      color: 'Biru Samudra & Putih Kapas',
+      luckyNum: '2, 7, 11'
+    }
+  },
+  CHAOS: {
+    badge: '🎭 Penghidup Suasana',
+    title: 'Agen Chaos Penebar Ceria',
+    mbti: 'ENFP',
+    quote: 'Dunia ini sudah cukup ribet, jangan dibikin makin kaku. Mari kita bikin hari ini seru!',
+    desc: 'Kamu adalah definisi nyata dari keceriaan yang menular. Kehadiranmu mampu mencairkan suasana yang paling canggung sekalipun. Kamu tidak suka kemunafikan, selalu apa adanya, penuh ide spontan, dan memiliki stok humor segar yang tidak pernah habis.',
+    actionStyle: 'Kamu bertindak ekspresif dan tanpa jaim (jaga image). Kamu tidak takut terlihat konyol demi membuat orang-orang di sekitarmu tertawa dan merasa nyaman.',
+    fate: {
+      fortune: 'Magnet keberuntungan sosial! Pintu rezeki dan peluang karir barumu seringkali terbuka lebar lewat jaringan tongkrongan, teman baru, atau proyek kreatif.',
+      love: 'Pasanganmu dijamin tidak akan pernah bosan seumur hidup karena setiap hari selalu ada cerita dan kejutan menggelitik darimu.',
+      warning: 'Hati-hati berbicara di acara yang sangat resmi, dan jangan lupa menyisihkan tabungan darurat sebelum habis dipakai bersenang-senang.',
+      amulet: 'Koleksi stiker WhatsApp kocak & camilan gurih pedas.',
+      color: 'Oranye Terang & Cokelat Karamel',
+      luckyNum: '3, 6, 21'
+    }
+  },
+  DIPLOMAT: {
+    badge: '🏛️ Sang Ahli Strategi',
+    title: 'Diplomat Elegan Boss Santun',
+    mbti: 'INTJ',
+    quote: 'Bicara seperlunya, bertindak seefektif mungkin, selesaikan masalah tepat di akarnya.',
+    desc: 'Kamu memiliki wibawa alami dan ketenangan seorang pemimpin sejati. Kamu tidak menyukai drama receh atau basa-basi yang membuang waktu. Orang lain menghormatimu karena caramu berpikir yang sistematis, adil, dan selalu dapat menemukan solusi praktis.',
+    actionStyle: 'Kamu bertindak secara taktis dan tenang. Kamu selalu menimbang untung-rugi secara objektif dan mengutamakan hasil nyata daripada sekadar omongan manis.',
+    fate: {
+      fortune: 'Sangat berbakat dalam membangun stabilitas finansial jangka panjang, investasi berbobot, atau mengelola organisasi dan usaha sendiri.',
+      love: 'Mencari pasangan yang setara secara intelektual, memiliki visi hidup mandiri, dan saling mendukung mimpi besar masing-masing.',
+      warning: 'Jangan terlalu keras pada diri sendiri dan sesekali biarkan dirimu rileks tanpa harus selalu memegang kendali.',
+      amulet: 'Jam tangan elegan, pulpen berkualitas, & kopi hitam tanpa gula.',
+      color: 'Hitam Arang & Emas Antik',
+      luckyNum: '4, 8, 22'
+    }
+  },
+  KASUR: {
+    badge: '🛋️ Petapa Ketenangan',
+    title: 'Pemuja Kasur & Ketenangan Jiwa',
+    mbti: 'INTP',
+    quote: 'Kebahagiaan tertinggi manusia adalah saat selimut sudah menutupi kaki dan tidak ada panggilan telepon masuk.',
+    desc: 'Kamu adalah pelindung energi batin sejati. Bagimu, rumah dan tempat tidur adalah tempat suci yang tidak tergantikan. Kamu tidak silau oleh keramaian dunia luar yang bising. Kamu menikmati duniamu sendiri, berpikir mendalam, dan menghargai kedamaian di atas segalanya.',
+    actionStyle: 'Kamu bertindak hemat energi dan selektif. Kamu menghindari pertengkaran yang tidak penting dan memilih mundur teratur jika suatu lingkungan terasa mulai melelahkan.',
+    fate: {
+      fortune: 'Nasibmu diberkahi umur panjang, batin yang sehat, dan awet muda. Rezekimu mengalir tenang dari pekerjaan fleksibel yang mengutamakan hasil nyata.',
+      love: 'Pasangan idamanmu adalah orang yang bisa diajak menikmati keheningan bersama: maraton film di kamar sambil makan camilan tanpa perlu banyak bicara.',
+      warning: 'Jangan sampai jadi fosil di dalam kamar! Sesekali jalan santai ke luar rumah untuk menghirup udara segar dan menyapa matahari.',
+      amulet: 'Bantal guling super empuk, selimut tebal, & playlist suara rintik hujan.',
+      color: 'Abu-abu Lembut & Biru Langit Malam',
+      luckyNum: '7, 9, 18'
+    }
+  }
+};
+
+const ENNE = {
+  1:{n:'Perfeksionis', t:'bermoral, rapi, dan ingin melakukan yang benar', work:'pekerjaan yang butuh standar tinggi: hukum, pendidikan, kontrol mutu', love:'setia dan ingin hubungan yang jujur, tapi bisa kritis'},
+  2:{n:'Penolong', t:'hangat, murah hati, dan ingin dibutuhkan', work:'pelayanan, kesehatan, HR, dan pekerjaan sosial', love:'penuh perhatian, perlu belajar menerima juga'},
+  3:{n:'Pencapai', t:'ambisius, adaptif, dan berorientasi hasil', work:'penjualan, kepemimpinan, dan bisnis', love:'mendukung pasangan sukses, jangan lupa waktu bersama'},
+  4:{n:'Individualis', t:'ekspresif, mendalam, dan unik', work:'seni, desain, penulisan, dan psikologi', love:'romantis dan intens, butuh dipahami'},
+  5:{n:'Penyelidik', t:'analitis, hemat energi, dan haus pengetahuan', work:'riset, teknologi, dan analisis', love:'setia tapi butuh ruang; belajarlah berbagi isi hati'},
+  6:{n:'Loyalis', t:'setia, waspada, dan bertanggung jawab', work:'keamanan, hukum, administrasi, dan kerja tim', love:'sangat setia, butuh rasa aman yang konsisten'},
+  7:{n:'Petualang', t:'optimis, spontan, dan suka variasi', work:'pemasaran, travel, kreatif, dan wirausaha', love:'menyenangkan, takut terikat dan jenuh'},
+  8:{n:'Penantang', t:'kuat, tegas, dan protektif', work:'kepemimpinan, bisnis, dan advokasi', love:'melindungi dengan sepenuh hati, belajar lebih lembut'},
+  9:{n:'Pendamai', t:'tenang, menerima, dan pencinta harmoni', work:'mediasi, konseling, dan pekerjaan kolaboratif', love:'sabar dan suportif, belajar menyuarakan keinginan sendiri'}
+};
+const DARAH = {
+  A:'teliti, rapi, bertanggung jawab, kadang terlalu khawatir',
+  B:'bebas, kreatif, penuh rasa ingin tahu, mengikuti kata hati',
+  AB:'unik, rasional sekaligus perasa, sulit ditebak',
+  O:'percaya diri, hangat, berorientasi tujuan, suka memimpin'
+};
+const TAROT = [
+  ['The Fool','🌱','awal baru, keberanian melangkah, spontanitas','gegabah atau ragu memulai'],
+  ['The Magician','✨','kemampuan mewujudkan, fokus, sumber daya cukup','tenaga terpencar atau menipu diri'],
+  ['The High Priestess','🌙','intuisi, rahasia, dengarkan batinmu','mengabaikan firasat, hal tersembunyi'],
+  ['The Empress','🌹','kelimpahan, kasih, kreativitas','terlalu bergantung atau stagnan'],
+  ['The Emperor','👑','struktur, otoritas, stabilitas','kaku atau sikap mendominasi'],
+  ['The Hierophant','📜','tradisi, bimbingan, nilai bersama','melawan aturan, perlu cara sendiri'],
+  ['The Lovers','💞','cinta, pilihan penting, keselarasan nilai','ketidakcocokan atau ragu memilih'],
+  ['The Chariot','🏇','tekad, kemenangan lewat disiplin','kehilangan arah dan kendali'],
+  ['Strength','🦁','keberanian lembut, sabar, kendali diri','keraguan diri, emosi tak terkendali'],
+  ['The Hermit','🕯️','refleksi, mencari jawaban dalam diri','terlalu mengisolasi diri'],
+  ['Wheel of Fortune','🎡','siklus berputar, momentum, takdir berpihak','nasib sedang turun, tahan dulu'],
+  ['Justice','⚖️','kejujuran, keadilan, sebab-akibat','ketidakadilan atau menghindari tanggung jawab'],
+  ['The Hanged Man','🙃','sudut pandang baru, jeda bermakna','menunda tanpa tujuan'],
+  ['Death','🦋','akhir yang membuka transformasi','takut melepas yang sudah usai'],
+  ['Temperance','⚗️','keseimbangan, kesabaran, harmoni','berlebihan atau tidak seimbang'],
+  ['The Devil','⛓️','keterikatan, godaan, kebiasaan yang mengekang','mulai bebas dari belenggu'],
+  ['The Tower','⚡','perubahan mendadak yang membersihkan','menghindari perubahan yang tak terelakkan'],
+  ['The Star','⭐','harapan, pemulihan, inspirasi','kehilangan harapan sementara'],
+  ['The Moon','🌕','ilusi, kecemasan, hal belum jelas','kabut mulai terangkat'],
+  ['The Sun','☀️','kebahagiaan, keberhasilan, vitalitas','kegembiraan tertunda'],
+  ['Judgement','📯','panggilan bangkit, evaluasi diri','ragu pada diri sendiri'],
+  ['The World','🌍','penyelesaian, pencapaian, utuh','hampir selesai, tinggal sentuhan akhir']
+];
+
+const roman = n => { if (!n) return '0'; let s = ''; for (const [v, t] of [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]) while (n >= v) { s += t; n -= v; } return s; };
+
+/* ================= HITUNGAN ================= */
+const reduce = (n, keepMaster = true) => {
+  while (n > 9 && !(keepMaster && (n === 11 || n === 22 || n === 33))) n = String(n).split('').reduce((a, b) => a + +b, 0);
+  return n;
+};
+const letterVal = ch => ((ch.charCodeAt(0) - 65) % 9) + 1;
+const clean = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z ]/g, '');
+function nameNums(name) {
+  const s = clean(name); let all = 0, v = 0, c = 0;
+  for (const ch of s) {
+    if (ch === ' ') continue;
+    const val = letterVal(ch); all += val;
+    if ('AEIOU'.includes(ch)) v += val; else c += val;
+  }
+  return { expression: reduce(all), soul: reduce(v), persona: reduce(c) };
+}
+function lifePath(d, m, y) { return reduce(reduce(d) + reduce(m) + reduce(y)); }
+function zodiakOf(d, m) {
+  for (const z of ZODIAK) {
+    const [m1, d1, m2, d2] = z.m;
+    if ((m === m1 && d >= d1) || (m === m2 && d <= d2)) return z;
+  }
+  return ZODIAK[0];
+}
+function chineseYear(date) {
+  try {
+    const p = new Intl.DateTimeFormat('en-u-ca-chinese', { year: 'numeric' }).formatToParts(date);
+    const ry = p.find(x => x.type === 'relatedYear'); if (ry) return +ry.value;
+  } catch (e) {}
+  return (date.getMonth() === 0 || (date.getMonth() === 1 && date.getDate() < 5)) ? date.getFullYear() - 1 : date.getFullYear();
+}
+function wetonOf(date) {
+  const days = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 864e5);
+  const pas = ((days + 3) % 5 + 5) % 5, hari = date.getDay();
+  return { hari: HARI[hari], pasaran: PASARAN[pas], neptu: NEPTU_HARI[hari] + NEPTU_PAS[pas], np: [NEPTU_HARI[hari], NEPTU_PAS[pas]] };
+}
+const SHICHEN = ['Tikus','Kerbau','Macan','Kelinci','Naga','Ular','Kuda','Kambing','Monyet','Ayam','Anjing','Babi'];
+function shioJam(hhmm) {
+  const [h] = hhmm.split(':').map(Number);
+  return SHICHEN[Math.floor(((h + 1) % 24) / 2)];
+}
+function profile(nama, tgl, jam) {
+  const [y, m, d] = tgl.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const cy = chineseYear(date);
+  const stem = ((cy - 4) % 10 + 10) % 10, br = ((cy - 4) % 12 + 12) % 12;
+  const n = nameNums(nama);
+  const now = new Date();
+  const py = reduce(reduce(d) + reduce(m) + reduce(now.getFullYear()), false);
+  const pm = reduce(py + now.getMonth() + 1, false);
+  return {
+    nama, date, d, m, y, lp: lifePath(d, m, y), birthday: reduce(d), ...n,
+    z: zodiakOf(d, m), cy, shio: SHIO[br], shioIdx: br,
+    unsur: UNSUR[cy % 10], yinyang: stem % 2 === 0 ? 'Yang' : 'Yin',
+    weton: wetonOf(date), py, pm, jamShio: jam ? shioJam(jam) : null
+  };
+}
+
+/* PRNG deterministik */
+function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { return () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* skor 0-100 dari perpaduan angka (kombinasi stabil + sedikit variasi harian) */
+function score(p, key, boost = 0) {
+  const base = 55 + (hashStr(p.nama.toUpperCase() + p.date.getTime() + key) % 25);
+  const dayStr = new Date().toISOString().slice(0, 10);
+  const day = hashStr(p.nama.toUpperCase() + dayStr + key) % 11 - 5;
+  const pyBonus = [0, 4, 0, 3, 1, 2, 3, -1, 5, -2][p.py] || 0;
+  return Math.max(35, Math.min(98, base + day + boost + pyBonus));
+}
+const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
+
+/* ================= KECOCOKAN ================= */
+const ZEL_COCOK = { Api:['Api','Udara'], Udara:['Udara','Api'], Tanah:['Tanah','Air'], Air:['Air','Tanah'] };
+function match(a, b) {
+  const out = [];
+  let tot = 0, cnt = 0;
+  const wsum = (a.weton.neptu + b.weton.neptu) % 8;
+  const j = JODOH[wsum];
+  const wScore = { 1:35, 2:85, 3:80, 4:65, 5:88, 6:60, 7:42, 0:92 }[wsum];
+  out.push({ k:'Weton Jawa', v:`${j[0]} (neptu ${a.weton.neptu}+${b.weton.neptu}=${a.weton.neptu + b.weton.neptu})`, d:j[1], s:wScore }); tot += wScore; cnt++;
+  const same = SHIO_TRINE.find(g => g.includes(a.shioIdx) && g.includes(b.shioIdx));
+  const clash = Math.abs(a.shioIdx - b.shioIdx) === 6;
+  const sS = same ? 90 : clash ? 38 : 65;
+  out.push({ k:'Shio', v:`${a.shio} & ${b.shio}`, d: same ? 'satu kelompok rukun: mudah sefrekuensi.' : clash ? 'shio berhadapan (bentrok): banyak perbedaan karakter, butuh saling memahami.' : 'netral: bisa cocok atau tidak tergantung usaha.', s:sS }); tot += sS; cnt++;
+  const zz = (ZEL_COCOK[a.z.el] || []).includes(b.z.el) ? 85 : 60;
+  out.push({ k:'Zodiak', v:`${a.z.n} & ${b.z.n}`, d: zz > 70 ? 'unsur serasi, alurnya mudah.' : 'unsur berbeda: saling belajar dan perlu penyesuaian.', s:zz }); tot += zz; cnt++;
+  const df = Math.abs(reduce(a.lp, false) - reduce(b.lp, false));
+  const lpS = df === 0 ? 80 : df <= 2 ? 75 : df <= 4 ? 62 : 52;
+  out.push({ k:'Numerologi jalur hidup', v:`${a.lp} & ${b.lp}`, d: df <= 2 ? 'jalur hidup mirip, mudah saling mengerti.' : 'jalur berbeda, bisa saling melengkapi kalau mau terbuka.', s:lpS }); tot += lpS; cnt++;
+  return { items: out, total: Math.round(tot / cnt) };
+}
+
+/* ================= RENDER ================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const color = s => s >= 75 ? 'var(--good)' : s >= 55 ? 'var(--mid)' : 'var(--low)';
+const label = s => s >= 80 ? 'Sangat baik' : s >= 65 ? 'Baik' : s >= 50 ? 'Cukup' : 'Perlu hati-hati';
+const bar = s => { const on = Math.round(s / 10); return `<div class="score"><div class="ruler" style="--c:${color(s)}">${Array.from({ length: 10 }, (_, i) => `<i${i < on ? ' class="on"' : ''}></i>`).join('')}</div><span class="num" style="color:${color(s)}">${s}</span> <span class="lbl">${label(s)}</span></div>`; };
+
+let P = null, Q = null, form = null, TABS = null;
+
+function build() {
+  const p = P, L = LP[p.lp], r = rng(hashStr(p.nama + p.date.getTime() + new Date().toISOString().slice(0, 10)));
+  const nick = form.panggil || p.nama.split(' ')[0];
+  const sh = SHIO_INFO[p.shio], un = UNSUR_INFO[p.unsur], pas = PASARAN_INFO[p.weton.pasaran], hr = HARI_INFO[p.weton.hari];
+  const luckyNum = [...new Set([p.lp > 9 ? reduce(p.lp, false) : p.lp, p.birthday > 9 ? reduce(p.birthday, false) : p.birthday, reduce(p.expression, false), p.weton.neptu % 9 || 9])].sort((a, b) => a - b);
+  const luckyDay = HARI[(p.weton.np[0] + p.d) % 7];
+
+  const T = {};
+  const cmpHtml = Q ? (() => {
+    const mt = match(P, Q);
+    return `<h2>Kecocokan dengan ${esc(Q.nama)}</h2>${bar(mt.total)}
+    ${mt.items.map(i => `<div class="box" style="margin-bottom:8px"><div class="k">${i.k}</div><div class="v">${esc(i.v)}</div><div style="font-size:13px">${i.d}</div>${bar(i.s)}</div>`).join('')}
+    <p class="why">Dihitung dari weton (neptu dijumlah dan dimodulo 8), kelompok shio, unsur zodiak, dan selisih jalur hidup numerologi.</p>`;
+  })() : '';
+
+  T.Ringkasan = () => `
+    <h2>Halo ${esc(nick)}</h2>
+    <p>Jalur hidupmu <b>${p.lp}</b>: ${L.t}. Zodiakmu <b>${p.z.n}</b> (${p.z.t}). Shio <b>${p.shio} ${p.unsur}</b>, ${sh.t}. Wetonmu <b>${p.weton.hari} ${p.weton.pasaran}</b>: ${pas}.</p>
+    <p>Sekilas, kamu ${hr}. Di tahun pribadi <b>${p.py}</b> sekarang, ini ${PY[p.py]}</p>
+    <div class="grid2">
+      ${['Karir','Percintaan','Pertemanan','Keuangan','Keberuntungan','Kesehatan'].map(k => `<div class="box"><div class="k">${k}</div>${bar(score(p, k))}</div>`).join('')}
+    </div>
+    <p class="why">Skor merupakan gabungan angka numerologi, weton, dan tahun pribadi yang dihitung dari datamu, dengan variasi kecil tiap hari.</p>`;
+
+  T.Karir = () => { const s = score(p, 'Karir', p.lp === 8 ? 4 : 0); return `<h2>Karir</h2>${bar(s)}
+    <p>${L.work}</p><p>Zodiak ${p.z.n}: ${p.z.work}.</p><p>Shio ${p.shio}: cocok di ${sh.work}.</p>
+    <p>Tahun pribadi ${p.py} → ${PY[p.py]}</p>
+    ${form.mbti ? `<p>MBTI ${form.mbti}: cocok di ${MBTI[form.mbti].work}.</p>` : ''}
+    <p><b>Saran:</b> ${pick(['Ambil tantangan yang sedikit di luar zona nyaman bulan ini.','Rapikan portofolio dan jaringanmu; peluang datang dari orang yang mengenalmu.','Fokus selesaikan satu proyek besar sebelum memulai yang baru.','Minta umpan balik dari atasan atau mentor dan tindak lanjuti.'], r)}</p>
+    <p class="why">Dasar: jalur hidup ${p.lp}, zodiak ${p.z.n}, shio ${p.shio}, tahun pribadi ${p.py}.</p>`; };
+
+  T.Percintaan = () => { const s = score(p, 'Cinta'); const st = form.status;
+    const stNote = st === 'single' ? 'Untuk yang sedang sendiri: pilih pasangan yang sejalan dengan nilai hidupmu, bukan sekadar chemistry.' : st === 'pacaran' ? 'Untuk yang berpasangan: bicarakan rencana ke depan dengan jujur.' : st === 'menikah' ? 'Untuk yang sudah menikah: sisihkan waktu berdua tanpa urusan rumah atau pekerjaan.' : '';
+    return `<h2>Percintaan</h2>${bar(s)}
+    <p>${L.love}</p><p>Zodiak ${p.z.n}: ${p.z.love}. Shio ${p.shio}: ${sh.love}.</p>
+    <p>Cocok dengan tipe: shio ${SHIO_TRINE.find(g => g.includes(p.shioIdx)).filter(i => i !== p.shioIdx).map(i => SHIO[i]).join(' & ')}, serta zodiak unsur ${p.z.el} dan ${ZEL_COCOK[p.z.el][1]}.</p>
+    ${form.mbti ? `<p>MBTI ${form.mbti}: ${MBTI[form.mbti].love}.</p>` : ''}
+    ${stNote ? `<p>${stNote}</p>` : ''}${cmpHtml ? `<hr style="border:0;border-top:1px solid var(--line);margin:14px 0">${cmpHtml}` : '<p class="hint">Tip: isi bagian "Cek kecocokan" di atas untuk membandingkan dengan seseorang.</p>'}
+    <p class="why">Dasar: jalur hidup, zodiak, shio, dan weton.</p>`; };
+
+  T.Pertemanan = () => { const s = score(p, 'Teman'); return `<h2>Pertemanan</h2>${bar(s)}
+    <p>${L.friend}</p><p>Wetonmu ${p.weton.pasaran}: ${pas}.</p>
+    <p>Kamu paling nyambung dengan orang unsur ${p.unsur === 'Kayu' ? 'Air & Kayu' : p.unsur === 'Api' ? 'Kayu & Api' : p.unsur === 'Tanah' ? 'Api & Tanah' : p.unsur === 'Logam' ? 'Tanah & Logam' : 'Logam & Air'}, dan zodiak ${ZODIAK.filter(z => z.el === p.z.el && z.n !== p.z.n).map(z => z.n).join(' / ')}.</p>
+    <p><b>Saran:</b> ${pick(['Hubungi satu teman lama minggu ini.','Jujur soal batasanmu supaya pertemanan tidak melelahkan.','Gabung komunitas sesuai minatmu untuk bertemu orang sefrekuensi.'], r)}</p>`; };
+
+  T.Keuangan = () => { const s = score(p, 'Uang', p.lp === 8 ? 5 : 0); return `<h2>Keuangan</h2>${bar(s)}
+    <p>${L.money}</p><p>Unsur ${p.unsur}: ${un.t}. Sifat ini memengaruhi cara kamu mengelola uang.</p>
+    <p>Neptu wetonmu <b>${p.weton.neptu}</b> ${p.weton.neptu >= 15 ? '(tinggi): rezeki cenderung besar tapi menuntut tanggung jawab.' : p.weton.neptu >= 11 ? '(sedang): rezeki cukup dan stabil jika rajin.' : '(rendah): rezeki datang bertahap dari ketekunan.'}</p>
+    <p>Tahun pribadi ${p.py}: ${p.py === 8 ? 'peluang finansial terbaik, manfaatkan.' : p.py === 4 ? 'fokus menabung dan melunasi utang.' : p.py === 5 ? 'hati-hati pengeluaran impulsif.' : 'ikuti rencana keuangan dan jangan terburu-buru investasi.'}</p>`; };
+
+  T.Keberuntungan = () => { const s = score(p, 'Luck'); return `<h2>Keberuntungan</h2>${bar(s)}
+    <p>${L.luck}</p>
+    <div class="grid2">
+      <div class="box"><div class="k">Angka hoki</div><div class="v">${luckyNum.join(', ')}</div></div>
+      <div class="box"><div class="k">Warna</div><div class="v">${WARNA_LP[p.lp]}, ${un.color}</div></div>
+      <div class="box"><div class="k">Hari baik</div><div class="v">${luckyDay}</div></div>
+      <div class="box"><div class="k">Arah</div><div class="v">${un.dir}</div></div>
+      <div class="box"><div class="k">Batu kelahiran</div><div class="v">${p.z.stone}</div></div>
+      <div class="box"><div class="k">Unsur pelengkap</div><div class="v">${Object.keys(ELEMEN_COCOK).find(k => ELEMEN_COCOK[k] === p.unsur)}</div></div>
+    </div>
+    <p style="margin-top:12px"><b>Hari ini:</b> skor keberuntunganmu ${s}. ${s >= 75 ? 'Waktu bagus untuk mengambil keputusan atau memulai sesuatu.' : s >= 55 ? 'Hari biasa, jalani dengan tenang.' : 'Tunda keputusan besar, utamakan hal rutin.'}</p>
+    <p class="why">Angka dari jalur hidup, tanggal lahir, ekspresi nama, dan neptu weton. Unsur pelengkap berdasarkan siklus penghasilan lima elemen.</p>`; };
+
+  T.Kesehatan = () => { const s = score(p, 'Sehat'); const tip = { Api:'jantung, tekanan darah, dan stres', Air:'ginjal, kandung kemih, dan pola tidur', Tanah:'pencernaan dan berat badan', Logam:'pernapasan dan kulit', Kayu:'hati, otot, dan mata' }[p.unsur];
+    return `<h2>Kesehatan &amp; keseimbangan</h2>${bar(s)}
+    <p>Unsur ${p.unsur} (${p.yinyang}) menyarankan perhatian pada ${tip}.</p>
+    <p>Saran: ${un.fix}.</p>
+    <p class="why">Ini bukan diagnosis medis. Kalau ada keluhan, periksa ke tenaga kesehatan.</p>`; };
+
+  const M = form.mbti ? MBTI[form.mbti] : null;
+  if (M) T.MBTI = () => `<h2>Kepribadian MBTI</h2>
+    <div class="mbti-big">${form.mbti}</div><p style="font-weight:700">${M.n}</p>
+    <p>Kamu ${M.t}.</p>
+    <div class="grid2">
+      <div class="box"><div class="k">Kekuatan</div><div style="font-size:14px">${M.up}</div></div>
+      <div class="box"><div class="k">Perlu dijaga</div><div style="font-size:14px">${M.down}</div></div>
+    </div>
+    <p style="margin-top:12px"><b>Karir:</b> ${M.work}.</p>
+    <p><b>Cinta:</b> ${M.love}.</p>
+    <p><b>Pertemanan:</b> ${M.friend}.</p>
+    <p><b>Perpaduan:</b> MBTI ${form.mbti} dengan jalur hidup ${p.lp} (${L.t}) dan zodiak ${p.z.n} menunjukkan ${form.mbti[0] === 'I' ? 'sisi dalam yang kuat, jadi' : 'energi sosial yang kuat, jadi'} ${p.lp === 8 || p.lp === 1 ? 'kecenderungan memimpin cukup menonjol' : p.lp === 2 || p.lp === 6 ? 'sisi merawat dan menengahi cukup menonjol' : 'sisi kreatif dan mencari makna cukup menonjol'}.</p>
+    <p class="why">Tipe ini berasal dari isianmu sendiri. Ini gambaran umum, bukan penilaian psikologis.</p>`;
+
+  const E = form.enne ? ENNE[form.enne] : null;
+  if (E || form.darah) T['Sifat lain'] = () => `<h2>Sifat tambahan</h2>
+    ${E ? `<div class="box" style="margin-bottom:10px"><div class="k">Enneagram</div><div class="v">Tipe ${form.enne}: ${E.n}</div><p style="margin:6px 0 0">Kamu ${E.t}. Karir cocok: ${E.work}. Dalam cinta: ${E.love}.</p></div>` : ''}
+    ${form.darah ? `<div class="box"><div class="k">Golongan darah ${form.darah}</div><p style="margin:6px 0 0">Menurut kepercayaan populer: ${DARAH[form.darah]}.</p></div>` : ''}
+    <p class="why">Golongan darah sebagai penentu sifat tidak terbukti secara ilmiah; ini sekadar tambahan hiburan.</p>`;
+
+  T['🎭 Persona Skenario'] = () => {
+    if (!P_SCENARIO_RESULT) {
+      return `<h2>Persona Skenario &amp; Tebak Nasib</h2>
+        <p>Kamu belum mengambil <b>Kuis Skenario Kocak</b>! Kuis ini menebak kepribadian dan nasibmu lewat 8 situasi hidup nyata yang seru dan anti-kaku.</p>
+        <div class="fun-banner" style="margin-top:16px">
+          <div>
+            <div class="fun-banner-title">Mau tahu caramu bertindak dan nasib unikmu?</div>
+            <div class="fun-banner-sub">Pilih responmu terhadap 8 keadaan kocak sehari-hari!</div>
+          </div>
+          <button type="button" id="tabScenarioBtn" style="background:var(--red);border-color:var(--red);color:var(--sheet);padding:10px 18px">Mulai Kuis Skenario &rarr;</button>
+        </div>`;
+    }
+    const r = P_SCENARIO_RESULT;
+    return `<h2>Persona Skenario: ${esc(r.title)}</h2>
+      <div class="kicker">${esc(r.badge)} · MBTI Serupa: ${esc(r.mbti)}</div>
+      <div class="archetype-title">${esc(r.title)}</div>
+      <div class="quote-box">"${esc(r.quote)}"</div>
+      <p><b>Karakter Kepribadian:</b> ${esc(r.desc)}</p>
+      <p><b>Gaya Bertindak Nyata:</b> ${esc(r.actionStyle)}</p>
+      <div class="grid2" style="margin:16px 0">
+        <div class="box"><div class="k">Rezeki &amp; Karir</div><p style="margin:4px 0 0;font-size:14.5px">${esc(r.fate.fortune)}</p></div>
+        <div class="box"><div class="k">Asmara &amp; Jodoh</div><p style="margin:4px 0 0;font-size:14.5px">${esc(r.fate.love)}</p></div>
+        <div class="box"><div class="k">Peringatan Kosmis</div><p style="margin:4px 0 0;font-size:14.5px;color:var(--red)">${esc(r.fate.warning)}</p></div>
+        <div class="box"><div class="k">Jimat Penolak Apes</div><p style="margin:4px 0 0;font-size:14.5px">${esc(r.fate.amulet)}</p></div>
+        <div class="box"><div class="k">Warna Aura</div><div class="v" style="font-size:16px">${esc(r.fate.color)}</div></div>
+        <div class="box"><div class="k">Angka Hoki</div><div class="v" style="font-size:16px">${esc(r.fate.luckyNum)}</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button type="button" id="tabScenarioReQuiz" class="ghost" style="padding:8px 14px">Ulangi Kuis Skenario</button>
+      </div>
+      <p class="why">Ditebak dari pilihan responmu pada 8 simulasi situasi kehidupan nyata.</p>`;
+  };
+
+  const tr = rng(hashStr('tarot' + p.nama + p.date.getTime() + new Date().toISOString().slice(0, 10)));
+  const deck = TAROT.map((c, i) => i); const draw = [];
+  while (draw.length < 3) { const i = Math.floor(tr() * deck.length); draw.push({ c: TAROT[deck.splice(i, 1)[0]], rev: tr() < 0.3 }); }
+  P.tarot = draw;
+  T.Tarot = () => `<h2>Tarot hari ini</h2>
+    <p>Tiga kartu ditarik dari namamu dan tanggal hari ini. Besok kartunya berganti.</p>
+    <div class="tarot">${draw.map((d, i) => `<div class="tcard${d.rev ? ' rev' : ''}"><div class="pos">${['Lalu', 'Kini', 'Nanti'][i]}</div><div class="sym">${roman(TAROT.indexOf(d.c))}</div><div class="nm">${d.c[0]}${d.rev ? ' (terbalik)' : ''}</div><p>${d.rev ? d.c[3] : d.c[2]}</p></div>`).join('')}</div>
+    <p><b>Pesan:</b> kartu <i>${draw[1].c[0]}</i> di posisi "kini" mengingatkanmu pada ${draw[1].rev ? draw[1].c[3] : draw[1].c[2]}. Menuju ke depan, <i>${draw[2].c[0]}</i> menandakan ${draw[2].rev ? draw[2].c[3] : draw[2].c[2]}.</p>
+    <p class="why">Hiburan dan bahan refleksi. Kartu dipilih secara deterministik dari datamu dan tanggal hari ini.</p>`;
+
+  T['Tahun ini'] = () => `<h2>Tahun ${new Date().getFullYear()}</h2>
+    <div class="grid2"><div class="box"><div class="k">Tahun pribadi</div><div class="v">${p.py}</div></div><div class="box"><div class="k">Bulan pribadi</div><div class="v">${p.pm}</div></div></div>
+    <p style="margin-top:12px">${PY[p.py][0].toUpperCase() + PY[p.py].slice(1)}</p>
+    <p>Bulan ini (bulan pribadi ${p.pm}): ${PY[p.pm]}</p>
+    <p class="why">Tahun pribadi = hari lahir + bulan lahir + tahun sekarang, direduksi ke 1–9.</p>`;
+
+  T['Detail hitungan'] = () => `<h2>Detail hitungan</h2>
+    <div class="grid2">
+      <div class="box"><div class="k">Jalur hidup</div><div class="v">${p.lp}</div></div>
+      <div class="box"><div class="k">Angka ekspresi (nama)</div><div class="v">${p.expression}</div></div>
+      <div class="box"><div class="k">Angka jiwa (vokal)</div><div class="v">${p.soul}</div></div>
+      <div class="box"><div class="k">Angka kepribadian (konsonan)</div><div class="v">${p.persona}</div></div>
+      <div class="box"><div class="k">Angka hari lahir</div><div class="v">${p.birthday}</div></div>
+      <div class="box"><div class="k">Zodiak</div><div class="v">${p.z.n} (${p.z.el})</div></div>
+      <div class="box"><div class="k">Shio &amp; unsur</div><div class="v">${p.shio} ${p.unsur} ${p.yinyang}</div></div>
+      <div class="box"><div class="k">Weton</div><div class="v">${p.weton.hari} ${p.weton.pasaran}</div></div>
+      <div class="box"><div class="k">Neptu</div><div class="v">${p.weton.np[0]} + ${p.weton.np[1]} = ${p.weton.neptu}</div></div>
+      ${p.jamShio ? `<div class="box"><div class="k">Shio jam lahir</div><div class="v">${p.jamShio}</div></div>` : ''}
+    </div>
+    <p class="why">Numerologi Pythagoras (A=1 … I=9, J=1 …). Angka 11, 22, 33 dipertahankan sebagai master number. Tahun Tionghoa memakai kalender Imlek, jadi lahir Januari–awal Februari bisa masuk shio tahun sebelumnya. ${p.jamShio ? '' : 'Jam lahir tidak diisi, jadi shio jam dilewati.'}</p>`;
+
+  return T;
+}
+
+function show(tabs, name) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === name));
+  $('panel').innerHTML = tabs[name]();
+  const tabBtn = $('panel').querySelector('#tabScenarioBtn');
+  if (tabBtn) tabBtn.onclick = openScenarioQuiz;
+  const tabReBtn = $('panel').querySelector('#tabScenarioReQuiz');
+  if (tabReBtn) tabReBtn.onclick = openScenarioQuiz;
+}
+
+function run() {
+  const nama = $('nama').value.trim(), tgl = $('tgl').value;
+  $('err').textContent = '';
+  if (!nama) return $('err').textContent = 'Isi nama lengkapnya dulu.';
+  if (!/[a-zA-Z]/.test(nama)) return $('err').textContent = 'Nama harus mengandung huruf (A–Z).';
+  if (!tgl) return $('err').textContent = 'Tanggal lahir belum diisi.';
+  if (new Date(tgl) > new Date()) return $('err').textContent = 'Tanggal lahir tidak boleh di masa depan.';
+  form = { panggil: $('panggil').value.trim(), status: $('status').value, jam: $('jam').value, mbti: $('mbti').value, enne: $('enne').value, darah: $('darah').value };
+  P = profile(nama, tgl, form.jam);
+  const n2 = $('nama2').value.trim(), t2 = $('tgl2').value;
+  Q = (n2 && t2 && /[a-zA-Z]/.test(n2)) ? profile(n2, t2, '') : null;
+
+  $('profil').innerHTML = `<div class="kicker" style="font-size:11.5px">Kartu data</div><h2 class="profil-name">${esc(P.nama)}</h2><div class="reg"><div><div class="k">Jalur hidup</div><div class="v">${P.lp}</div></div><div><div class="k">Zodiak</div><div class="v">${P.z.n}</div></div><div><div class="k">Shio</div><div class="v">${P.shio} ${P.unsur}</div></div><div><div class="k">Weton</div><div class="v">${P.weton.hari} ${P.weton.pasaran}</div></div><div><div class="k">Tahun pribadi</div><div class="v">${P.py}</div></div>${form.mbti ? `<div><div class="k">MBTI</div><div class="v">${form.mbti}</div></div>` : ''}${form.enne ? `<div><div class="k">Enneagram</div><div class="v">Tipe ${form.enne}</div></div>` : ''}</div>`;
+  const tabs = build();
+  TABS = tabs;
+  $('tabs').innerHTML = Object.keys(tabs).map(k => `<button class="tab" data-t="${k}">${k}</button>`).join('');
+  $('tabs').onclick = e => { const t = e.target.dataset.t; if (t) show(tabs, t); };
+  $('out').style.display = 'block';
+  show(tabs, 'Ringkasan');
+  $('out').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* info langsung saat tanggal diisi */
+function live() {
+  const t = $('tgl').value, box = $('live');
+  if (!t) { box.style.display = 'none'; return; }
+  const [y, m, d] = t.split('-').map(Number), date = new Date(y, m - 1, d);
+  const w = wetonOf(date), z = zodiakOf(d, m), cy = chineseYear(date);
+  box.style.display = 'block';
+  box.innerHTML = `Dari tanggal lahirmu, otomatis terbaca: <b>${HARI[date.getDay()]}</b>, weton <b>${w.hari} ${w.pasaran}</b>, zodiak <b>${z.n}</b>, shio <b>${SHIO[((cy - 4) % 12 + 12) % 12]}</b>. Jadi tidak perlu tahu semua ini dulu.`;
+}
+
+$('tgl').max = new Date().toISOString().slice(0, 10);
+$('tgl2').max = $('tgl').max;
+$('tgl').addEventListener('input', live);
+$('go').onclick = run;
+$('reset').onclick = () => { document.querySelectorAll('input,select').forEach(e => e.value = ''); $('out').style.display = 'none'; $('live').style.display = 'none'; $('err').textContent = ''; };
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') run(); });
+
+/* ===== Pilihan MBTI & Enneagram ===== */
+Object.keys(MBTI).forEach(k => $('mbti').add(new Option(`${k} · ${MBTI[k].n}`, k)));
+Object.keys(ENNE).forEach(k => $('enne').add(new Option(`Tipe ${k} · ${ENNE[k].n}`, k)));
+
+/* ===== Tes MBTI singkat ===== */
+$('quizForm').innerHTML = QUIZ.map((q, i) => `<div class="q"><p>${i + 1}. ${q[1]}</p>
+  <label><input type="radio" name="q${i}" value="${q[4]}"> ${q[2]}</label>
+  <label><input type="radio" name="q${i}" value="${q[5]}"> ${q[3]}</label></div>`).join('');
+$('quizBtn').onclick = () => $('quiz').showModal();
+$('quizCancel').onclick = () => $('quiz').close();
+$('quizDone').onclick = () => {
+  const cnt = {}; let answered = 0;
+  QUIZ.forEach((q, i) => { const v = document.querySelector(`input[name=q${i}]:checked`); if (v) { cnt[v.value] = (cnt[v.value] || 0) + 1; answered++; } });
+  if (answered < QUIZ.length) return $('quizErr').textContent = `Masih ada ${QUIZ.length - answered} pertanyaan belum dijawab.`;
+  const pk = (a, b) => (cnt[a] || 0) >= (cnt[b] || 0) ? a : b;
+  const type = pk('E', 'I') + pk('S', 'N') + pk('T', 'F') + pk('J', 'P');
+  $('mbti').value = type; $('quizErr').textContent = ''; $('quiz').close();
+};
+
+/* ===== Unduh hasil ===== */
+function save(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'hasil';
+
+$('dlTxt').onclick = () => {
+  if (!TABS) return;
+  const lines = [`RAMALAN ${P.nama.toUpperCase()}`, `Dibuat ${new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}`, ''];
+  Object.keys(TABS).forEach(k => {
+    const div = document.createElement('div');
+    div.innerHTML = TABS[k]().replace(/<\/(p|h2|li)>/g, '$&\n').replace(/<\/div>/g, '$&\n');
+    lines.push('=== ' + k.toUpperCase() + ' ===', div.textContent.replace(/\n{3,}/g, '\n\n').trim(), '');
+  });
+  lines.push('Hanya untuk hiburan dan refleksi diri.');
+  save(new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' }), `ramalan-${slug(P.nama)}.txt`);
+};
+
+function wrap(c, text, x, y, maxW, lh) {
+  const words = text.split(' '); let line = '';
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (c.measureText(t).width > maxW && line) { c.fillText(line, x, y); line = w; y += lh; } else line = t;
+  }
+  c.fillText(line, x, y); return y + lh;
+}
+
+$('dlPng').onclick = async () => {
+  if (!P) return;
+  try { await Promise.all([document.fonts.load('48px "Young Serif"'), document.fonts.load('600 22px "Newsreader"'), document.fonts.load('italic 26px "Newsreader"'), document.fonts.load('26px "Newsreader"')]); } catch (e) {}
+  const DISP = '"Young Serif",Georgia,serif', TXT = '"Newsreader",Georgia,serif';
+  const INK = '#2a2017', PAPER = '#eee3ca', SHEET = '#f7f0de', RED = '#a1301c', MUTED = '#6b5c49', LINE = '#cdbb96';
+  const W = 1080, H = 1640, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  const sp = px => { try { c.letterSpacing = px + 'px'; } catch (e) {} };
+  const fit = (text, base, font, maxW, min) => { let s = base; c.font = font(s); while (c.measureText(text).width > maxW && s > min) { s -= 2; c.font = font(s); } };
+
+  c.fillStyle = PAPER; c.fillRect(0, 0, W, H);
+  const r = rng(hashStr(P.nama));
+  for (let i = 0; i < 1100; i++) { c.fillStyle = `rgba(90,60,20,${.03 + r() * .05})`; c.fillRect(r() * W, r() * H, 1.6, 1.6); }
+  c.fillStyle = SHEET; c.fillRect(40, 40, W - 80, H - 80);
+  c.strokeStyle = INK; c.lineWidth = 3; c.strokeRect(40, 40, W - 80, H - 80);
+  c.lineWidth = 1.5; c.strokeRect(54, 54, W - 108, H - 108);
+  c.fillStyle = INK;
+  for (let x = 54; x < W - 54; x += 27) { c.beginPath(); c.moveTo(x, 80); c.lineTo(x + 27, 80); c.lineTo(x + 13.5, 62); c.closePath(); c.fill(); }
+
+  c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  c.fillStyle = RED; c.font = `600 22px ${TXT}`; sp(7); c.fillText('PRIMBON DIGITAL', W / 2 + 3, 140); sp(0);
+  c.fillStyle = INK; fit(P.nama, 88, s => `${s}px ${DISP}`, W - 220, 36); c.fillText(P.nama, W / 2, 245);
+  c.fillStyle = MUTED; c.font = `italic 28px ${TXT}`;
+  c.fillText(P.date.toLocaleDateString('id-ID', { dateStyle: 'long' }) + '  ·  ' + P.weton.hari + ' ' + P.weton.pasaran, W / 2, 298);
+  c.fillStyle = INK; c.fillRect(120, 330, W - 240, 1.5);
+
+  const cells = [['Jalur hidup', String(P.lp)], ['Zodiak', P.z.n], ['Shio', `${P.shio} ${P.unsur}`], ['Weton', `${P.weton.hari} ${P.weton.pasaran}`], ['Tahun pribadi', String(P.py)], form.mbti ? ['MBTI', form.mbti] : ['Neptu', String(P.weton.neptu)]];
+  const cw = (W - 240) / 3, ch = 108, gx = 120, gy = 362;
+  c.strokeStyle = LINE; c.lineWidth = 1.5;
+  cells.forEach(([k, v], i) => {
+    const x = gx + (i % 3) * cw, y = gy + Math.floor(i / 3) * ch;
+    c.strokeRect(x, y, cw, ch);
+    c.textAlign = 'left'; c.fillStyle = MUTED; c.font = `600 16px ${TXT}`; sp(3); c.fillText(k.toUpperCase(), x + 16, y + 32); sp(0);
+    c.fillStyle = INK; fit(v, 32, s => `${s}px ${DISP}`, cw - 32, 18); c.fillText(v, x + 16, y + 78);
+  });
+
+  let y = gy + ch * 2 + 70;
+  c.textAlign = 'left'; c.fillStyle = RED; c.font = `600 20px ${TXT}`; sp(6); c.fillText('PERUNTUNGAN', 120, y); sp(0);
+  c.fillStyle = INK; c.fillRect(120, y + 14, W - 240, 1.5); y += 66;
+  ['Karir', 'Percintaan', 'Pertemanan', 'Keuangan', 'Keberuntungan', 'Kesehatan'].forEach(k => {
+    const s = score(P, k), col = s >= 75 ? '#456a4a' : s >= 55 ? '#94661a' : '#a1301c', on = Math.round(s / 10);
+    c.textAlign = 'left'; c.fillStyle = INK; c.font = `30px ${TXT}`; c.fillText(k, 120, y);
+    const rx = 400, rw = W - 120 - 130 - rx, seg = (rw - 27) / 10;
+    for (let i = 0; i < 10; i++) { c.fillStyle = i < on ? col : LINE; c.fillRect(rx + i * (seg + 3), y - 20, seg, 20); }
+    c.textAlign = 'right'; c.fillStyle = col; c.font = `38px ${DISP}`; c.fillText(String(s), W - 120, y);
+    y += 74;
+  });
+
+  y += 22; c.textAlign = 'left'; c.fillStyle = RED; c.font = `600 20px ${TXT}`; sp(6); c.fillText('TIGA KARTU HARI INI', 120, y); sp(0);
+  c.fillStyle = INK; c.fillRect(120, y + 14, W - 240, 1.5); y += 44;
+  const tw = (W - 240 - 48) / 3, th = 250;
+  P.tarot.forEach((d, i) => {
+    const x = 120 + i * (tw + 24);
+    c.fillStyle = PAPER; c.fillRect(x, y, tw, th);
+    c.strokeStyle = INK; c.lineWidth = 3; c.strokeRect(x, y, tw, th); c.lineWidth = 1.2; c.strokeRect(x + 8, y + 8, tw - 16, th - 16);
+    c.textAlign = 'center'; c.fillStyle = MUTED; c.font = `600 15px ${TXT}`; sp(5); c.fillText(['LALU', 'KINI', 'NANTI'][i], x + tw / 2 + 2, y + 44); sp(0);
+    c.save(); c.translate(x + tw / 2, y + 128);
+    c.fillStyle = RED; c.font = `76px ${DISP}`; c.textBaseline = 'middle'; c.fillText(roman(TAROT.indexOf(d.c)), 0, 0); c.restore();
+    c.textBaseline = 'alphabetic'; c.fillStyle = INK; const nm = d.c[0]; fit(nm, 24, s => `${s}px ${DISP}`, tw - 40, 14); c.fillText(nm, x + tw / 2, y + 196);
+    if (d.rev) { c.fillStyle = MUTED; c.font = `italic 20px ${TXT}`; c.fillText('terbalik', x + tw / 2, y + 224); }
+  });
+
+  c.textAlign = 'center'; c.fillStyle = INK; c.font = `italic 26px ${TXT}`;
+  const lucky = [P.lp > 9 ? reduce(P.lp, false) : P.lp, P.birthday > 9 ? reduce(P.birthday, false) : P.birthday, reduce(P.expression, false)].filter((v, i, a) => a.indexOf(v) === i);
+  c.fillText('Angka hoki: ' + lucky.join(', '), W / 2, H - 118);
+  c.fillStyle = MUTED; c.font = `italic 20px ${TXT}`;
+  c.fillText('Hanya untuk hiburan dan refleksi diri  ·  ' + new Date().toLocaleDateString('id-ID', { dateStyle: 'long' }), W / 2, H - 82);
+  cv.toBlob(b => save(b, `ramalan-${slug(P.nama)}.png`), 'image/png');
+};
+
+/* ===== KUIS SKENARIO: TEBAK PERSONALITY & NASIB ===== */
+let P_SCENARIO_RESULT = null;
+let scenarioStep = 0;
+const scenarioAnswers = {};
+
+function openScenarioQuiz() {
+  scenarioStep = 0;
+  $('scenarioQuizView').style.display = 'block';
+  $('scenarioResultView').style.display = 'none';
+  renderScenarioStep();
+  $('scenarioDialog').showModal();
+}
+
+function renderScenarioStep() {
+  const q = SCENARIO_QUESTIONS[scenarioStep];
+  $('scenarioStepNum').textContent = `${scenarioStep + 1} / ${SCENARIO_QUESTIONS.length}`;
+  
+  const dots = Array.from({ length: SCENARIO_QUESTIONS.length }, (_, i) => `<i${i <= scenarioStep ? ' class="on"' : ''}></i>`).join('');
+  $('scenarioProgressBar').innerHTML = dots;
+
+  $('scenarioPrev').style.visibility = scenarioStep > 0 ? 'visible' : 'hidden';
+
+  const optLetters = ['A', 'B', 'C', 'D'];
+  const curAns = scenarioAnswers[scenarioStep];
+  
+  $('scenarioQuestionBox').innerHTML = `
+    <div class="kicker" style="font-size:11.5px;color:var(--ochre)">Skenario Nyata #${scenarioStep + 1}</div>
+    <div class="scenario-title">${esc(q.title)}</div>
+    <div class="scenario-desc"><b>Keadaan:</b> ${esc(q.desc)}</div>
+    <p style="font-weight:600;font-size:15px;margin-bottom:10px">Apa yang kamu lakukan?</p>
+    <div id="scenarioOptList">
+      ${q.options.map((opt, idx) => `
+        <button type="button" class="scenario-opt${curAns === opt.arch ? ' selected' : ''}" data-arch="${opt.arch}">
+          <span class="opt-tag">(${optLetters[idx]})</span>
+          <span>${esc(opt.text)}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+
+  document.querySelectorAll('#scenarioOptList .scenario-opt').forEach(btn => {
+    btn.onclick = () => {
+      const arch = btn.dataset.arch;
+      scenarioAnswers[scenarioStep] = arch;
+      if (scenarioStep < SCENARIO_QUESTIONS.length - 1) {
+        scenarioStep++;
+        renderScenarioStep();
+      } else {
+        finishScenarioQuiz();
+      }
+    };
+  });
+}
+
+function finishScenarioQuiz() {
+  const counts = { SULTAN: 0, DEADLINER: 0, OVERTHINKER: 0, CHAOS: 0, DIPLOMAT: 0, KASUR: 0 };
+  Object.values(scenarioAnswers).forEach(arch => {
+    if (counts[arch] !== undefined) counts[arch]++;
+  });
+
+  let bestArch = 'SULTAN';
+  let maxCount = -1;
+  const order = ['CHAOS', 'DEADLINER', 'OVERTHINKER', 'SULTAN', 'DIPLOMAT', 'KASUR'];
+  for (const k of order) {
+    if (counts[k] > maxCount) {
+      maxCount = counts[k];
+      bestArch = k;
+    }
+  }
+
+  const result = ARCHETYPES[bestArch];
+  P_SCENARIO_RESULT = result;
+
+  $('scenarioQuizView').style.display = 'none';
+  $('scenarioResultView').style.display = 'block';
+  $('scenarioResultBadge').textContent = result.badge;
+
+  $('scenarioResultContent').innerHTML = `
+    <div class="archetype-title">${esc(result.title)}</div>
+    <div class="quote-box">"${esc(result.quote)}"</div>
+    <p><b>Karakter Kepribadian:</b> ${esc(result.desc)}</p>
+    <p><b>Gaya Bertindak Nyata:</b> ${esc(result.actionStyle)}</p>
+    <div class="grid2" style="margin:14px 0">
+      <div class="box"><div class="k">Rezeki &amp; Karir</div><p style="margin:4px 0 0;font-size:14px">${esc(result.fate.fortune)}</p></div>
+      <div class="box"><div class="k">Asmara &amp; Jodoh</div><p style="margin:4px 0 0;font-size:14px">${esc(result.fate.love)}</p></div>
+      <div class="box"><div class="k">Peringatan Kosmis</div><p style="margin:4px 0 0;font-size:14px;color:var(--red)">${esc(result.fate.warning)}</p></div>
+      <div class="box"><div class="k">Jimat Penolak Apes</div><p style="margin:4px 0 0;font-size:14px">${esc(result.fate.amulet)}</p></div>
+      <div class="box"><div class="k">Warna Aura</div><div class="v" style="font-size:16px">${esc(result.fate.color)}</div></div>
+      <div class="box"><div class="k">Angka Hoki</div><div class="v" style="font-size:16px">${esc(result.fate.luckyNum)}</div></div>
+    </div>
+    <div class="box" style="background:var(--paper);border:1px dashed var(--line)">
+      <div class="k">Tipe MBTI yang Paling Mirip</div>
+      <div class="v" style="color:var(--red)">${result.mbti} · ${MBTI[result.mbti].n}</div>
+      <p style="margin:4px 0 0;font-size:13.5px">${MBTI[result.mbti].t}</p>
+    </div>
+  `;
+
+  if (P && TABS) {
+    const updatedTabs = build();
+    TABS = updatedTabs;
+    $('tabs').innerHTML = Object.keys(updatedTabs).map(k => `<button class="tab" data-t="${k}">${k}</button>`).join('');
+  }
+}
+
+$('scenarioPrev').onclick = () => {
+  if (scenarioStep > 0) {
+    scenarioStep--;
+    renderScenarioStep();
+  }
+};
+
+$('scenarioClose').onclick = () => $('scenarioDialog').close();
+$('scenarioResultClose').onclick = () => $('scenarioDialog').close();
+
+$('scenarioRetryBtn').onclick = () => {
+  scenarioStep = 0;
+  for (const k in scenarioAnswers) delete scenarioAnswers[k];
+  $('scenarioResultView').style.display = 'none';
+  $('scenarioQuizView').style.display = 'block';
+  renderScenarioStep();
+};
+
+$('scenarioApplyMbti').onclick = () => {
+  if (P_SCENARIO_RESULT) {
+    $('mbti').value = P_SCENARIO_RESULT.mbti;
+    alert(`Tipe MBTI berhasil diatur ke ${P_SCENARIO_RESULT.mbti} (${MBTI[P_SCENARIO_RESULT.mbti].n}) pada form ramalan!`);
+    $('scenarioDialog').close();
+  }
+};
+
+$('scenarioCopyBtn').onclick = () => {
+  if (!P_SCENARIO_RESULT) return;
+  const r = P_SCENARIO_RESULT;
+  const txt = `✨ HASIL TEBAK PERSONALITY & NASIB SKENARIO ✨\n\nGelar: ${r.title} (${r.badge})\n"${r.quote}"\n\n📌 Karakter: ${r.desc}\n\n🏃 Gaya Bertindak: ${r.actionStyle}\n\n💰 Rezeki: ${r.fate.fortune}\n💖 Asmara: ${r.fate.love}\n⚠️ Waspada: ${r.fate.warning}\n🍀 Jimat: ${r.fate.amulet}\n🎨 Warna: ${r.fate.color} | Angka Hoki: ${r.fate.luckyNum}\n💡 Tipe MBTI Mirip: ${r.mbti}\n\n(Dihitung lewat Primbon Digital Nusantara)`;
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('Hasil tebakan berhasil disalin ke clipboard!');
+  }).catch(() => {
+    alert('Gagal menyalin otomatis, silakan salin manual.');
+  });
+};
+
+$('openScenarioBtn').onclick = openScenarioQuiz;
+$('quizScenarioBtn2').onclick = openScenarioQuiz;
+</script>
+</body>
+</html>

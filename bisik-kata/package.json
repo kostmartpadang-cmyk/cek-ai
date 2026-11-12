@@ -1,0 +1,11 @@
+{
+  "name": "bisik-kata",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Permainan tebak kata multiplayer berbasis WebRTC, tanpa backend.",
+  "scripts": {
+    "dev": "node dev-server.mjs",
+    "test": "node --test"
+  }
+}

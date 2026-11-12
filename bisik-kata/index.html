@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a22">
+<meta name="description" content="Bisik Kata — permainan tebak kata multiplayer di browser. Buat kamar, bagikan kode, main bareng teman. Tanpa install, tanpa server.">
+<title>Bisik Kata — Tebak Kata Bareng Teman</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f1a22'/><circle cx='11' cy='15' r='4' fill='%23f5b544'/><circle cx='21' cy='19' r='3' fill='%23ef6f58'/></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">Bisik<span>Kata</span></div>
+    <button id="mute" class="icon" title="Matikan/bunyikan suara">Suara: ON</button>
+  </header>
+
+  <main>
+    <section id="home" class="screen">
+      <h1>Tebak kata dari petunjuk sekadarnya.</h1>
+      <p class="lede">Satu orang pegang kata rahasia, sisanya adu cepat menebak dari petunjuk. Butuh 2 orang atau lebih, main lewat HP atau laptop masing-masing.</p>
+
+      <div class="card">
+        <label for="name">Nama kamu</label>
+        <input id="name" maxlength="16" placeholder="Contoh: Awi" autocomplete="off" enterkeyhint="go">
+
+        <button id="create" class="primary wide">Buat Kamar Baru</button>
+
+        <div class="split"><span>atau masuk kamar teman</span></div>
+
+        <div class="joinrow">
+          <input id="code" maxlength="4" placeholder="KODE" autocapitalize="characters" autocomplete="off">
+          <button id="join" class="ghost">Masuk</button>
+        </div>
+        <p class="err" id="homeErr"></p>
+      </div>
+
+      <details class="card howto">
+        <summary>Cara main &amp; aturan poin</summary>
+        <ol>
+          <li><b>Buat kamar</b> → dapat kode 4 huruf. Bagikan lewat tombol salin atau kirim kodenya.</li>
+          <li>Tiap ronde, <b>satu orang jadi pemimpin</b>. Dia melihat kata rahasia dan mengirim petunjuk (maks 6).</li>
+          <li>Pemain lain mengetak tebakan. Yang benar pertama dapat poin, pemimpin ikut dapat poin.</li>
+          <li>Semakin <b>sedikit petunjuk</b> dan semakin <b>cepat terjawab</b>, poinnya makin besar. Waktu 60 detik.</li>
+          <li>Jumlah ronde = jumlah pemain, jadi semua kebagian jadi pemimpin. Poin tertinggi di akhir menang.</li>
+        </ol>
+        <p class="tip">Tidak ada server dan tidak ada akun: browser saling terhubung langsung. Tutup halaman = keluar kamar.</p>
+      </details>
+    </section>
+
+    <section id="busy" class="screen hidden">
+      <div class="card center">
+        <div class="spinner"></div>
+        <p id="busyTxt">Menyambungkan…</p>
+        <button id="busyCancel" class="ghost">Batal</button>
+      </div>
+    </section>
+
+    <section id="lobby" class="screen hidden">
+      <div class="card center">
+        <div class="k">Kode kamar</div>
+        <div class="bigcode" id="lobbyCode">----</div>
+        <div class="row">
+          <button id="copyLink" class="ghost">Salin Ajakan</button>
+          <button id="copyCode" class="ghost">Salin Kode</button>
+        </div>
+        <p class="tip">Teman buka halaman yang sama, pilih <b>Masuk</b>, lalu masukkan kode ini.</p>
+      </div>
+      <div class="card">
+        <div class="k">Pemain (<span id="pcount">1</span>/8)</div>
+        <ul class="plist" id="lobbyPlayers"></ul>
+        <button id="start" class="primary wide">Mulai Main</button>
+        <p class="tip wait" id="waitTxt"></p>
+      </div>
+    </section>
+
+    <section id="play" class="screen hidden">
+      <div class="hud">
+        <div>
+          <div class="k">Ronde <b id="rIdx">1</b>/<b id="rTot">3</b></div>
+          <div class="cat" id="cat"></div>
+        </div>
+        <div class="timer" id="timer"><span id="timerTxt">60</span></div>
+      </div>
+
+      <div class="card board">
+        <div class="k leader" id="leaderNote"></div>
+        <div class="mask" id="mask"></div>
+
+        <div class="secret hidden" id="secretCard">
+          <div class="k">Kata rahasiamu</div>
+          <div class="word" id="secretWord"></div>
+          <div class="row">
+            <button id="giveup" class="tiny ghost">Menyerah, buka kata</button>
+          </div>
+        </div>
+
+        <div class="hints">
+          <div class="k">Petunjuk <span id="hintCount">0/6</span></div>
+          <ol class="hintlist" id="hintList"></ol>
+        </div>
+
+        <form id="hintForm" class="bar hidden">
+          <input id="hintText" maxlength="32" placeholder="Ketik petunjuk…" autocomplete="off" enterkeyhint="send">
+          <button class="primary">Kirim</button>
+        </form>
+
+        <form id="guessForm" class="bar">
+          <input id="guessText" maxlength="40" placeholder="Tebakannya…" autocomplete="off" enterkeyhint="send">
+          <button class="primary">Tebak</button>
+        </form>
+
+        <div class="guesses" id="guesses"></div>
+      </div>
+
+      <div class="scores" id="scores"></div>
+      <ul class="feed" id="feed"></ul>
+
+      <div class="reveal hidden" id="reveal">
+        <div class="r-in">
+          <div class="k" id="revealK">Kata rahasianya</div>
+          <div class="word" id="revealWord"></div>
+          <p id="revealNote"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="over" class="screen hidden">
+      <div class="card center">
+        <div class="k">Permainan selesai</div>
+        <div class="word" id="winnerTxt"></div>
+        <ol class="rank" id="rank"></ol>
+        <button id="again" class="primary wide">Main Lagi</button>
+        <p class="tip wait" id="overWait"></p>
+      </div>
+    </section>
+  </main>
+
+  <button id="leave" class="leavenode hidden">Keluar</button>
+  <p class="toast" id="toast"></p>
+  <footer class="foot">Bisik Kata · main bareng, bebas install · <span id="netnote">koneksi langsung antar browser</span></footer>
+</div>
+
+<script defer src="vendor/peerjs.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -611,7 +611,7 @@ function resize() {
   R.world.resize(w, h, pr);
   const help = node('help');
   if (help && !sig(help, R.touch ? 't' : 'k'))
-    setTxt(help, R.touch ? 'Geser kiri untuk jalan · geser kanan untuk memutar kamera' : 'WASD jalan · Shift lari · Spasi lompat · E sonar · geser mouse putar kamera');
+    setTxt(help, R.touch ? 'Geser kiri untuk jalan · geser kanan untuk memutar kamera' : 'WASD jalan · Shift lari · Spasi lompat · E sonar · klik layar untuk mengunci kamera ke mouse, Esc untuk lepas');
 }
 
 export function view(v) {
@@ -815,6 +815,8 @@ function exposeDebug() {
         tris: R.world.renderer.info.render.triangles,
         geoms: R.world.renderer.info.memory.geometries,
         texs: R.world.renderer.info.memory.textures,
+        yaw: R.world.camState.yaw,
+        pitch: R.world.camState.pitch,
       };
     },
     api: {

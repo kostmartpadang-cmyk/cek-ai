@@ -4,6 +4,8 @@ const RUN_AT = 0.82;
 const YAW_TOUCH = 0.005;
 const PITCH_TOUCH = 0.0035;
 const PITCH_MOUSE = 0.0035;
+const YAW_LOCK = 0.0026;
+const PITCH_LOCK = 0.0022;
 const MOVE_KEYS = {
   KeyW: [0, 1],
   ArrowUp: [0, 1],
@@ -34,6 +36,7 @@ export function createControls(opts = {}) {
   let lookId = null;
   let mouseLook = false;
   let lastMouse = null;
+  let locked = false;
   let shiftRun = false;
   const ox = { cx: 0, cy: 0 };
   const ol = { x: 0, y: 0 };
@@ -86,11 +89,45 @@ export function createControls(opts = {}) {
     } catch (err) {}
   }
 
+  // Pointer lock hanya bisa diminta dari gestur; beberapa browser menolak pilihan input mentah.
+  function requestLock() {
+    if (!touch || !touch.requestPointerLock || doc.pointerLockElement === touch) return;
+    const plain = () => {
+      try {
+        const p = touch.requestPointerLock();
+        if (p && p.catch) p.catch(() => {});
+      } catch (err) {}
+    };
+    try {
+      const p = touch.requestPointerLock({ unadjustedMovement: true });
+      if (p && p.catch) p.catch(plain);
+    } catch (err) {
+      plain();
+    }
+  }
+
+  function releaseLock() {
+    if (touch && doc.pointerLockElement === touch) {
+      try {
+        doc.exitPointerLock();
+      } catch (err) {}
+    }
+  }
+
+  function onLockChange() {
+    locked = !!touch && doc.pointerLockElement === touch;
+    if (!locked) {
+      mouseLook = false;
+      lastMouse = null;
+    }
+  }
+
   function onDown(e) {
     if (!on || !touch) return;
     if (e.pointerType === 'mouse') {
       mouseLook = true;
       lastMouse = { x: e.clientX, y: e.clientY };
+      requestLock();
       return;
     }
     const w = touch.clientWidth || win.innerWidth || 1;
@@ -101,6 +138,13 @@ export function createControls(opts = {}) {
   function onMove(e) {
     if (!on || !touch) return;
     if (e.pointerType === 'mouse') {
+      if (locked) {
+        const mx = Number.isFinite(e.movementX) ? e.movementX : 0;
+        const my = Number.isFinite(e.movementY) ? e.movementY : 0;
+        dyaw += mx * YAW_LOCK;
+        dpitch -= my * PITCH_LOCK;
+        return;
+      }
       if (!mouseLook || !lastMouse) return;
       dyaw += (e.clientX - lastMouse.x) * YAW_TOUCH;
       dpitch -= (e.clientY - lastMouse.y) * PITCH_MOUSE;
@@ -217,6 +261,7 @@ export function createControls(opts = {}) {
   bind(touch, 'lostpointercapture', endPointer, { passive: false });
   bind(touch, 'touchend', onTouchEnd, { passive: false });
   bind(touch, 'contextmenu', onCtx, { passive: false });
+  bind(doc, 'pointerlockchange', onLockChange);
   bind(win, 'blur', resetAll);
   bind(doc, 'keydown', (e) => onKey(e, true), { passive: false });
   bind(doc, 'keyup', (e) => onKey(e, false), { passive: false });
@@ -279,6 +324,7 @@ export function createControls(opts = {}) {
     setEnabled(next) {
       on = !!next;
       if (!on) {
+        releaseLock();
         resetAll();
         dyaw = 0;
         dpitch = 0;
@@ -289,6 +335,7 @@ export function createControls(opts = {}) {
       }
     },
     destroy() {
+      releaseLock();
       while (cleanups.length) cleanups.pop()();
     },
   };

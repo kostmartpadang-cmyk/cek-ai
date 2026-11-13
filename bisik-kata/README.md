@@ -42,7 +42,7 @@ Pilih kartu **Berburu Harta** di beranda sebelum membuat kamar. Mode ditentukan 
 
 Poin per ronde: peringkat 1-8 mendapat `100 / 70 / 50 / 35 / 25 / 18 / 12 / 8`, ditambah bonus kecepatan sampai +30 (`30 × sisa waktu / total waktu`). Tidak menemukan hartanya = 0.
 
-**Kontrol.** HP: sentuh separuh kiri untuk jalan (tekan sampai mentok = lari), geser separuh kanan untuk memutar kamera, tombol Lompat & Sonar di kanan bawah. Laptop: WASD/tombol panah, Shift lari, Spasi lompat, E/F sonar, geser mouse untuk kamera.
+**Kontrol.** HP: sentuh separuh kiri untuk jalan (tekan sampai mentok = lari), geser separuh kanan untuk memutar kamera, tombol Lompat & Sonar di kanan bawah. Laptop: WASD/tombol panah, Shift lari, Spasi lompat, E/F sonar. Untuk kameranya di laptop, **klik layar sekali** — kursor menghilang dan kamera mengikuti gerakan mouse seperti game tembak-tembakan; **Esc** melepas lagi (tanpa klik pun masih bisa: tahan tombol mouse lalu geser).
 
 Karena tuan rumah yang menghitung, **koordinat harta tidak pernah dikirim ke browser tamu** sebelum ada yang menyentuhnya (dijaga tes `tests/harta.test.js`).
 
@@ -102,9 +102,10 @@ node tools/e2e-2-player.mjs  # 2 Chrome headless jadi 2 pemain betulan (WebRTC)
 node tools/e2e-3-player.mjs  # 3 pemain: rotasi pemimpin, balapan tebakan, sinkron skor
 node tools/e2e-harta.mjs     # Berburu Harta: WebGL nyata, 3 ronde, sonar, klaim, skor, keluar-masuk kamar
 node tools/e2e-touch.mjs     # Berburu Harta di layar sentuh: joystick, putar kamera, tombol lompat/sonar
+node tools/e2e-mouse.mjs     # Berburu Harta di layar laptop: klik mengunci kursor, kamera ikut mouse, Esc lepas
 ```
 
-Harness di `tools/` butuh Chrome terinstall (dipanggil lewat `C:\Program Files\Google\Chrome\Application\chrome.exe`; sesuaikan lewat variabel `CHROME` kalau di Linux/macOS). File itu hanya dipakai saat develop dan tidak dirujuk halaman game. `e2e-touch.mjs` menyuntik pemain kedua lewat `logic.addPlayer` supaya tidak bergantung pada negosiasi WebRTC.
+Harness di `tools/` butuh Chrome terinstall (dipanggil lewat `C:\Program Files\Google\Chrome\Application\chrome.exe`; sesuaikan lewat variabel `CHROME` kalau di Linux/macOS). File itu hanya dipakai saat develop dan tidak dirujuk halaman game. `e2e-touch.mjs` dan `e2e-mouse.mjs` menyuntik pemain kedua lewat `logic.addPlayer` supaya tidak bergantung pada negosiasi WebRTC.
 
 ## Struktur
 
@@ -124,7 +125,7 @@ js/app.js           penyambung UI ke logika + jaringan, render, suara
 dev-server.mjs      server statis kecil untuk mencoba lokal
 tests/game.test.js  test logika Bisik Kata (node --test)
 tests/harta.test.js test logika Berburu Harta (node --test)
-tools/e2e-*.mjs     uji end-to-end memakai Chrome headless (2/3 pemain, harta, sentuh)
+tools/e2e-*.mjs     uji end-to-end memakai Chrome headless (2/3 pemain, harta, sentuh, mouse)
 vendor/peerjs.min.js library PeerJS (diunduh, bukan dari CDN)
 vendor/three.module.min.js library three.js (diunduh, bukan dari CDN)
 vercel.json         header cache & clean URLs

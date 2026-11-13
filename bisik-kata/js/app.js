@@ -1,9 +1,11 @@
 import { WORDS } from './words.js';
 import * as G from './game.js';
+import * as H from './harta/logic.js';
+import * as RT from './harta/harta.js';
 import * as Net from './net.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['home', 'busy', 'lobby', 'play', 'over'];
+const SCREENS = ['home', 'busy', 'lobby', 'play', 'over', 'race'];
 const now = () => Date.now();
 
 const S = {
@@ -18,6 +20,7 @@ const S = {
   lastBeat: 0,
   lastFeedId: null,
   lastBeepSec: 99,
+  mode: 'kata',
 };
 
 const store = {
@@ -39,6 +42,67 @@ const store = {
 function show(name) {
   SCREENS.forEach((n) => $(n).classList.toggle('hidden', n !== name));
   $('leave').classList.toggle('hidden', !(S.connected && name !== 'busy'));
+  document.body.classList.toggle('in-race', name === 'race');
+  if (name === 'home' && !S.connected) RT.dispose();
+  RT.onScreen(name);
+}
+
+const fn = () => (S.game && S.game.mode === 'harta' ? H : G);
+
+const HOME_TXT = {
+  kata: {
+    title: 'Tebak kata dari petunjuk sekadarnya.',
+    lede: 'Satu orang pegang kata rahasia, sisanya adu cepat menebak dari petunjuk. Butuh 2 orang atau lebih, main lewat HP atau laptop masing-masing.',
+    create: 'Buat Kamar Baru',
+  },
+  harta: {
+    title: 'Satu ruangan, satu peti emas, satu pemenang.',
+    lede: 'Semua pemburu berlari di ruangan 3D yang sama dan saling terlihat. Yang paling dulu menyentuh peti emasnya menang. Tiga tempat, tiga ronde.',
+    create: 'Buat Kamar Berburu Harta',
+  },
+};
+
+function applyMode() {
+  const harta = S.mode === 'harta';
+  const t = HOME_TXT[harta ? 'harta' : 'kata'];
+  document.body.classList.toggle('mode-harta', harta);
+  $('modeKata').classList.toggle('sel', !harta);
+  $('modeHarta').classList.toggle('sel', harta);
+  $('create').classList.toggle('hr-go', harta);
+  $('start').classList.toggle('hr-go', harta);
+  setTxt('homeTitle', t.title);
+  setTxt('homeLede', t.lede);
+  if (!S.connected) setTxt('create', t.create);
+  $('howKata').classList.toggle('hidden', harta);
+  $('howHarta').classList.toggle('hidden', !harta);
+  $('mapCard').classList.add('hidden');
+}
+
+function rtCtx() {
+  return {
+    isHost: () => S.isHost,
+    net: () => S.net,
+    myId: () => S.me,
+    state: () => S.game,
+    broadcast,
+    toast,
+    tone,
+    pickMap: (id) => {
+      if (!S.game || S.game.mode !== 'harta') return;
+      const res = H.setMap(S.game, { id, by: S.me });
+      if (!res.ok) return toast(res.error, true);
+      broadcast();
+      render();
+    },
+  };
+}
+
+function followRoomMode(v) {
+  const m = v.mode === 'harta' ? 'harta' : 'kata';
+  if (m === S.mode || !S.connected) return;
+  S.mode = m;
+  store.set('harta-mode', m);
+  applyMode();
 }
 
 let toastTimer = 0;
@@ -141,10 +205,13 @@ async function createRoom() {
   try {
     const net = await Net.hostRoom({
       onJoin: () => {},
-      onData: onHostData,
+      onData: (id, msg) => {
+        if (seq === S.seq) onHostData(id, msg);
+      },
       onLeave: (id) => {
+        if (seq !== S.seq) return;
         if (!S.game) return;
-        G.dropPlayer(S.game, { id, now: now() });
+        fn().dropPlayer(S.game, { id, now: now() });
         broadcast();
         render();
       },
@@ -154,8 +221,17 @@ async function createRoom() {
     S.net = net;
     S.isHost = true;
     S.me = net.self;
-    S.game = G.createRoom({ code: net.code, hostId: net.self, hostName: name, now: now() });
+    S.game = (S.mode === 'harta' ? H : G).createRoom({ code: net.code, hostId: net.self, hostName: name, now: now() });
     S.connected = true;
+    if (S.game.mode === 'harta' && !(await RT.attach(rtCtx()))) {
+      S.net.close();
+      S.net = null;
+      S.game = null;
+      S.isHost = false;
+      S.connected = false;
+      show('home');
+      return homeErr('Browser-nya belum bisa tampil 3D. Coba Chrome/Firefox/Edge terbaru, atau main Bisik Kata saja.');
+    }
     show('lobby');
     render();
     toast('Kamar ' + net.code + ' siap. Bagikan kodenya!');
@@ -181,7 +257,7 @@ function onHostData(id, msg) {
       S.net.send(id, { t: 'no', msg: 'Kamar sedang dipakai main. Tunggu nanti atau bikin kamar sendiri.' });
       return S.net.kill(id);
     }
-    const res = G.addPlayer(S.game, { id, name: msg.name, now: ts });
+    const res = fn().addPlayer(S.game, { id, name: msg.name, now: ts });
     if (!res.ok) {
       S.net.send(id, { t: 'no', msg: res.error });
       return S.net.kill(id);
@@ -192,13 +268,14 @@ function onHostData(id, msg) {
   }
 
   if (!touch(id)) return;
+  if (S.game.mode === 'harta' && RT.message(id, msg)) return;
   let res;
   if (msg.t === 'hint') res = G.submitHint(S.game, { id, text: msg.text, now: ts, words: WORDS, rng: Math.random });
   else if (msg.t === 'guess') res = G.submitGuess(S.game, { id, text: msg.text, now: ts });
   else if (msg.t === 'giveup') res = G.giveUpRound(S.game, { id, now: ts });
   else if (msg.t === 'ping') res = { ok: true };
   else if (msg.t === 'bye') {
-    G.dropPlayer(S.game, { id, now: ts });
+    fn().dropPlayer(S.game, { id, now: ts });
     broadcast();
     return render();
   } else return;
@@ -211,14 +288,15 @@ function onHostData(id, msg) {
 function broadcast() {
   if (!S.isHost || !S.net || !S.game) return;
   const ts = now();
-  for (const p of S.game.players) S.net.send(p.id, { t: 'v', v: G.toView(S.game, p.id, ts) });
+  const F = fn();
+  for (const p of S.game.players) S.net.send(p.id, { t: 'v', v: F.toView(S.game, p.id, ts) });
 }
 
 function pruneStale() {
   const ts = now();
   for (const p of [...S.game.players]) {
     if (p.id === S.game.hostId) continue;
-    if (ts - (p.lastSeen || ts) > 45000) G.dropPlayer(S.game, { id: p.id, now: ts });
+    if (ts - (p.lastSeen || ts) > 45000) fn().dropPlayer(S.game, { id: p.id, now: ts });
   }
 }
 
@@ -236,8 +314,11 @@ async function joinRoom() {
   try {
     const net = await Net.joinRoom({
       code,
-      onData: onGuestData,
+      onData: (msg) => {
+        if (seq === S.seq) onGuestData(msg);
+      },
       onClosed: () => {
+        if (seq !== S.seq) return;
         S.connected = false;
         S.net = null;
         show('home');
@@ -263,6 +344,7 @@ async function joinRoom() {
 
 function onGuestData(msg) {
   if (!msg || typeof msg !== 'object') return;
+  if (RT.message(null, msg)) return;
   if (msg.t === 'v') {
     S.view = msg.v;
     S.viewAt = now();
@@ -288,7 +370,7 @@ function startPing() {
 function view() {
   if (S.isHost && S.game) {
     S.viewAt = now();
-    return G.toView(S.game, S.me, S.viewAt);
+    return fn().toView(S.game, S.me, S.viewAt);
   }
   return S.view;
 }
@@ -302,6 +384,8 @@ function render() {
   if (!S.connected) return;
   const v = view();
   if (!v || !v.you) return;
+  followRoomMode(v);
+  if (v.mode === 'harta') return renderHarta(v);
   if (v.phase === 'lobby') {
     show('lobby');
     renderLobby(v);
@@ -311,6 +395,23 @@ function render() {
   } else {
     show('play');
     renderPlay(v);
+  }
+  sounds(v);
+}
+
+function renderHarta(v) {
+  if (v.phase !== 'over' && !RT.ready()) RT.ensure(rtCtx());
+  if (v.phase === 'lobby') {
+    show('lobby');
+    renderLobby(v);
+    $('mapCard').classList.remove('hidden');
+    RT.lobbyMaps(v);
+  } else if (v.phase === 'over') {
+    show('over');
+    renderOver(v);
+  } else {
+    show('race');
+    RT.view(v);
   }
   sounds(v);
 }
@@ -335,9 +436,12 @@ function renderLobby(v) {
     },
   );
   const canStart = v.players.length >= 2;
+  const harta = S.mode === 'harta';
+  setTxt('start', harta ? 'Mulai Berburu' : 'Mulai Main');
   $('start').classList.toggle('hidden', !v.you.isHost);
   $('start').disabled = !canStart;
-  if (v.you.isHost) setTxt('waitTxt', canStart ? 'Semua siap. Gas!' : 'Tunggu teman masuk dulu (minimal 2 pemain).');
+  if (v.you.isHost)
+    setTxt('waitTxt', canStart ? 'Semua siap. Gas!' : harta ? 'Tunggu teman masuk dulu (minimal 2 pemburu).' : 'Tunggu teman masuk dulu (minimal 2 pemain).');
   else setTxt('waitTxt', 'Tunggu ' + (v.players.find((p) => p.isHost) || {}).name + ' menekan Mulai…');
 }
 
@@ -437,7 +541,22 @@ function renderPlay(v) {
 function renderOver(v) {
   const top = v.players[0] || {};
   const tie = v.players.length > 1 && v.players[1] && v.players[1].score === top.score;
-  setTxt('winnerTxt', tie ? 'Seri! Poinnya sama rata.' : (top.name || '') + ' juara ronde ini');
+  const harta = v.mode === 'harta';
+  $('overMvp').classList.toggle('hidden', !harta);
+  if (harta) {
+    setTxt('mvpName', top.name || '—');
+    setTxt('mvpSub', (top.bestMs ? 'waktu terbaik ' + (top.bestMs / 1000).toFixed(1) + ' detik · ' : '') + (top.score || 0) + ' poin');
+  }
+  setTxt(
+    'winnerTxt',
+    harta
+      ? tie
+        ? 'Seri! Poin pemburunya sama.'
+        : 'Juara berburu harta'
+      : tie
+        ? 'Seri! Poinnya sama rata.'
+        : (top.name || '') + ' juara ronde ini',
+  );
   fill(
     'rank',
     v.players,
@@ -447,7 +566,9 @@ function renderOver(v) {
       n.textContent = i + 1 + '.';
       li.append(n, document.createTextNode(p.name + (p.id === v.you.id ? ' (kamu)' : '')));
       const b = document.createElement('b');
-      b.textContent = p.score + ' poin';
+      b.textContent = harta
+        ? p.score + ' poin' + (p.bestMs ? ' · ' + (p.bestMs / 1000).toFixed(1) + ' dtk' : '')
+        : p.score + ' poin';
       li.append(b);
       return li;
     },
@@ -475,9 +596,24 @@ $('mute').onclick = () => {
   if (next === '0') sfx('sys');
 };
 
+for (const id of ['modeKata', 'modeHarta']) {
+  $(id).onclick = () => {
+    const m = $(id).dataset.mode;
+    if (S.connected) {
+      if (m !== S.mode) toast('Mode ditentukan tuan rumah — kamar ini ' + (S.mode === 'harta' ? 'Berburu Harta' : 'Bisik Kata') + '.', true);
+      return;
+    }
+    if (m === S.mode) return;
+    S.mode = m;
+    store.set('harta-mode', m);
+    applyMode();
+  };
+}
+
+$('hrNoglOut').onclick = leaveRoom;
+
 $('create').onclick = createRoom;
-$('join').onclick = joinRoom;
-$('code').addEventListener('input', () => {
+$('join').onclick = joinRoom;$('code').addEventListener('input', () => {
   $('code').value = $('code').value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
 });
 
@@ -491,8 +627,9 @@ $('busyCancel').onclick = () => {
   show('home');
 };
 
-$('start').onclick = () => {
-  const res = G.startGame(S.game, { now: now(), words: WORDS, rng: Math.random });
+$('start').onclick = async () => {
+  if (S.mode === 'harta' && !RT.ready() && !(await RT.attach(rtCtx()))) return toast('Dunia 3D gagal dimuat.', true);
+  const res = fn().startGame(S.game, { now: now(), words: WORDS, rng: Math.random });
   if (!res.ok) return toast(res.error, true);
   broadcast();
   render();
@@ -563,6 +700,9 @@ window.addEventListener('pagehide', () => {
   if (S.net && !S.isHost) S.net.send({ t: 'bye' });
 });
 
+S.mode = store.get('harta-mode', 'kata') === 'harta' ? 'harta' : 'kata';
+applyMode();
+
 const urlCode = (new URLSearchParams(location.search).get('k') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
 if (urlCode.length === 4) {
   $('code').value = urlCode;
@@ -576,9 +716,10 @@ if (urlCode.length === 4) {
 /* ---------- loop ---------- */
 setInterval(() => {
   if (S.isHost && S.game) {
-    const changed = G.tick(S.game, { now: now(), words: WORDS, rng: Math.random });
+    const harta = S.game.mode === 'harta';
+    const changed = harta ? false : G.tick(S.game, { now: now(), words: WORDS, rng: Math.random });
     pruneStale();
-    if (changed || now() - S.lastBeat > 1500) {
+    if (!harta && (changed || now() - S.lastBeat > 1500)) {
       S.lastBeat = now();
       broadcast();
     }

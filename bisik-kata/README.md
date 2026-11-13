@@ -1,8 +1,11 @@
 # Bisik Kata
 
-Permainan tebak kata multiplayer di browser. Satu orang jadi **pemimpin** (melihat kata rahasia), sisanya **adu cepat menebak** dari petunjuk. Ringan, tanpa install, tanpa akun, tanpa backend.
+Dua permainan multiplayer di browser, satu halaman, tanpa install, tanpa akun, tanpa backend.
 
-## Cara main
+- **Bisik Kata** — satu orang jadi **pemimpin** (melihat kata rahasia), sisanya **adu cepat menebak** dari petunjuk.
+- **Berburu Harta (3D)** — semua pemburu berlari di ruangan 3D yang sama, saling terlihat, adu cepat menemukan peti emas yang disembunyikan.
+
+## Cara main — Bisik Kata
 
 1. Tekan **Buat Kamar Baru** → dapat kode 4 huruf (contoh `KXMP`).
 2. Bagikan lewat tombol **Salin Ajakan** (link otomatis berisi kode) atau sebutkan kodenya.
@@ -27,21 +30,38 @@ Permainan tebak kata multiplayer di browser. Satu orang jadi **pemimpin** (melih
 
 Bonus kecepatan: +15 jika terjawab saat sisa waktu ≥ 40 detik, +8 jika ≥ 20 detik. Penebak mendapat `dasar + bonus`, pemimpin mendapat `dasar` — jadi memberi petunjuk yang pas (tidak terlalu gampang, tidak terlalu sulit) itu yang paling untung.
 
+## Cara main — Berburu Harta
+
+Pilih kartu **Berburu Harta** di beranda sebelum membuat kamar. Mode ditentukan tuan rumah; tamu yang masuk otomatis ikut.
+
+1. Semua pemburu masuk ke **ruangan 3D yang sama** dan saling terlihat berlari.
+2. Ada **satu peti emas asli** (plus peti palsu). Peti asli baru menyala kelihatan kalau sudah cukup dekat — sisanya pakai tebakan.
+3. **Meter panas** (Beku → Membakar) memberitahu seberapa dekat kamu; **sonar** 2 kali per ronde menunjukkan arah selama 3 detik.
+4. Yang paling dulu menyentuh peti emas menang ronde itu, sisanya dapat poin peringkat. Waktu 150 detik per ronde.
+5. **3 tempat = 3 ronde** (gudang, ruang mainan, kuil), masing-masing dengan tata letak acak. Total poin tertinggi jadi juara.
+
+Poin per ronde: peringkat 1-8 mendapat `100 / 70 / 50 / 35 / 25 / 18 / 12 / 8`, ditambah bonus kecepatan sampai +30 (`30 × sisa waktu / total waktu`). Tidak menemukan hartanya = 0.
+
+**Kontrol.** HP: sentuh separuh kiri untuk jalan (tekan sampai mentok = lari), geser separuh kanan untuk memutar kamera, tombol Lompat & Sonar di kanan bawah. Laptop: WASD/tombol panah, Shift lari, Spasi lompat, E/F sonar, geser mouse untuk kamera.
+
+Karena tuan rumah yang menghitung, **koordinat harta tidak pernah dikirim ke browser tamu** sebelum ada yang menyentuhnya (dijaga tes `tests/harta.test.js`).
+
 ## Kenapa bisa gratis dan tanpa server
 
 Koneksi antar pemain berjalan **langsung di browser** (WebRTC, peer-to-peer). Yang dibutuhkan hanya:
 
 - **PeerJS** (sudah ikut di repo, `vendor/peerjs.min.js`) untuk "pertemuan awal" — saling tukar alamat. Setelah tersambung, data permainan tidak lewat server kita lagi.
+- **three.js** (juga ikut di repo, `vendor/three.module.min.js`) untuk ruangan 3D Berburu Harta. Render-nya penuh di GPU tiap pemain, tidak ada server gambar.
 - **Hosting statis** untuk file HTML/JS/CSS. Karena tidak ada build step dan tidak ada API, Vercel Hobby (gratis) lebih dari cukup.
 
-Kode kamar = `bisik-kata-<KODE>` yang dipakai sebagai PeerJS id, jadi teman tidak perlu link panjang: cukup 4 huruf. Tuan rumah adalah satu-satunya pemegang aturan main (skor, waktu, giliran); tamu hanya mengirim niat ("tebak", "beri petunjuk") dan menerima ringkasan kondisi. Kata rahasia hanya dikirim ke pemimpin, jadi tidak bisa dicuri dari data tampilan.
+Kode kamar = `bisik-kata-<KODE>` yang dipakai sebagai PeerJS id, jadi teman tidak perlu link panjang: cukup 4 huruf. Tuan rumah adalah satu-satunya pemegang aturan main (skor, waktu, giliran); tamu hanya mengirim niat ("tebak", "beri petunjuk") dan menerima ringkasan kondisi. Kata rahasia hanya dikirim ke pemimpin, jadi tidak bisa dicuri dari data tampilan. Di Berburu Harta polanya sama: tuan rumah yang memutuskan pemenang, poin, dan jatah sonar — tamu cuma mengirim posisi lari dan klaim "sudah menyentuh".
 
 ## Jalankan lokal
 
 ```bash
 cd bisik-kata
 npm run dev            # node dev-server.mjs -> http://127.0.0.1:5173
-npm test               # 12 test logika permainan
+npm test               # 27 test aturan main (12 Bisik Kata + 15 Berburu Harta)
 ```
 
 Tes multiplayer tanpa teman: buka `http://127.0.0.1:5173`, buat kamar di tab pertama, lalu buka tab kedua (window incognito kalau perlu) dan masuk dengan kode itu. Dua tab = dua pemain.
@@ -76,33 +96,45 @@ Setelah live, bagikan link `https://nama-project.vercel.app/?k=KODE` — tapi in
 ## Uji otomatis
 
 ```bash
-npm test                     # 12 test aturan main (tanpa browser)
+npm test                     # 27 test aturan main (tanpa browser)
 npm run dev                  # nyalakan server dulu
 node tools/e2e-2-player.mjs  # 2 Chrome headless jadi 2 pemain betulan (WebRTC)
 node tools/e2e-3-player.mjs  # 3 pemain: rotasi pemimpin, balapan tebakan, sinkron skor
+node tools/e2e-harta.mjs     # Berburu Harta: WebGL nyata, 3 ronde, sonar, klaim, skor, keluar-masuk kamar
+node tools/e2e-touch.mjs     # Berburu Harta di layar sentuh: joystick, putar kamera, tombol lompat/sonar
 ```
 
-Harness di `tools/` butuh Chrome terinstall (dipanggil lewat `C:\Program Files\Google\Chrome\Application\chrome.exe`; sesuaikan paths kalau di Linux/macOS). File ini hanya untuk pengembangan, tidak ikut ter-deploy.
+Harness di `tools/` butuh Chrome terinstall (dipanggil lewat `C:\Program Files\Google\Chrome\Application\chrome.exe`; sesuaikan lewat variabel `CHROME` kalau di Linux/macOS). File itu hanya dipakai saat develop dan tidak dirujuk halaman game. `e2e-touch.mjs` menyuntik pemain kedua lewat `logic.addPlayer` supaya tidak bergantung pada negosiasi WebRTC.
 
 ## Struktur
 
 ```
-index.html          tampilan & layar (home, lobby, main, hasil)
-styles.css          seluruh gaya (mobile-first, tanpa gambar)
+index.html          tampilan & layar (home, lobby, lomba 3D, main, hasil)
+styles.css          gaya Bisik Kata (mobile-first, tanpa gambar)
+styles-harta.css    gaya Berburu Harta (HUD 3D, joystick, kartu tempat)
 js/words.js         ~260 kata rahasia + kategori
-js/game.js          aturan main murni: ronde, poin, validasi (tanpa DOM, bisa di-test)
+js/game.js          aturan Bisik Kata murni: ronde, poin, validasi (tanpa DOM, bisa di-test)
+js/harta/logic.js   aturan Berburu Harta murni: fase, klaim, poin, sonar (tanpa DOM, bisa di-test)
+js/harta/maps.js    pembangkit tata letak 3 tempat + tabrakan (seed → layout, selalu bisa dijangkau)
+js/harta/world.js   three.js: ruangan, peti, avatar, partikel, kamera
+js/harta/controls.js keyboard/mouse + joystick sentuh dua jari
+js/harta/harta.js   penyambung dunia 3D ke state & jaringan (HUD, render loop, sinkron posisi)
 js/net.js           PeerJS: buat kamar (host) & masuk kamar (tamu)
 js/app.js           penyambung UI ke logika + jaringan, render, suara
 dev-server.mjs      server statis kecil untuk mencoba lokal
-tests/game.test.js  test logika (node --test)
-tools/e2e-*.mjs        uji end-to-end memakai 2-3 Chrome headless
+tests/game.test.js  test logika Bisik Kata (node --test)
+tests/harta.test.js test logika Berburu Harta (node --test)
+tools/e2e-*.mjs     uji end-to-end memakai Chrome headless (2/3 pemain, harta, sentuh)
 vendor/peerjs.min.js library PeerJS (diunduh, bukan dari CDN)
+vendor/three.module.min.js library three.js (diunduh, bukan dari CDN)
 vercel.json         header cache & clean URLs
 ```
 
 ## Batasan yang perlu diketahui
 
 - **Hanya untuk 2–8 orang per kamar.** WebRTC star topology, tuan rumah jadi pusat. Kalau tuan rumah menutup tab, kamar bubar.
-- Butuh akses keluar ke server signaling PeerJS (`0.peerjs.com`) dan STUN Google untuk negosiasi. Di jaringan kantor/sekolah yang memblokir UDP, koneksi bisa gagal — itu satu-satunya bagian yang tidak bisa kita kendalikan tanpa backend sendiri.
+- Butuh akses keluar ke server signaling PeerJS (`0.peerjs.com`) dan STUN Google untuk negosiasi. Di jaringan kantor/sekolah yang memblokir UDP, koneksi bisa gagal — itu satu-satunya bagian yang tidak bisa kita kendalikan tanpa backend sendiri. Server publik itu pernah rewel saat dipakai membuat banyak kamar berturut-turut; kodenya sudah mencoba ulang otomatis, tapi kalau gagal terus bikin kamar baru lagi sebentar kemudian.
+- **Berburu Harta butuh WebGL.** Tanpa itu muncul peringatan dan Bisik Kata tetap bisa dimainkan. Kalau FPS jatuh di bawah 40 (HP tua / tanpa akselerasi hardware), resolusi dalam game otomatis diturunkan.
+- Lalu lintas Berburu Harta: tiap pemburu mengirim posisinya 12 kali per detik, tuan rumah menyiarkan ringkasan keadaan minimal ~1,4 kali per detik (bertambah saat ada klaim/sonar). Semua berupa angka pendek, tetap ringan.
 - Skor tidak disimpan. Tutup halaman = progres hilang (sengaja, supaya tidak ada data pengguna).
-- Ganti kata? Cukup edit `js/words.js` — tidak ada bagian lain yang perlu diubah.
+- Ganti kata? Cukup edit `js/words.js` — tidak ada bagian lain yang perlu diubah. Ganti tata letak ruangan? `js/harta/maps.js`.

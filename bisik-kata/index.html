@@ -2,12 +2,13 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0f1a22">
-<meta name="description" content="Bisik Kata — permainan tebak kata multiplayer di browser. Buat kamar, bagikan kode, main bareng teman. Tanpa install, tanpa server.">
-<title>Bisik Kata — Tebak Kata Bareng Teman</title>
+<meta name="description" content="Bisik Kata & Berburu Harta — permainan multiplayer di browser. Buat kamar, bagikan kode, main bareng teman. Tanpa install, tanpa server.">
+<title>Bisik Kata — Tebak Kata &amp; Berburu Harta Bareng Teman</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f1a22'/><circle cx='11' cy='15' r='4' fill='%23f5b544'/><circle cx='21' cy='19' r='3' fill='%23ef6f58'/></svg>">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles-harta.css">
 </head>
 <body>
 <div class="wrap">
@@ -18,8 +19,25 @@
 
   <main>
     <section id="home" class="screen">
-      <h1>Tebak kata dari petunjuk sekadarnya.</h1>
-      <p class="lede">Satu orang pegang kata rahasia, sisanya adu cepat menebak dari petunjuk. Butuh 2 orang atau lebih, main lewat HP atau laptop masing-masing.</p>
+      <div class="hr-modes" id="modes">
+        <button type="button" class="hr-mode" id="modeKata" data-mode="kata">
+          <span class="hr-mode-in">
+            <b>Bisik Kata</b>
+            <i>Tebak kata dari petunjuk teman</i>
+          </span>
+        </button>
+        <button type="button" class="hr-mode hr-mode-new" id="modeHarta" data-mode="harta">
+          <span class="hr-shine" aria-hidden="true"></span>
+          <span class="hr-mode-in">
+            <em class="hr-tag">BARU · 3D</em>
+            <b>Berburu Harta</b>
+            <i>Lomba cari peti emas di ruangan besar</i>
+          </span>
+        </button>
+      </div>
+
+      <h1 id="homeTitle">Tebak kata dari petunjuk sekadarnya.</h1>
+      <p class="lede" id="homeLede">Satu orang pegang kata rahasia, sisanya adu cepat menebak dari petunjuk. Butuh 2 orang atau lebih, main lewat HP atau laptop masing-masing.</p>
 
       <div class="card">
         <label for="name">Nama kamu</label>
@@ -36,7 +54,7 @@
         <p class="err" id="homeErr"></p>
       </div>
 
-      <details class="card howto">
+      <details class="card howto" id="howKata">
         <summary>Cara main &amp; aturan poin</summary>
         <ol>
           <li><b>Buat kamar</b> → dapat kode 4 huruf. Bagikan lewat tombol salin atau kirim kodenya.</li>
@@ -46,6 +64,18 @@
           <li>Jumlah ronde = jumlah pemain, jadi semua kebagian jadi pemimpin. Poin tertinggi di akhir menang.</li>
         </ol>
         <p class="tip">Tidak ada server dan tidak ada akun: browser saling terhubung langsung. Tutup halaman = keluar kamar.</p>
+      </details>
+
+      <details class="card howto howto-harta hidden" id="howHarta">
+        <summary>Cara main &amp; aturan poin berburu harta</summary>
+        <ol>
+          <li>Semua pemburu masuk ke <b>satu ruangan 3D yang sama</b> dan saling terlihat berlari.</li>
+          <li>Ada <b>satu peti emas asli</b> dan beberapa peti palsu. Peti asli baru kelihatan kalau sudah dekat.</li>
+          <li>Gunakan <b>meter panas</b> (dingin → membakar) dan <b>2 sonar</b> untuk mempersempit pencarian.</li>
+          <li>Yang paling dulu menyentuh peti emas menang ronde itu. makin cepat = makin banyak bonus poin.</li>
+          <li>Ada <b>3 tempat</b> (gudang, ruang mainan, kuil) = 3 ronde. Total poin tertinggi jadi juara.</li>
+        </ol>
+        <p class="tip">HP: sentuh separuh kiri untuk jalan (tekan penuh = lari), geser separuh kanan untuk memutar kamera. Laptop: WASD, Shift lari, Spasi lompat, geser mouse untuk kamera.</p>
       </details>
     </section>
 
@@ -67,11 +97,75 @@
         </div>
         <p class="tip">Teman buka halaman yang sama, pilih <b>Masuk</b>, lalu masukkan kode ini.</p>
       </div>
+      <div class="card hr-mapcard hidden" id="mapCard">
+        <div class="k">Tempat berburu <span id="mapWho"></span></div>
+        <div class="hr-maps" id="mapPick"></div>
+        <p class="tip" id="mapNote"></p>
+      </div>
+
       <div class="card">
         <div class="k">Pemain (<span id="pcount">1</span>/8)</div>
         <ul class="plist" id="lobbyPlayers"></ul>
         <button id="start" class="primary wide">Mulai Main</button>
         <p class="tip wait" id="waitTxt"></p>
+      </div>
+    </section>
+
+    <section id="race" class="screen hr-race hidden">
+      <canvas id="gl"></canvas>
+      <div class="hr-touch" id="hrTouch"></div>
+
+      <div class="hr-hud">
+        <div class="hr-top">
+          <div class="hr-plate">
+            <span class="hr-round">RONDE <b id="hrIdx">1</b>/<b id="hrTot">3</b></span>
+            <span class="hr-mapname" id="hrMap">—</span>
+          </div>
+          <div class="hr-timer" id="hrTimer"><span id="hrTimerTxt">150</span></div>
+        </div>
+
+        <div class="hr-track" id="hrTrack"></div>
+
+        <div class="hr-heat hidden" id="hrHeat">
+          <div class="hr-heat-bar"><i id="hrHeatFill"></i></div>
+          <span id="hrHeatTxt">Dingin</span>
+        </div>
+
+        <div class="hr-arrow hidden" id="hrArrow"><b>▲</b><span>Sonar</span></div>
+
+        <div class="hr-stick hidden" id="hrStick"><i id="hrKnob"></i></div>
+
+        <div class="hr-btns">
+          <button type="button" class="hr-skill" id="hrSonar"><span class="hr-cd" id="hrSonarCd"></span><b>Sonar</b><em id="hrSonarN">2</em></button>
+          <button type="button" class="hr-skill hr-jump" id="hrJump"><b>Lompat</b></button>
+        </div>
+
+        <div class="hr-labels" id="hrLabels"></div>
+        <div class="hr-feed" id="hrFeed"></div>
+        <div class="hr-big" id="hrBig"></div>
+        <div class="hr-help" id="hrHelp"></div>
+      </div>
+
+      <div class="hr-load" id="hrLoad">
+        <div class="spinner"></div>
+        <p>Memuat dunia 3D…</p>
+      </div>
+
+      <div class="hr-reveal hidden" id="hrReveal">
+        <div class="hr-reveal-in">
+          <div class="k" id="hrRevealK">Peti emasnya ada di</div>
+          <div class="hr-reveal-name" id="hrRevealWho">—</div>
+          <ol class="hr-round-rank" id="hrRoundRank"></ol>
+          <p class="tip" id="hrNextTxt"></p>
+        </div>
+      </div>
+
+      <div class="hr-nogl hidden" id="hrNogl">
+        <div class="card center">
+          <div class="word">Browser-nya belum bisa tampil 3D</div>
+          <p class="tip">Coba Chrome/Firefox/Edge terbaru, atau nyalakan akselerasi hardware. Game Bisik Kata tetap bisa dimainkan.</p>
+          <button id="hrNoglOut" class="ghost">Kembali</button>
+        </div>
       </div>
     </section>
 
@@ -128,6 +222,11 @@
 
     <section id="over" class="screen hidden">
       <div class="card center">
+        <div class="hr-mvp hidden" id="overMvp">
+          <span class="hr-mvp-badge">MVP</span>
+          <b class="hr-mvp-name" id="mvpName">—</b>
+          <span class="hr-mvp-sub" id="mvpSub"></span>
+        </div>
         <div class="k">Permainan selesai</div>
         <div class="word" id="winnerTxt"></div>
         <ol class="rank" id="rank"></ol>

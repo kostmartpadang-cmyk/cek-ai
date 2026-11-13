@@ -74,6 +74,7 @@ export function createRoom({ code, hostId, hostName, now }) {
   return {
     code,
     hostId,
+    mode: 'kata',
     phase: 'lobby',
     createdAt: now,
     players: [{ id: hostId, name: hostName, score: 0, joinedAt: now }],
@@ -259,6 +260,7 @@ export function toView(state, viewerId, now) {
   }
   return {
     code: state.code,
+    mode: 'kata',
     hostId: state.hostId,
     nowHost: now,
     phase: state.phase,

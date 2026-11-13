@@ -37,8 +37,10 @@ Pilih kartu **Berburu Harta** di beranda sebelum membuat kamar. Mode ditentukan 
 1. Semua pemburu masuk ke **ruangan 3D yang sama** dan saling terlihat berlari.
 2. Ada **satu peti emas asli** (plus peti palsu). Peti asli baru menyala kelihatan kalau sudah cukup dekat — sisanya pakai tebakan.
 3. **Meter panas** (Beku → Membakar) memberitahu seberapa dekat kamu; **sonar** 2 kali per ronde menunjukkan arah selama 3 detik.
-4. Yang paling dulu menyentuh peti emas menang ronde itu, sisanya dapat poin peringkat. Waktu 150 detik per ronde.
-5. **3 tempat = 3 ronde** (gudang, ruang mainan, kuil), masing-masing dengan tata letak acak. Total poin tertinggi jadi juara.
+4. Yang paling dulu menyentuh peti emas menang ronde itu, sisanya dapat poin peringkat. Waktu 180 detik per ronde.
+5. **5 tempat = 5 ronde** (gudang, ruang mainan, kuil, tambang tua, kebun raya), masing-masing dengan tata letak acak. Urutan ronde dimulai dari tempat pilihan tuan rumah lalu berputar, jadi setiap tempat didatangi tepat satu kali. Total poin tertinggi jadi juara.
+
+**Rintangan.** Selain dinding dan peti, lantai punya tiga tingkah: benda setinggi pinggang (≤ 1,1 m) bisa **dilompati lalu diinjak** — berdiri di atasnya akan terlihat temanmu; **tanah lembek** membuat langkah separuh kecepatan; **lubang** menjatuhkanmu 0,85 m dengan langkah yang nyaris tak bergerak, dan satu-satunya jalan keluar adalah melompat. Tinggi dihitung dengan aturan yang sama di browser dan di tuan rumah, jadi dia ikut tersinkron.
 
 Poin per ronde: peringkat 1-8 mendapat `100 / 70 / 50 / 35 / 25 / 18 / 12 / 8`, ditambah bonus kecepatan sampai +30 (`30 × sisa waktu / total waktu`). Tidak menemukan hartanya = 0.
 
@@ -96,13 +98,15 @@ Setelah live, bagikan link `https://nama-project.vercel.app/?k=KODE` — tapi in
 ## Uji otomatis
 
 ```bash
-npm test                     # 27 test aturan main (tanpa browser)
+npm test                     # 30 test aturan main (tanpa browser)
 npm run dev                  # nyalakan server dulu
 node tools/e2e-2-player.mjs  # 2 Chrome headless jadi 2 pemain betulan (WebRTC)
 node tools/e2e-3-player.mjs  # 3 pemain: rotasi pemimpin, balapan tebakan, sinkron skor
-node tools/e2e-harta.mjs     # Berburu Harta: WebGL nyata, 3 ronde, sonar, klaim, skor, keluar-masuk kamar
+node tools/e2e-harta.mjs     # Berburu Harta: WebGL nyata, 5 ronde rotasi, sonar, klaim, skor, geometri tidak bocor, keluar-masuk kamar
 node tools/e2e-touch.mjs     # Berburu Harta di layar sentuh: joystick, putar kamera, tombol lompat/sonar
 node tools/e2e-mouse.mjs     # Berburu Harta di layar laptop: klik mengunci kursor, kamera ikut mouse, Esc lepas
+node tools/e2e-jump.mjs      # Jalur vertikal: lompat ke atas peti, tinggi tersinkron, turun lagi ke lantai
+node tools/e2e-zone.mjs      # Tanah lembek memperlambat + lubang menjebak: cuma lompat yang mengeluarkan
 ```
 
 Harness di `tools/` butuh Chrome terinstall (dipanggil lewat `C:\Program Files\Google\Chrome\Application\chrome.exe`; sesuaikan lewat variabel `CHROME` kalau di Linux/macOS). File itu hanya dipakai saat develop dan tidak dirujuk halaman game. `e2e-touch.mjs` dan `e2e-mouse.mjs` menyuntik pemain kedua lewat `logic.addPlayer` supaya tidak bergantung pada negosiasi WebRTC.
@@ -116,7 +120,7 @@ styles-harta.css    gaya Berburu Harta (HUD 3D, joystick, kartu tempat)
 js/words.js         ~260 kata rahasia + kategori
 js/game.js          aturan Bisik Kata murni: ronde, poin, validasi (tanpa DOM, bisa di-test)
 js/harta/logic.js   aturan Berburu Harta murni: fase, klaim, poin, sonar (tanpa DOM, bisa di-test)
-js/harta/maps.js    pembangkit tata letak 3 tempat + tabrakan (seed → layout, selalu bisa dijangkau)
+js/harta/maps.js    pembangkit tata letak 5 tempat + tabrakan (seed → layout, selalu bisa dijangkau)
 js/harta/world.js   three.js: ruangan, peti, avatar, partikel, kamera
 js/harta/controls.js keyboard/mouse + joystick sentuh dua jari
 js/harta/harta.js   penyambung dunia 3D ke state & jaringan (HUD, render loop, sinkron posisi)

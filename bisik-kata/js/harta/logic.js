@@ -1,4 +1,4 @@
-import { CFG as M, layoutFor, resolveCircle } from './maps.js';
+import { CFG as M, MAPS, layoutFor, resolveFeet, supportAt, zoneAt } from './maps.js';
 
 export const COLORS = ['#e2554b', '#2f7fd1', '#4cba69', '#f2c53d', '#b45fd6', '#3fd2ff', '#ff8a3d', '#eee7d6'];
 
@@ -6,7 +6,7 @@ export const CFG = {
   maxPlayers: 8,
   nameMax: 16,
   countdownMs: 3500,
-  roundMs: 150000,
+  roundMs: 180000,
   finishWindowMs: 8000,
   revealMs: 7000,
   arbitrateMs: 260,
@@ -18,7 +18,7 @@ export const CFG = {
   feedKeep: 10,
   speedBonusMax: 30,
   points: [100, 70, 50, 35, 25, 18, 12, 8],
-  mapOrder: ['gudang', 'mainan', 'kuil'],
+  mapOrder: MAPS.map((m) => m.id),
 };
 
 const num = (v) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN);
@@ -50,6 +50,7 @@ function racerAt(layout, slot) {
     x: sp.x,
     z: sp.z,
     a: 0,
+    y: 0,
     s: 0,
     j: 0,
     vx: 0,
@@ -128,8 +129,16 @@ export function setMap(state, { id, by }) {
   return { ok: true };
 }
 
+/* Urutan ronde = mapOrder yang diputar supaya dimulai dari pilihan tuan rumah. Dengan begitu setiap
+   tempat didatangi tepat satu kali dalam satu sesi; urutan polos akan mengulang pilihan tuan rumah
+   di ronde terakhir dan melewati tempat lain. */
+function roundOrder(pick) {
+  const at = CFG.mapOrder.indexOf(pick);
+  return at <= 0 ? CFG.mapOrder : CFG.mapOrder.slice(at).concat(CFG.mapOrder.slice(0, at));
+}
+
 function openRound(state, { now, rng, index }) {
-  const want = index === 0 ? state.mapPick : CFG.mapOrder[index % CFG.mapOrder.length];
+  const want = roundOrder(state.mapPick)[index % CFG.mapOrder.length];
   const seed = Math.floor(rng() * 0xffffff) >>> 0;
   const layout = layoutFor(want, seed);
   const racers = {};
@@ -228,13 +237,22 @@ export function onMove(state, id, msg, now) {
   if (!finite(x) || !finite(z)) return { ok: false };
   const b = r.layout.bounds;
   if (Math.abs(x) > b.hw + 2 || Math.abs(z) > b.hd + 2) return { ok: false };
-  const fixed = resolveCircle(r.layout, x, z, M.playerR);
+  const yRaw = num(msg.y);
+  const y = finite(yRaw) ? yRaw : 0;
+  const fixed = resolveFeet(r.layout, x, z, M.playerR, y);
+  const sup = supportAt(r.layout, fixed.x, fixed.z);
+  // Atap: tak ada lompatan yang bisa mencapai lebih dari jumpReach di atas pijakan terdekat.
+  // Dasar: di bawah lantai hanya mulut lubang yang boleh, dan cuma sedalam lubang — sama seperti yang
+  // diizinkan langkah kaki di klien, jadi tamu tidak bisa "jalan" keluar lubang tanpa melompat.
+  const lub = zoneAt(r.layout, fixed.x, fixed.z) === 2;
+  if (y > sup + M.jumpReach || y < (lub ? -M.pitDepth - 0.35 : -0.35)) return { ok: false };
   const dt = Math.max(0.08, (now - (p.lastAt || now)) / 1000);
   if (Math.hypot(fixed.x - p.x, fixed.z - p.z) > CFG.runSpeed * 1.9 * dt) return { ok: false };
   p.vx = (fixed.x - p.x) / dt;
   p.vz = (fixed.z - p.z) / dt;
   p.x = fixed.x;
   p.z = fixed.z;
+  p.y = y;
   if (finite(num(msg.a))) p.a = num(msg.a);
   p.s = msg.s === 2 ? 2 : msg.s === 1 ? 1 : 0;
   p.j = msg.j ? 1 : 0;
@@ -370,6 +388,7 @@ export function toView(state, viewerId, now) {
               x: Math.round(q.x * 10) / 10,
               z: Math.round(q.z * 10) / 10,
               a: Math.round(q.a * 100) / 100,
+              y: Math.round((q.y || 0) * 100) / 100,
               s: q.s,
               j: q.j,
               finished: !!q.finished,

@@ -123,6 +123,7 @@ export function createWorld(THREE, canvas) {
   const faceTex = tex(makeFaceTexture(THREE));
   const sparkTex = tex(makeSparkTexture(THREE));
   const blobGeo = geo(new THREE.CircleGeometry(0.95, 14));
+  const decalGeo = geo(new THREE.CircleGeometry(0.95, 14).rotateX(-Math.PI / 2));
   const blobMat = mtl(new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }));
   const faceGeo = geo(new THREE.PlaneGeometry(0.5, 0.5));
   const faceMat = mtl(new THREE.MeshBasicMaterial({ map: faceTex, transparent: true }));
@@ -157,7 +158,7 @@ export function createWorld(THREE, canvas) {
     return c;
   }
 
-  const camState = { yaw: Math.PI, pitch: 0.4, dist: 7.8 };
+  const camState = { yaw: Math.PI, pitch: 0.4, dist: 9.2 };
   const orbit = { on: false, ang: 0 };
   const camPos = new THREE.Vector3(0, 8, 16);
   const lookAt = new THREE.Vector3();
@@ -184,7 +185,10 @@ export function createWorld(THREE, canvas) {
   // per-level materials are built outside sharedMat so throwAway() can free them each round
   function throwAway(obj) {
     obj.traverse((o) => {
-      if (o !== obj && o.geometry && !sharedGeo.includes(o.geometry)) o.geometry.dispose();
+      // Dulu baris ini melewatkan objek yang dipegang langsung. beam/halo/sparks dipasang sebagai
+      // root masing-masing, jadi geometri mereka lolos dan menumpuk satu set per ronde.
+      if (o.geometry && !sharedGeo.includes(o.geometry)) o.geometry.dispose();
+      if (o.isInstancedMesh) o.dispose();
       if (o.material && !sharedMat.includes(o.material)) o.material.dispose?.();
     });
   }
@@ -211,12 +215,13 @@ export function createWorld(THREE, canvas) {
     const trims = new THREE.InstancedMesh(boxGeo, paint(pal.trim), Math.max(1, walls.length));
     let bi = 0;
     for (const b of boxes) {
+      if (b.s === 'cyl') continue;
       dummy.position.set(b.x, b.h / 2, b.z);
-      dummy.scale.set(b.w, b.h, b.d);
-      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(b.rw || b.w, b.h, b.rd || b.d);
+      dummy.rotation.set(0, b.rot || 0, 0);
       dummy.updateMatrix();
       solids.setMatrixAt(bi, dummy.matrix);
-      solids.setColorAt(bi, tint(THREE, pal[b.c] || '#8a8a8a', b.wall ? 0 : 0.04));
+      solids.setColorAt(bi, tint(THREE, pal[b.c] || '#8a8a8a', b.wall ? 0 : shade(b)));
       bi++;
     }
     solids.count = bi;
@@ -224,6 +229,7 @@ export function createWorld(THREE, canvas) {
     for (const b of walls) {
       dummy.position.set(b.x, b.h + 0.1, b.z);
       dummy.scale.set(b.w * 1.03, 0.2, b.d * 1.03);
+      dummy.rotation.set(0, 0, 0);
       dummy.updateMatrix();
       trims.setMatrixAt(ti++, dummy.matrix);
     }
@@ -241,15 +247,23 @@ export function createWorld(THREE, canvas) {
       const cm = new THREE.InstancedMesh(cylGeo, new THREE.MeshLambertMaterial({ color: '#ffffff' }), cyls.length);
       cyls.forEach((b, i) => {
         dummy.position.set(b.x, b.h / 2, b.z);
-        dummy.scale.set(b.w, b.h, b.d);
+        dummy.scale.set(b.rw || b.w, b.h, b.rd || b.d);
+        dummy.rotation.set(0, b.rot || 0, 0);
         dummy.updateMatrix();
         cm.setMatrixAt(i, dummy.matrix);
-        cm.setColorAt(i, tint(THREE, pal[b.c] || '#8a8a8a', 0));
+        cm.setColorAt(i, tint(THREE, pal[b.c] || '#8a8a8a', shade(b)));
       });
       cm.instanceMatrix.needsUpdate = true;
       if (cm.instanceColor) cm.instanceColor.needsUpdate = true;
       grp.add(cm);
     }
+
+    const caps = buildCaps(l, pal);
+    if (caps) grp.add(caps);
+    const parts = buildDetails(l, pal);
+    if (parts) grp.add(parts);
+    const shadeMesh = buildContact(l);
+    if (shadeMesh) grp.add(shadeMesh);
 
     const fw = l.bounds.w + 8;
     const fd = l.bounds.d + 8;
@@ -289,6 +303,142 @@ export function createWorld(THREE, canvas) {
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     return n ? mesh : null;
+  }
+
+  function shade(b) {
+    if (b.wall) return 0;
+    const h = (Math.imul(Math.round((b.x + 64) * 16) + 7, 2246822519) ^ Math.imul(Math.round((b.z + 64) * 16) + 11, 3266489917)) >>> 0;
+    return ((h % 1000) / 1000) * 0.09 - 0.02;
+  }
+
+  // Piring tipis di atas puncak yang terjangkau lompatan: cara termurah menunjukkan "naik ke sini".
+  function buildCaps(l, pal) {
+    const list = l.boxes.filter((b) => !b.wall && b.k !== 'soft' && b.k !== 'pit' && b.h >= 0.3 && b.h <= 1.3);
+    if (!list.length) return null;
+    const mat = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+    const g = new THREE.Group();
+    const fill = (base, items, inset, bright) => {
+      const m = new THREE.InstancedMesh(base, mat, items.length);
+      items.forEach((b, i) => {
+        dummy.position.set(b.x, b.h + 0.03, b.z);
+        dummy.scale.set(Math.max(0.25, (b.rw || b.w) - inset), 0.06, Math.max(0.25, (b.rd || b.d) - inset));
+        dummy.rotation.set(0, b.rot || 0, 0);
+        dummy.updateMatrix();
+        m.setMatrixAt(i, dummy.matrix);
+        m.setColorAt(i, tint(THREE, pal[b.c] || '#8a8a8a', shade(b) + bright));
+      });
+      m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+      return m;
+    };
+    const square = list.filter((b) => b.s !== 'cyl');
+    const round = list.filter((b) => b.s === 'cyl');
+    if (square.length) g.add(fill(boxGeo, square, 0.36, 0.22));
+    if (round.length) g.add(fill(cylGeo, round, 0.3, 0.16));
+    return g;
+  }
+
+  // Bagian tambahan per arketipe: papan rak, ikatan peti, lingkar tong, kapitel pilar, kepala arca,
+  // bibir genangan. Semuanya ditampung dua InstancedMesh (kotak dan silinder) dengan geometri bersama,
+  // jadi siluet ruangan berubah jauh sementara draw call cuma bertambah dua.
+  function buildDetails(l, pal) {
+    const papan = [];
+    const bulat = [];
+    const kotak = (b, y, sx, sy, sz, k, dx = 0, dz = 0) => papan.push({ b, y, sx, sy, sz, k, dx, dz });
+    const bundar = (b, y, sx, sy, sz, k) => bulat.push({ b, y, sx, sy, sz, k });
+    for (const b of l.boxes) {
+      const rw = b.rw || b.w;
+      const rd = b.rd || b.d;
+      const h = b.h;
+      if (b.wall) continue;
+      if (b.k === 'soft' || b.k === 'pit') {
+        bundar(b, h + 0.005, rw * 1.1, 0.02, rd * 1.1, b.k === 'pit' ? -0.35 : 0.1);
+        continue;
+      }
+      switch (b.p) {
+        case 'shelf': {
+          const tingkat = Math.max(2, Math.round(h / 1.6));
+          for (let i = 1; i < tingkat; i++) kotak(b, (h * i) / tingkat, rw * 1.05, 0.13, rd * 0.82, 0.2);
+          break;
+        }
+        case 'crate':
+          if (h >= 0.9) {
+            kotak(b, h * 0.58, rw * 1.05, 0.14, Math.min(0.5, rd * 0.34), -0.2);
+            kotak(b, h * 0.58, Math.min(0.5, rw * 0.34), 0.14, rd * 1.05, -0.2);
+          }
+          break;
+        case 'barrel':
+          bundar(b, h * 0.26, rw * 1.08, 0.11, rd * 1.08, 0.34);
+          bundar(b, h * 0.74, rw * 1.08, 0.11, rd * 1.08, 0.34);
+          break;
+        case 'pillar':
+          if (h >= 2) {
+            kotak(b, 0.17, rw * 1.34, 0.34, rd * 1.34, 0.14);
+            kotak(b, h - 0.15, rw * 1.28, 0.3, rd * 1.28, 0.14);
+          }
+          break;
+        case 'statue':
+          kotak(b, h + 0.26, 0.52, 0.52, 0.52, 0.24);
+          break;
+        case 'planter':
+          kotak(b, h * 0.52, rw * 1.18, 0.18, rd * 1.18, -0.22);
+          break;
+        // Pagar tanaman: pita lebih terang di puncak plus batang yang lebih gelap di dalam badannya,
+        // supaya dia terbaca sebagai "dinding hidup". Semuanya ditengah karena benda ini boleh berputar.
+        case 'hedge':
+          kotak(b, h - 0.1, rw * 1.06, 0.2, rd * 1.06, 0.16);
+          kotak(b, h * 0.42, rw * 0.86, h * 0.84, rd * 0.86, -0.2);
+          break;
+        // Gerobak bijih: bibir rel di sekeliling bak plus gundukan isinya. Roda sengaja tidak digambar —
+        // silindernya cuma berputar pada sumbu Y, jadi roda akan terlihat sebagai piring tergeletak.
+        case 'cart':
+          kotak(b, h + 0.07, rw * 1.1, 0.14, 0.16, -0.32);
+          kotak(b, h + 0.07, 0.16, 0.14, rd * 1.1, -0.32);
+          bundar(b, h + 0.12, rw * 0.62, 0.26, rd * 0.62, 0.3);
+          break;
+        case 'bench':
+          kotak(b, h + 0.05, rw * 1.04, 0.14, rd * 1.06, 0.2);
+          kotak(b, h * 0.5, rw * 0.9, h * 0.86, rd * 0.6, -0.24);
+          break;
+        default:
+          break;
+      }
+    }
+    const g = new THREE.Group();
+    const isi = (base, list) => {
+      if (!list.length) return;
+      const m = new THREE.InstancedMesh(base, new THREE.MeshLambertMaterial({ color: '#ffffff' }), list.length);
+      list.forEach((p, i) => {
+        dummy.position.set(p.b.x + p.dx, p.y, p.b.z + p.dz);
+        dummy.scale.set(Math.max(0.1, p.sx), Math.max(0.04, p.sy), Math.max(0.1, p.sz));
+        dummy.rotation.set(0, p.b.rot || 0, 0);
+        dummy.updateMatrix();
+        m.setMatrixAt(i, dummy.matrix);
+        m.setColorAt(i, tint(THREE, pal[p.b.c] || '#8a8a8a', p.k + shade(p.b)));
+      });
+      m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+      g.add(m);
+    };
+    isi(boxGeo, papan);
+    isi(cylGeo, bulat);
+    return g.children.length ? g : null;
+  }
+
+  // Bayangan kontak: elips gelap di lantai di bawah tiap benda, satu draw call tanpa shadow map.
+  function buildContact(l) {
+    const list = l.boxes.filter((b) => !b.wall && b.h >= 0.5);
+    if (!list.length) return null;
+    const m = new THREE.InstancedMesh(decalGeo, blobMat, list.length);
+    list.forEach((b, i) => {
+      dummy.position.set(b.x, 0.03, b.z);
+      dummy.scale.set(((b.rw || b.w) + 0.8) * 0.5, ((b.rd || b.d) + 0.8) * 0.5, 1);
+      dummy.rotation.set(0, b.rot || 0, 0);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    return m;
   }
 
   function buildChest(l, at, real) {
@@ -360,7 +510,7 @@ export function createWorld(THREE, canvas) {
     scene.add(chest);
 
     beam = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.55, 1.05, 18, 10, 1, true),
+      new THREE.CylinderGeometry(0.55, 1.05, map.wallH * 1.9, 10, 1, true),
       new THREE.MeshBasicMaterial({
         color: '#ffd76b',
         transparent: true,
@@ -370,7 +520,7 @@ export function createWorld(THREE, canvas) {
         depthWrite: false,
       }),
     );
-    beam.position.set(treasure.x, 9, treasure.z);
+    beam.position.set(treasure.x, map.wallH * 0.95, treasure.z);
     scene.add(beam);
 
     halo = new THREE.Mesh(
@@ -497,7 +647,7 @@ export function createWorld(THREE, canvas) {
     }
     const bs = 0.9 + amp * 0.12;
     a.blob.scale.set(bs, bs, bs);
-    a.blob.position.y = 0.04 - (p.y || 0) * 0.12;
+    a.blob.position.y = Math.max(0.04, 0.04 - (p.y || 0) * 0.12);
     a.blob.material = blobMat;
   }
 

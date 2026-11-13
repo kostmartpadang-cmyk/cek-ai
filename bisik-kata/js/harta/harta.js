@@ -1,5 +1,5 @@
 import { CFG, onFound, onMove, onSonar, tick } from './logic.js';
-import { CFG as M, layoutFor, resolveCircle } from './maps.js';
+import { CFG as M, MAPS, layoutFor, resolveFeet, supportAt, insideSolid, zoneAt } from './maps.js';
 import { createWorld } from './world.js';
 import { createControls } from './controls.js';
 
@@ -10,18 +10,12 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const nowMs = () => Date.now();
 
 const BANDS = [
-  { max: 5, label: 'Membakar', k: 1 },
-  { max: 9, label: 'Panas', k: 0.8 },
-  { max: 15, label: 'Hangat', k: 0.6 },
-  { max: 26, label: 'Sejuk', k: 0.35 },
-  { max: 40, label: 'Dingin', k: 0.18 },
+  { max: 8, label: 'Membakar', k: 1 },
+  { max: 15, label: 'Panas', k: 0.8 },
+  { max: 26, label: 'Hangat', k: 0.6 },
+  { max: 45, label: 'Sejuk', k: 0.35 },
+  { max: 70, label: 'Dingin', k: 0.18 },
   { max: Infinity, label: 'Beku', k: 0.06 },
-];
-
-const MAPS_UI = [
-  { id: 'gudang', name: 'Gudang Kuno', sub: 'rak kayu & tumpukan peti' },
-  { id: 'mainan', name: 'Ruang Mainan', sub: 'balok besar bersol' },
-  { id: 'kuil', name: 'Kuil Terbengkalai', sub: 'pilar batu & arca' },
 ];
 
 let R = null;
@@ -183,8 +177,10 @@ function syncRound(v) {
   R.me.x = sp.x;
   R.me.z = sp.z;
   R.me.y = 0;
+  R.me.sup = 0;
   R.me.vy = 0;
-  R.me.jumping = false;
+  R.me.air = false;
+  R.me.zone = 0;
   R.me.a = Math.atan2(R.layout.treasure.x - sp.x, R.layout.treasure.z - sp.z) + Math.PI;
   R.world.camState.yaw = R.me.a;
   R.world.camState.pitch = 0.42;
@@ -193,7 +189,7 @@ function syncRound(v) {
 }
 
 function sendMove() {
-  const msg = { t: 'mv', x: q1(R.me.x), z: q1(R.me.z), a: q2(R.me.a), s: R.moveS, j: R.me.y > 0.05 ? 1 : 0 };
+  const msg = { t: 'mv', x: q1(R.me.x), z: q1(R.me.z), a: q2(R.me.a), y: q2(R.me.y), s: R.moveS, j: R.me.air ? 1 : 0 };
   R.lastSent = msg;
   if (R.isHost()) {
     const st = R.ctx.state();
@@ -210,7 +206,7 @@ function relayPackets() {
   for (const p of st.players) {
     const q = st.race.racers[p.id];
     if (!q) continue;
-    rows.push([p.id, q1(q.x), q1(q.z), q2(q.a), q.s || 0, q.j ? 1 : 0]);
+    rows.push([p.id, q1(q.x), q1(q.z), q2(q.a), q.s || 0, q.j ? 1 : 0, q2(q.y || 0)]);
   }
   const msg = { t: 'p', r: rows };
   for (const p of st.players) if (p.id !== st.hostId) net.send(p.id, msg);
@@ -222,9 +218,9 @@ export function message(id, msg) {
     if (msg.t !== 'p' || !Array.isArray(msg.r)) return false;
     for (const row of msg.r) {
       if (!Array.isArray(row) || row.length < 5) continue;
-      const [pid, x, z, a, s, j] = row;
+      const [pid, x, z, a, s, j, y] = row;
       if (pid === R.myId() || !Number.isFinite(x) || !Number.isFinite(z)) continue;
-      const q = R.remote.get(pid) || { x: 0, z: 0, a: 0, vx: 0, vz: 0, t: 0 };
+      const q = R.remote.get(pid) || { x: 0, z: 0, a: 0, y: 0, vx: 0, vz: 0, t: 0 };
       const now = nowMs();
       const dt = (now - q.t) / 1000;
       if (dt > 0.02 && Math.hypot(x - q.x, z - q.z) < 8) {
@@ -234,6 +230,7 @@ export function message(id, msg) {
       q.x = x;
       q.z = z;
       q.a = Number.isFinite(+a) ? +a : q.a;
+      q.y = Number.isFinite(+y) ? +y : q.y;
       q.s = +s || 0;
       q.j = !!j;
       q.t = now;
@@ -302,11 +299,21 @@ function stepPhysics(dt, canMove) {
   let vx = rx * inp.x + fx * inp.z;
   let vz = rz * inp.x + fz * inp.z;
   const mag = Math.min(1, Math.hypot(inp.x, inp.z));
+  const zone = zoneAt(R.layout, R.me.x, R.me.z);
+  if (zone !== R.me.zone) {
+    if (zone === 1) beep(165, 0.14, 0.028, 'triangle');
+    R.me.zone = zone;
+  }
   R.moveS = mag > 0.08 ? (inp.run ? 2 : 1) : 0;
-  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag;
-  const solved = resolveCircle(R.layout, R.me.x + vx * speed * dt, R.me.z + vz * speed * dt, M.playerR);
-  R.me.x = solved.x;
-  R.me.z = solved.z;
+  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1);
+  const solved = resolveFeet(R.layout, R.me.x + vx * speed * dt, R.me.z + vz * speed * dt, M.playerR, R.me.y);
+  // Tepi lubang berperilaku seperti dinding selama kaki masih di bawah lantai: satu-satunya jalan
+  // keluar adalah melompat. Tanpa ini, melangkah ke bibir lubang berarti naik sendiri menembus lantai.
+  const tepiLubang = R.me.y < -0.02 && zoneAt(R.layout, solved.x, solved.z) !== 2;
+  if (!tepiLubang && !insideSolid(R.layout, solved.x, solved.z, R.me.y)) {
+    R.me.x = solved.x;
+    R.me.z = solved.z;
+  }
   if (mag > 0.1) {
     const want = Math.atan2(vx, vz);
     let da = want - R.me.a;
@@ -314,15 +321,28 @@ function stepPhysics(dt, canMove) {
     while (da < -Math.PI) da += Math.PI * 2;
     R.me.a += da * Math.min(1, dt * 16);
   }
-  if (R.me.jumping) {
+  const sup = supportAt(R.layout, R.me.x, R.me.z);
+  R.me.sup = sup;
+  if (R.me.air) {
     R.me.vy -= 22 * dt;
     R.me.y += R.me.vy * dt;
-    if (R.me.y <= 0) {
-      R.me.y = 0;
+    // Turun dan kaki sudah di bawah pijakan = mendarat. Tidak perlu syarat "tadi di atasnya": benda
+    // yang lebih tinggi dari satu langkah sudah mendorong kita keluar, jadi pijakan yang melompat ke
+    // atas sini selalu sebesar langkah atau mulut lubang — dan tanpa itu, keluar lubang sambil melayang
+    // akan membuat kita tembus lantai.
+    if (R.me.vy <= 0 && R.me.y <= sup) {
+      R.me.y = sup;
       R.me.vy = 0;
-      R.me.jumping = false;
-      beep(120, 0.1, 0.045, 'sawtooth');
+      R.me.air = false;
+      beep(sup < 0 ? 58 : sup > 0.4 ? 96 : 120, sup < 0 ? 0.16 : 0.1, 0.045, 'sawtooth');
     }
+  } else if (sup > R.me.y + 0.02) {
+    if (sup - R.me.y <= M.stepH + 0.06) R.me.y = sup;
+  } else if (sup < R.me.y - 0.02) {
+    R.me.air = true;
+    R.me.vy = 0;
+  } else {
+    R.me.y = sup;
   }
   const d = Math.hypot(R.me.x - R.layout.treasure.x, R.me.z - R.layout.treasure.z);
   R.meDist = d;
@@ -341,14 +361,16 @@ function updateAvatars(v, dt) {
     let x = p.x;
     let z = p.z;
     let a = p.a;
+    let y = p.y || 0;
     let s = p.s;
     let j = p.j;
     if (p.id === v.you.id) {
       x = R.me.x;
       z = R.me.z;
       a = R.me.a;
+      y = R.me.y;
       s = R.moveS;
-      j = R.me.y > 0.05;
+      j = R.me.air;
     } else {
       const q = R.remote.get(p.id);
       if (q && nowMs() - q.t < 900) {
@@ -356,6 +378,7 @@ function updateAvatars(v, dt) {
         x = q.x + q.vx * age;
         z = q.z + q.vz * age;
         a = q.a;
+        y = q.y || 0;
         s = q.s;
         j = q.j;
       }
@@ -366,7 +389,7 @@ function updateAvatars(v, dt) {
       x,
       z,
       a,
-      y: p.id === v.you.id ? R.me.y : 0,
+      y,
       s,
       j,
       me: p.id === v.you.id,
@@ -386,7 +409,8 @@ function drawLabels(v, w, h) {
     const q = R.remote.get(p.id);
     const x = p.id === v.you.id ? R.me.x : q ? q.x : p.x;
     const z = p.id === v.you.id ? R.me.z : q ? q.z : p.z;
-    const s = R.world.project(x, 2.7, z, w, h);
+    const y = p.id === v.you.id ? R.me.y : q ? q.y || 0 : p.y || 0;
+    const s = R.world.project(x, 2.7 + y, z, w, h);
     if (!s.vis) {
       np.style.opacity = '0';
       continue;
@@ -473,7 +497,7 @@ function updateHud(v, dt) {
     }
   } else if (R.cdShown !== null) {
     R.cdShown = null;
-    big('go', 'CARI!', 'peti emasnya tersembunyi di ' + r.mapName.toLowerCase());
+    big('go', 'CARI!', 'peti emasnya tersembunyi di ' + r.mapName.toLowerCase() + ' · ' + fiturOf(r.mapId).join(' · '));
     beep(1046, 0.28, 0.07);
     R.bigUntil = nowMs() + 1600;
   }
@@ -562,8 +586,8 @@ function loop(ts) {
   const look = R.controls.consumeLook();
   R.world.camState.yaw -= look.yaw;
   R.world.camState.pitch = clamp(R.world.camState.pitch - look.pitch, -0.22, 1.15);
-  if (canMove && R.controls.consumeJump() && !R.me.jumping) {
-    R.me.jumping = true;
+  if (canMove && R.controls.consumeJump() && !R.me.air && R.me.y - R.me.sup < 0.3) {
+    R.me.air = true;
     R.me.vy = 7.4;
     beep(420, 0.07, 0.035);
   }
@@ -611,7 +635,7 @@ function resize() {
   R.world.resize(w, h, pr);
   const help = node('help');
   if (help && !sig(help, R.touch ? 't' : 'k'))
-    setTxt(help, R.touch ? 'Geser kiri untuk jalan · geser kanan untuk memutar kamera' : 'WASD jalan · Shift lari · Spasi lompat · E sonar · klik layar untuk mengunci kamera ke mouse, Esc untuk lepas');
+    setTxt(help, R.touch ? 'Geser kiri untuk jalan · geser kanan untuk memutar kamera · Lompat untuk naik ke peti rendah atau keluar dari lubang' : 'WASD jalan · Shift lari · Spasi lompat (naik ke peti rendah, keluar dari lubang) · E sonar · klik layar untuk mengunci kamera ke mouse, Esc untuk lepas');
 }
 
 export function view(v) {
@@ -697,7 +721,7 @@ export function attach(ctx) {
       mapPick: $('mapPick'),
       mapCard: $('mapCard'),
     },
-    me: { x: 0, z: 0, y: 0, vy: 0, a: 0, jumping: false },
+    me: { x: 0, z: 0, y: 0, sup: 0, vy: 0, a: 0, air: false, zone: 0 },
     remote: new Map(),
     labels: new Map(),
     size: { w: 0, h: 0 },
@@ -804,7 +828,7 @@ function exposeDebug() {
   window.HARTA = {
     view: () => (R ? R.view : null),
     state: () => (R ? R.ctx.state() : null),
-    me: () => (R ? { x: R.me.x, z: R.me.z, a: R.me.a, y: R.me.y } : null),
+    me: () => (R ? { x: R.me.x, z: R.me.z, a: R.me.a, y: R.me.y, sup: R.me.sup, air: !!R.me.air, zone: R.me.zone } : null),
     dbg: () => {
       if (!R || !R.ready || !R.world) return null;
       return {
@@ -822,9 +846,12 @@ function exposeDebug() {
     api: {
       moveTo(x, z) {
         if (!R || !R.layout) return false;
-        const s = resolveCircle(R.layout, x, z, M.playerR);
+        const s = resolveFeet(R.layout, x, z, M.playerR, R.me.y);
         R.me.x = s.x;
         R.me.z = s.z;
+        R.me.y = supportAt(R.layout, s.x, s.z);
+        R.me.vy = 0;
+        R.me.air = false;
         R.meDist = Math.hypot(R.me.x - R.layout.treasure.x, R.me.z - R.layout.treasure.z);
         if (R.view) updateAvatars(R.view, 0.05);
         sendMove();
@@ -876,13 +903,13 @@ export function lobbyMaps(v) {
   const host = !!(v.you && v.you.isHost);
   if (sig(box, (v.mapPick || '') + '|' + host)) {
     box.textContent = '';
-    for (const m of MAPS_UI) {
+    for (const m of MAPS) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'hr-map' + (v.mapPick === m.id ? ' sel' : '') + (host ? '' : ' off');
       const cv = document.createElement('canvas');
-      cv.width = 120;
-      cv.height = 96;
+      cv.width = 180;
+      cv.height = 144;
       drawThumb(cv, m.id);
       const inr = document.createElement('span');
       inr.className = 'hr-map-in';
@@ -890,34 +917,87 @@ export function lobbyMaps(v) {
       b.textContent = m.name;
       const i = document.createElement('i');
       i.textContent = m.sub;
-      inr.append(b, i);
+      const f = document.createElement('em');
+      f.className = 'hr-map-fit';
+      f.textContent = fiturOf(m.id).join(' · ');
+      inr.append(b, i, f);
       btn.append(cv, inr);
       if (host) btn.onclick = () => R.ctx.pickMap(m.id);
       box.append(btn);
     }
   }
   setTxt($('mapWho'), host ? '(kamu yang pilih)' : '');
-  setTxt($('mapNote'), host ? 'Ronde 1 pakai tempat ini, lalu dua tempat sisanya berurutan.' : 'Tuan rumah yang menentukan tempatnya.');
+  setTxt($('mapNote'), host ? 'Ronde 1 pakai tempat ini, lalu tempat lainnya berputar sampai semua pernah didatangi.' : 'Tuan rumah yang menentukan tempatnya.');
+}
+
+// Kartu tempat dibaca dari layout yang sama seperti saat main (seed demo), bukan hiasan: bentuk
+// ruangan, di mana lumpur dan lubang, serta benda mana yang bisa diinjak semuanya ikut tergambar.
+const FITUR = new Map();
+function fiturOf(mapId) {
+  if (!FITUR.has(mapId)) {
+    const l = layoutFor(mapId, 4242);
+    const chip = [];
+    if (l.boxes.some((b) => !b.wall && b.h >= M.stepH && b.h <= 1.25)) chip.push('bisa dinaiki');
+    if (l.boxes.some((b) => b.k === 'soft')) chip.push('tanah lembek');
+    if (l.boxes.some((b) => b.k === 'pit')) chip.push('lubang jebakan');
+    FITUR.set(mapId, chip);
+  }
+  return FITUR.get(mapId);
 }
 
 function drawThumb(cv, mapId) {
-  const g = cv.getContext('2d');
   const l = layoutFor(mapId, 4242);
-  const s = Math.min((cv.width - 8) / l.bounds.w, (cv.height - 8) / l.bounds.d);
+  const g = cv.getContext('2d');
+  const s = Math.min((cv.width - 10) / l.bounds.w, (cv.height - 10) / l.bounds.d);
   const ox = cv.width / 2;
   const oy = cv.height / 2;
+  const px = (x) => ox + x * s;
+  const pz = (z) => oy + z * s;
+  const tapak = (b) => (b.rot ? [b.rw || b.w, b.rd || b.d] : [b.w, b.d]);
   g.fillStyle = l.map.sky;
   g.fillRect(0, 0, cv.width, cv.height);
-  g.fillStyle = l.palette.floor;
-  g.fillRect(ox - (l.bounds.w * s) / 2, oy - (l.bounds.d * s) / 2, l.bounds.w * s, l.bounds.d * s);
+  g.fillStyle = l.palette.floor2;
+  g.fillRect(px(-l.bounds.hw), pz(-l.bounds.hd), l.bounds.w * s, l.bounds.d * s);
+  // Zona lebih dulu dan semi-transparan: genangan harus tetap kelihatan ada benda di atasnya.
   for (const b of l.boxes) {
-    g.fillStyle = b.wall ? l.palette.wallDark : l.palette[b.c] || '#999';
-    g.fillRect(ox + (b.x - b.w / 2) * s, oy + (b.z - b.d / 2) * s, Math.max(1, b.w * s), Math.max(1, b.d * s));
+    if (b.k !== 'soft' && b.k !== 'pit') continue;
+    const [w, d] = tapak(b);
+    g.save();
+    g.globalAlpha = b.k === 'pit' ? 0.85 : 0.4;
+    g.fillStyle = l.palette[b.c] || '#241a12';
+    g.translate(px(b.x), pz(b.z));
+    g.rotate(-(b.rot || 0));
+    if (b.s === 'cyl') {
+      g.beginPath();
+      g.ellipse(0, 0, (w / 2) * s, (d / 2) * s, 0, 0, Math.PI * 2);
+      g.fill();
+    } else g.fillRect((-w / 2) * s, (-d / 2) * s, w * s, d * s);
+    g.restore();
+  }
+  for (const b of l.boxes) {
+    if (b.k === 'soft' || b.k === 'pit') continue;
+    const [w, d] = tapak(b);
+    const rw = Math.max(1, w * s);
+    const rd = Math.max(1, d * s);
+    const naek = !b.wall && b.h >= M.stepH && b.h <= 1.25;
+    g.save();
+    g.translate(px(b.x), pz(b.z));
+    g.rotate(-(b.rot || 0));
+    // 'wall' (bukan 'wallDark') supaya batas ruangan terbaca di atas lantai yang gelap.
+    g.fillStyle = b.wall ? l.palette.wall : l.palette[b.c] || '#999';
+    g.fillRect(-rw / 2, -rd / 2, rw, rd);
+    // Pena emas = "naik ke sini": cara termurah membedakan peti yang bisa diinjak dari yang cuma tembok.
+    if (naek) {
+      g.strokeStyle = 'rgba(255,224,138,0.8)';
+      g.lineWidth = 1;
+      g.strokeRect(-rw / 2, -rd / 2, rw, rd);
+    }
+    g.restore();
   }
   g.fillStyle = '#3fd2ff';
-  for (const sp of l.spawns.slice(0, 8)) g.fillRect(ox + sp.x * s - 1.5, oy + sp.z * s - 1.5, 3, 3);
+  for (const sp of l.spawns.slice(0, 8)) g.fillRect(px(sp.x) - 1.5, pz(sp.z) - 1.5, 3, 3);
   g.fillStyle = '#ffd76b';
-  g.fillRect(ox + l.treasure.x * s - 2.5, oy + l.treasure.z * s - 2.5, 5, 5);
+  g.fillRect(px(l.treasure.x) - 2.5, pz(l.treasure.z) - 2.5, 5, 5);
 }
 
 export function dispose() {

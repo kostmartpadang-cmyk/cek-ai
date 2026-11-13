@@ -930,7 +930,8 @@ button.primary.hr-go:disabled { opacity: 0.5; transform: none; box-shadow: 0 6px
 }
 .hr-maps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  /* 150 px: lima kartu jadi 3+2 di layar laptop dan 2+2+1 di HP, bukan 4+1 yang menyisakan lubang. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   margin-top: 10px;
 }
@@ -970,6 +971,17 @@ button.primary.hr-go:disabled { opacity: 0.5; transform: none; box-shadow: 0 6px
   font-style: normal;
   font-size: 11px;
   color: var(--muted);
+}
+/* Ciri rintangan peta, dibaca dari layout aslinya — bukan hiasan, jadi dia ikut berubah kalau
+   resep petanya berubah. */
+.hr-map-in > em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hr-gold-2);
 }
 .hr-map:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45); }
 .hr-map:focus-visible { outline: 2px solid var(--hr-neon); outline-offset: 2px; }

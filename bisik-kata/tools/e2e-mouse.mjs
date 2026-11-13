@@ -144,15 +144,17 @@ try {
     (await A.eval(`matchMedia('(pointer: coarse)').matches + '/' + navigator.maxTouchPoints`)) === 'false/0',
   );
 
-  await A.eval(`document.getElementById('modeHarta').click(); document.getElementById('name').value='Awi'; 1`);
+  await A.eval(`document.getElementById('modeHarta').click(); 1`);
   let inLobby = false;
-  for (let attempt = 1; attempt <= 3 && !inLobby; attempt++) {
-    await A.eval(`document.getElementById('create').click(); 1`);
+  for (let attempt = 1; attempt <= 5 && !inLobby; attempt++) {
+    // Nama ditulis ulang setiap percobaan: app.js mengisi kolomnya dari localStorage saat modulnya
+    // baru siap, yang bisa terjadi sesudah ketikan pertama kita.
+    await A.eval(`document.getElementById('name').value='Awi'; document.getElementById('create').click(); 1`);
     inLobby = await until(A, `!document.getElementById('lobby').classList.contains('hidden')`, 30000);
     if (!inLobby) {
       console.log('  percobaan kamar ' + attempt + ' gagal: ' + (await A.eval(`[document.getElementById('busyTxt').textContent, document.getElementById('homeErr').textContent].join(' / ')`)));
       await A.eval(`document.getElementById('busyCancel').click(); 1`);
-      await sleep(1500);
+      await sleep(2000 * attempt);
     }
   }
   if (!inLobby) throw new Error('tidak bisa membuat kamar (signaling bermasalah)');

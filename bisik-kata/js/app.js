@@ -57,7 +57,7 @@ const HOME_TXT = {
   },
   harta: {
     title: 'Satu ruangan, satu peti emas, satu pemenang.',
-    lede: 'Semua pemburu berlari di ruangan 3D yang sama dan saling terlihat. Yang paling dulu menyentuh peti emasnya menang. Tiga tempat, tiga ronde.',
+    lede: 'Semua pemburu berlari di ruangan 3D yang sama dan saling terlihat. Yang paling dulu menyentuh peti emasnya menang. Lima tempat, lima ronde.',
     create: 'Buat Kamar Berburu Harta',
   },
 };

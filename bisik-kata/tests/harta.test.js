@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAPS, CFG as M, mulberry32, buildLayout, layoutFor, blockedAt } from '../js/harta/maps.js';
+import { MAPS, CFG as M, mulberry32, buildLayout, layoutFor, blockedAt, supportAt, insideSolid, zoneAt } from '../js/harta/maps.js';
 import {
   CFG,
   COLORS,
@@ -77,7 +77,9 @@ test('peta: seed sama memberi layout yang sama persis', () => {
   const a = buildLayout(MAPS[0], mulberry32(1234));
   const b = buildLayout(MAPS[0], mulberry32(1234));
   assert.equal(JSON.stringify(a), JSON.stringify(b));
-  const c = buildLayout(MAPS[0], mulberry32(9999));
+  // Generator boleh menolak satu seed (ruangnya tersumbat), tapi layoutFor tidak boleh pernah menyerah.
+  const c = layoutFor('gudang', 9999);
+  assert.ok(c && c.treasure, 'layoutFor mencari seed cadangan sampai dapat');
   assert.notEqual(JSON.stringify(c.treasure), JSON.stringify(a.treasure));
   assert.equal(layoutFor('gudang', 4242), layoutFor('gudang', 4242));
 });
@@ -94,6 +96,9 @@ test('peta: harta selalu di ruang terbuka, jauh dari spawn, dan bisa dijangkau',
       for (const s of L.spawns)
         assert.equal(floodReachable(L, s, t), true, map.id + '/' + seed + ' harta terkurung dari spawn');
       assert.ok(L.decoys.length >= 2, map.id + '/' + seed + ' decoy kurang');
+      assert.notEqual(zoneAt(L, t.x, t.z), 2, map.id + '/' + seed + ' harta jatuh ke dalam lubang');
+      for (const s of L.spawns) assert.notEqual(zoneAt(L, s.x, s.z), 2, map.id + '/' + seed + ' spawn di dalam lubang');
+      for (const d of L.decoys) assert.notEqual(zoneAt(L, d.x, d.z), 2, map.id + '/' + seed + ' umpan di dalam lubang');
     }
   }
 });
@@ -150,6 +155,102 @@ test('gerak: input tidak wajar ditolak tanpa mengubah state', () => {
   assert.equal(st.race.racers.h.j, 1);
 });
 
+test('vertikal: pijakan peti, tinggi tak masuk akal ditolak, y absen tetap kompatibel', () => {
+  const st = started(2);
+  const L = st.race.layout;
+  const peti = L.boxes.filter((b) => !b.wall && b.h >= M.stepH && b.h <= 1.25).sort((a, b) => b.h - a.h)[0];
+  assert.ok(peti, 'peta menaruh penghalang yang puncaknya terjangkau lompatan');
+  assert.ok(peti.h <= M.stepH + 0.4, 'tinggi pijakan: ' + peti.h);
+  assert.equal(supportAt(L, peti.x, peti.z), peti.h, 'di atas peti ada pijakan setinggi puncaknya');
+  assert.equal(supportAt(L, peti.x + M.playerR + peti.w / 2 + 0.3, peti.z), 0, 'di samping peti lantai lagi');
+  assert.equal(insideSolid(L, peti.x, peti.z, 0), true, 'tubuh di dalam peti tidak mungkin');
+  assert.equal(insideSolid(L, peti.x, peti.z, peti.h), false, 'berdiri di atas peti mungkin');
+
+  const q = st.race.racers.p1;
+  const at = (y, t) => {
+    place(st, 'p1', peti.x, peti.z);
+    const msg = { x: peti.x, z: peti.z };
+    if (y !== undefined) msg.y = y;
+    return { res: onMove(st, 'p1', msg, t), x: q.x, z: q.z, y: q.y };
+  };
+
+  const didit = at(0, GO + 1000);
+  assert.equal(didit.res.ok, true, 'posisi tertanam diluruskan tuan rumah, bukan dibuang');
+  assert.equal(insideSolid(L, didit.x, didit.z, didit.y), false, 'tidak ada pemain yang tertanam di dalam peti');
+  assert.equal(didit.y, 0);
+
+  assert.equal(at(99, GO + 1100).res.ok, false, 'tinggi mustahil ditolak');
+  assert.equal(at(peti.h + M.jumpReach + 0.6, GO + 1150).res.ok, false, 'melampaui jangkauan lompat ditolak');
+  const di = at(peti.h, GO + 1200);
+  assert.equal(di.res.ok, true);
+  assert.equal(di.y, peti.h);
+  assert.equal(supportAt(L, di.x, di.z), peti.h);
+  assert.equal(at(peti.h + M.jumpReach, GO + 1300).res.ok, true, 'tepat di batas jangkauan masih diterima');
+
+  const lama = at(undefined, GO + 1400);
+  assert.equal(lama.res.ok, true, 'klien lama tanpa y tetap diterima');
+  assert.equal(lama.y, 0);
+
+  q.y = peti.h;
+  const view = toView(st, 'p1', GO + 1500);
+  const mine = view.race.racers.find((p) => p.id === 'p1');
+  assert.equal(mine.y, Math.round(peti.h * 100) / 100, 'tinggi ikut terkirim supaya terlihat teman');
+});
+
+test('zona: tanah lembek memperlambat tanpa menghalangi, lubang menjatuhkan dan cuma sedalam itu', () => {
+  for (const map of MAPS) {
+    const L = layoutFor(map.id, 4242);
+    const lembek = L.boxes.filter((b) => b.k === 'soft');
+    assert.ok(lembek.length >= 3, map.id + ' menaruh tanah lembek: ' + lembek.length);
+    for (const b of lembek) assert.equal(zoneAt(L, b.x, b.z), 1, map.id + ' lembek tercetak di grid zona');
+    // Peti boleh berdiri di dalam lumpur, jadi yang diuji bukan titik tengah bendanya melainkan sel-sel
+    // lumpurnya sendiri: masih harus ada tempat pijak supaya genangannya bisa dilewati dengan berjalan.
+    let bisaDiinjak = 0;
+    for (const b of lembek) {
+      const r = Math.max(b.w, b.d) / 2 - 0.6;
+      for (let dx = -r; dx <= r; dx += 1)
+        for (let dz = -r; dz <= r; dz += 1) {
+          if (Math.hypot(dx, dz) > r) continue;
+          const x = b.x + dx;
+          const z = b.z + dz;
+          if (zoneAt(L, x, z) !== 1 || blockedAt(L, x, z) || supportAt(L, x, z) !== 0 || insideSolid(L, x, z, 0)) continue;
+          bisaDiinjak++;
+        }
+    }
+    assert.ok(bisaDiinjak >= 6, map.id + ' punya tanah lembek yang benar-benar bisa diinjak: ' + bisaDiinjak);
+  }
+
+  const L = layoutFor('kuil', 4242);
+  const lubang = L.boxes.filter((b) => b.k === 'pit');
+  assert.ok(lubang.length >= 2, 'kuil menaruh lubang jebakan: ' + lubang.length);
+  for (const b of lubang) {
+    assert.equal(zoneAt(L, b.x, b.z), 2, 'lubang tercetak di grid zona');
+    assert.equal(supportAt(L, b.x, b.z), -M.pitDepth, 'dasar lubang adalah pijakan terendah di situ');
+    assert.equal(blockedAt(L, b.x, b.z), false, 'lubang tidak memotong flood fill: masih bisa diseberangi');
+    assert.equal(floodReachable(L, b, L.treasure), true, 'dari dasar lubang harta tetap bisa didatangi');
+  }
+
+  const st = room(2);
+  setMap(st, { id: 'kuil', by: 'h' });
+  startGame(st, { now: T0, rng: () => 0 });
+  const q = st.race.racers.p1;
+  const lub = st.race.layout.boxes.filter((b) => b.k === 'pit')[0];
+  assert.ok(lub, 'kuil ronde 1 punya lubang');
+  place(st, 'p1', lub.x, lub.z);
+  assert.equal(onMove(st, 'p1', { x: lub.x, z: lub.z, y: -M.pitDepth }, GO + 1000).ok, true, 'di dasar lubang posisi tetap sah');
+  assert.equal(q.y, -M.pitDepth);
+  assert.equal(onMove(st, 'p1', { x: lub.x, z: lub.z, y: -M.pitDepth - 0.6 }, GO + 1100).ok, false, 'terowongan di bawah lubang ditolak');
+  const view = toView(st, 'p1', GO + 1200);
+  assert.equal(view.race.racers.find((p) => p.id === 'p1').y, -M.pitDepth, 'lubang ikut terkirim ke view');
+
+  // Tepi lubang adalah dinding sampai kaki naik ke atas lantai: di luar lubang tak ada bawah lantai.
+  const spawn = st.race.layout.spawns[0];
+  place(st, 'p1', spawn.x, spawn.z);
+  assert.equal(onMove(st, 'p1', { x: spawn.x, z: spawn.z, y: -0.5 }, GO + 1300).ok, false, 'menyusup di bawah lantai biasa ditolak');
+  assert.equal(onMove(st, 'p1', { x: spawn.x, z: spawn.z, y: -0.2 }, GO + 1400).ok, true, 'toleransi kecil tetap diterima');
+  assert.equal(q.y, -0.2);
+});
+
 test('fase: countdown mengunci gerak-claim, lalu running, lalu reveal dan ronde berikutnya', () => {
   const st = started(2);
   assert.equal(st.race.status, 'countdown');
@@ -174,7 +275,7 @@ test('fase: countdown mengunci gerak-claim, lalu running, lalu reveal dan ronde 
   assert.notEqual(st.race.id, 'r1');
 });
 
-test('ronde tiga peta lalu selesai dengan poin peringkat + bonus kecepatan', () => {
+test('ronde lima peta lalu selesai dengan poin peringkat + bonus kecepatan', () => {
   const st = started(3);
   const seen = [];
   for (let i = 0; i < 30 && st.phase !== 'over'; i++) {
@@ -191,14 +292,35 @@ test('ronde tiga peta lalu selesai dengan poin peringkat + bonus kecepatan', () 
     if (st.phase === 'reveal') tick(st, { now: st.race.revealUntil + 1 });
   }
   assert.equal(st.phase, 'over');
-  assert.deepEqual(seen, ['gudang#0', 'mainan#1', 'kuil#2']);
+  assert.deepEqual(seen, MAPS.map((m, i) => m.id + '#' + i));
   const p1 = st.players.find((p) => p.id === 'p1');
   const bonus = (ms) => Math.round(CFG.speedBonusMax * (1 - ms / CFG.roundMs));
   assert.equal(p1.bestMs, 5000);
-  assert.equal(p1.score, 3 * (CFG.points[0] + bonus(5000)));
-  assert.equal(st.players.find((p) => p.id === 'p2').score, 3 * (CFG.points[1] + bonus(7000)));
-  assert.equal(st.players.find((p) => p.id === 'h').score, 3 * (CFG.points[2] + bonus(9000)));
+  assert.equal(p1.score, MAPS.length * (CFG.points[0] + bonus(5000)));
+  assert.equal(st.players.find((p) => p.id === 'p2').score, MAPS.length * (CFG.points[1] + bonus(7000)));
+  assert.equal(st.players.find((p) => p.id === 'h').score, MAPS.length * (CFG.points[2] + bonus(9000)));
   assert.equal(standings(st)[0].id, 'p1');
+});
+
+test('urutan ronde diputar dari pilihan tuan rumah: tiap tempat tepat satu kali', () => {
+  const st = room(3);
+  setMap(st, { id: 'kuil', by: 'h' });
+  startGame(st, { now: T0, rng: () => 0 });
+  const seen = [];
+  for (let i = 0; i < 30 && st.phase !== 'over'; i++) {
+    const r = st.race;
+    seen.push(r.mapId);
+    tick(st, { now: r.goAt });
+    atTreasure(st, 'p1');
+    onFound(st, 'p1', { ms: 5000 }, r.goAt + 5000);
+    tick(st, { now: r.goAt + 5000 + CFG.arbitrateMs + 1 });
+    tick(st, { now: r.goAt + 5000 + CFG.arbitrateMs + CFG.finishWindowMs + 1 });
+    if (st.phase === 'reveal') tick(st, { now: st.race.revealUntil + 1 });
+  }
+  assert.equal(seen.length, MAPS.length, 'satu sesi mengunjungi setiap tempat');
+  assert.equal(new Set(seen).size, MAPS.length, 'tidak ada tempat yang diulang');
+  assert.equal(seen[0], 'kuil', 'ronde 1 tetap pilihan tuan rumah');
+  assert.deepEqual(CFG.mapOrder, MAPS.map((m) => m.id), 'daftar tempat hanya punya satu sumber');
 });
 
 test('klaim nyaris bersamaan: waktu klien yang jadi penentu, bukan urutan tiba', () => {

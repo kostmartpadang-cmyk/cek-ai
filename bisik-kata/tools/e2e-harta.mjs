@@ -121,7 +121,7 @@ const check = (name, cond, extra = '') => {
 };
 
 /* Jalan mendekat satu titik: langkah kecil + belok saat mentok tembok/peti. */
-async function walkTo(tab, x, z, maxStep = 420) {
+async function walkTo(tab, x, z, maxStep = 900) {
   return tab.eval(
     `(async () => {
       const H = window.HARTA;
@@ -160,6 +160,11 @@ const raceOf = (tab) => tab.eval(`(() => { const v = HARTA && HARTA.view && HART
 const treasureOf = (tab) => tab.eval(`(() => (HARTA && HARTA.api ? HARTA.api.treasure() : null))()`);
 
 const mapCardCount = `document.querySelectorAll('#mapPick .hr-map').length`;
+
+// Jejak GPU per ronde: [geometri, tekstur] seperti yang dilaporkan renderer. Diambil setelah level
+// ronde itu benar-benar terpasang di tab, supaya yang dibandingkan adalah dunia yang sedang dipakai.
+const jejak = [];
+const sampel = (tab, id) => until(tab, `HARTA.dbg() && HARTA.dbg().raceId === ${lit(id)} && HARTA.dbg().drawCalls > 0 ? JSON.stringify([HARTA.dbg().geoms, HARTA.dbg().texs]) : ''`, 40000).then(JSON.parse);
 
 const stateDump = `JSON.stringify({
   screens: ['home','busy','lobby','race','over'].filter(n => !document.getElementById(n).classList.contains('hidden')),
@@ -207,6 +212,8 @@ try {
   }
   check('kamar harta memakai kode 4 huruf yang sama seperti Bisik Kata', /^[A-Z]{4}$/.test(code), 'kode=' + code);
 
+  // Kartu tempat dibangun oleh loop render, yang di swiftshader cuma ~2 fps — tunggu dulu, baru baca.
+  await until(A, `document.querySelectorAll('#mapPick .hr-map').length >= 5`, 40000);
   const picker = await A.eval(`(() => {
     const cards = [...document.querySelectorAll('#mapPick .hr-map')];
     const cv = cards[0] && cards[0].querySelector('canvas');
@@ -219,7 +226,21 @@ try {
             cards.length, cards.map(c => c.querySelector('b').textContent).join(','),
             cards.filter(c => c.classList.contains('sel')).length, painted].join(' | ');
   })()`);
-  check('lobby harta punya 3 kartu tempat + thumbnail tergambar', /^true \| 3 \| Gudang Kuno,Ruang Mainan,Kuil Terbengkalai \| 1 \| \d{3,}$/.test(picker), picker);
+  check('lobby harta punya 5 kartu tempat + thumbnail tergambar', /^true \| 5 \| Gudang Kuno,Ruang Mainan,Kuil Terbengkalai,Tambang Tua,Kebun Raya \| 1 \| \d{3,}$/.test(picker), picker);
+
+  const chips = await A.eval(`(() => {
+    const cari = (nama) => {
+      const c = [...document.querySelectorAll('#mapPick .hr-map')].find((k) => k.querySelector('b').textContent === nama);
+      return c ? c.querySelector('em').textContent : '';
+    };
+    return [cari('Kuil Terbengkalai'), cari('Gudang Kuno')].join(' || ');
+  })()`);
+  const [chipKuil, chipGudang] = chips.split(' || ');
+  check(
+    'kartu menyebut rintangan yang benar-benar ada di petanya',
+    /bisa dinaiki/.test(chipKuil) && /lubang jebakan/.test(chipKuil) && /bisa dinaiki/.test(chipGudang) && !/lubang/.test(chipGudang),
+    chips,
+  );
 
   await A.eval(`[...document.querySelectorAll('#mapPick .hr-map')].find(b => /Kuil/.test(b.textContent)).click(); 1`);
   await until(A, `HARTA.state().mapPick === 'kuil'`);
@@ -229,7 +250,7 @@ try {
   await until(A, `HARTA.state().players.length >= 2`, 30000);
   await until(B, `document.querySelectorAll('#lobbyPlayers li').length >= 2`, 30000);
   const follow = await until(B, `document.body.classList.contains('mode-harta') ? document.querySelectorAll('#mapPick .hr-map').length : 0`);
-  check('tamu otomatis ikut mode kamar dan melihat 3 kartu', follow === 3, 'kartu=' + follow);
+  check('tamu otomatis ikut mode kamar dan melihat 5 kartu', follow === 5, 'kartu=' + follow);
   const guestLocked = await B.eval(`[...document.querySelectorAll('#mapPick .hr-map')].every(c => c.classList.contains('off'))`);
   check('tamu tidak bisa mengganti tempat', guestLocked === true);
 
@@ -250,10 +271,14 @@ try {
 
   await until(A, `HARTA.view().race.status === 'running'`, 20000);
   await until(B, `HARTA.view().race.status === 'running'`, 20000);
-  const banner = await B.eval(`document.getElementById('hrBig').textContent`);
-  check('hitungan mundur selesai lalu banner CARI tampil di tamu', /CARI/i.test(banner), 'banner=' + banner.trim());
+  // Banner CARI ditulis oleh loop render tamu; di swiftshader tab itu bisa cuma 1 fps, jadi status
+  // 'running' sudah terlihat sebelum banner sempat digambar — tunggu banner-nya, bukan statusnya.
+  const banner = await until(B, `/CARI/i.test(document.getElementById('hrBig').textContent) ? document.getElementById('hrBig').textContent : ''`, 20000);
+  check('hitungan mundur selesai lalu banner CARI tampil di tamu', /CARI/i.test(banner), 'banner=' + String(banner).trim());
+  check('banner ronde menyebut ciri rintangan peta', /kuil/.test(banner) && /bisa dinaiki/.test(banner) && /lubang jebakan/.test(banner), String(banner).trim());
   const rows = await B.eval(`document.querySelectorAll('#hrTrack .hr-tc').length`);
   check('strip pemburu menampilkan kedua pemain', rows >= 2, 'baris=' + rows);
+  jejak.push({ peta: r1.mapId, tuan: await sampel(A, r1.id), tamu: await sampel(B, r1.id) });
 
   await B.eval(`HARTA.api.sonar(); 1`);
   const arrowShown = await until(B, `!document.getElementById('hrArrow').classList.contains('hidden')`, 1500);
@@ -288,10 +313,11 @@ try {
   const reveal = await B.eval(`[document.getElementById('hrRevealK').textContent, document.getElementById('hrRevealWho').textContent, document.getElementById('hrNextTxt').textContent, !document.getElementById('hrReveal').classList.contains('hidden')].join(' | ')`);
   check('banner reveal menyebut pemenang ronde', /Awi/.test(reveal) && /ditemukan oleh/.test(reveal), reveal);
 
-  await until(A, `HARTA.state().race.index === 1`, 45000);
-  await until(B, `HARTA.view().race.index === 1 && HARTA.view().race.status === 'running'`, 45000);
+  await until(A, `HARTA.state().race.index === 1`, 90000);
+  await until(B, `HARTA.view().race.index === 1 && HARTA.view().race.status === 'running'`, 90000);
   const r2 = await raceOf(B);
-  check('ronde 2 otomatis pindah ke peta kedua', r2.mapId === 'mainan', r2.mapId + '#' + r2.index);
+  check('ronde 2 otomatis pindah ke tempat berikutnya dalam rotasi', r2.mapId === 'tambang', r2.mapId + '#' + r2.index);
+  jejak.push({ peta: r2.mapId, tuan: await sampel(A, r2.id), tamu: await sampel(B, r2.id) });
 
   const t2 = await treasureOf(B);
   const walkB = await walkTo(B, t2.x, t2.z);
@@ -301,18 +327,39 @@ try {
   const bAt = await A.eval(`(() => { const st = HARTA.state(); const q = st.race.racers[${lit(won2)}]; return [q.x, q.z]; })()`);
   check('posisi tamu tersinkron ke tuan rumah', Math.hypot(bAt[0] - t2.x, bAt[1] - t2.z) < 2, 'tamu di=' + JSON.stringify(bAt));
 
-  await until(A, `HARTA.state().race.index === 2`, 45000);
-  await until(B, `HARTA.view().race.index === 2 && HARTA.view().race.status === 'running'`, 45000);
-  const r3 = await raceOf(A);
-  check('ronde 3 memakai peta ketiga (sisa dari urutan)', r3.mapId === 'kuil', r3.mapId + '#' + r3.index);
+  // Rotasi dari pilihan tuan rumah 'kuil': kuil, tambang, kebun, gudang, mainan — tiap tempat sekali.
+  const rotasi = ['kebun', 'gudang', 'mainan'];
+  for (let idx = 2; idx < 5; idx++) {
+    await until(A, `HARTA.state().race.index === ${idx}`, 90000);
+    await until(B, `HARTA.view().race.index === ${idx} && HARTA.view().race.status === 'running'`, 90000);
+    const r = await raceOf(A);
+    check(`ronde ${idx + 1} memakai tempat rotasi berikutnya`, r.mapId === rotasi[idx - 2], r.mapId + '#' + r.index);
+    const tab = idx % 2 === 0 ? A : B;
+    const juara = idx % 2 === 0 ? hostId : guestId;
+    const t = await treasureOf(tab);
+    const walk = await walkTo(tab, t.x, t.z, 900);
+    check(`peta ${r.mapId} bisa didatangi tanpa teleport`, walk.ok === true, JSON.stringify(walk));
+    await until(A, `HARTA.state().race.winnerId === ${lit(juara)}`, 60000);
+    check(`ronde ${idx + 1} dimenangkan ${(idx % 2 === 0 && 'tuan') || 'tamu'} rumah`, true);
+    jejak.push({ peta: r.mapId, tuan: await sampel(A, r.id), tamu: await sampel(B, r.id) });
+  }
 
-  const t3 = await treasureOf(A);
-  await walkTo(A, t3.x, t3.z);
-  await until(A, `HARTA.state().race.winnerId === ${lit(hostId)}`, 30000);
-  check('ronde 3 dimenangkan tuan rumah', true);
+  // Setiap ronde membangun ulang dunia. Yang dibuat dan dibuang per ronde cuma beberapa geometri
+  // (lantai, berkas cahaya, halo, percikan) — sisanya dibagi, jadi hitungannya harus rata. Dulu
+  // throwAway() melewati objek root sehingga beam/halo/sparks tertinggal dan naik +3 tiap ronde.
+  // Toleransinya bukan nol karena sebuah geometri baru ikut terhitung setelah pertama kali dirender,
+  // dan tab swiftshader di sini bisa cuma 1-7 fps: sampelnya berbalik ±1-2 tergantung waktu.
+  const geo = (j) => Math.max(j.tuan[0], j.tamu[0]);
+  const tex = (j) => Math.max(j.tuan[1], j.tamu[1]);
+  const merangkak = jejak.filter((j, i) => i > 0 && geo(j) > geo(jejak[i - 1]) + 2).length;
+  check(
+    'geometri/tekstur tidak merangkak naik lintas ronde',
+    geo(jejak[jejak.length - 1]) <= geo(jejak[0]) + 6 && tex(jejak[jejak.length - 1]) <= tex(jejak[0]) + 2 && merangkak <= 1,
+    JSON.stringify(jejak.map((j) => j.peta + ' tuan=' + j.tuan.join('/') + ' tamu=' + j.tamu.join('/'))),
+  );
 
-  await until(A, `HARTA.state().phase === 'over'`, 45000);
-  await until(B, `!document.getElementById('over').classList.contains('hidden')`, 45000);
+  await until(A, `HARTA.state().phase === 'over'`, 90000);
+  await until(B, `!document.getElementById('over').classList.contains('hidden')`, 90000);
   const over = await A.eval(`(() => [String(!document.getElementById('overMvp').classList.contains('hidden')),
             document.getElementById('mvpName').textContent,
             document.getElementById('mvpSub').textContent,
@@ -345,9 +392,11 @@ try {
     `document.getElementById('lobbyCode').textContent.trim() === ${lit(code2)} && document.querySelectorAll('#lobbyPlayers li').length >= 2`,
     30000,
   );
+  // Kartu tempat dibangun di layar lobby oleh loop render, yang di swiftshader bisa cuma 2 fps.
+  await until(B, `${mapCardCount} === 5`, 20000);
   const cards2 = [await A.eval(mapCardCount), await B.eval(mapCardCount)];
   check('tamu bisa masuk kamar kedua', joined2 === true, 'kode=' + code2);
-  check('ruang tunggu kamar kedua membangun ulang kartu tempat', cards2[0] === 3 && cards2[1] === 3, 'tuan=' + cards2[0] + ' tamu=' + cards2[1]);
+  check('ruang tunggu kamar kedua membangun ulang kartu tempat', cards2[0] === 5 && cards2[1] === 5, 'tuan=' + cards2[0] + ' tamu=' + cards2[1]);
   await A.eval(`document.getElementById('start').click(); 1`);
   const rid2 = await until(A, `HARTA.view() && HARTA.view().race ? HARTA.view().race.id : ''`, 40000);
   let race2 = false;

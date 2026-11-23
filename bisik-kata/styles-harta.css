@@ -109,12 +109,18 @@
 .hr-plate {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 7px 14px 8px;
-  min-width: 0;
+  gap: 3px;
+  padding: 8px 14px 9px;
+  min-width: min(52vw, 230px);
   background: var(--hr-panel);
   border-radius: var(--hr-r);
   clip-path: polygon(var(--hr-cut) 0, 100% 0, 100% calc(100% - var(--hr-cut)), calc(100% - var(--hr-cut)) 100%, 0 100%, 0 var(--hr-cut));
+}
+.hr-plate-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .hr-round {
   font-size: 10px;
@@ -130,6 +136,26 @@
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 10px rgba(255, 200, 90, 0.45);
 }
+.hr-coord {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--hr-neon);
+  opacity: 0.92;
+  text-shadow: 0 0 8px rgba(63, 210, 255, 0.4);
+}
+.hr-map-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 1px 0;
+}
+.hr-map-ico {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 214, 120, 0.5));
+}
 .hr-mapname {
   max-width: 44vw;
   overflow: hidden;
@@ -143,6 +169,44 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+.hr-subloc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2edf6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border-left: 2px solid var(--mint);
+  transition: border-color 0.25s, color 0.25s;
+}
+.hr-subloc-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 6px var(--mint);
+  animation: hrSublocPulse 1.6s ease-in-out infinite;
+}
+.hr-subloc.warning {
+  color: #ff9990;
+  border-left-color: var(--hr-danger);
+  background: rgba(255, 90, 79, 0.12);
+}
+.hr-subloc.warning .hr-subloc-dot {
+  background: var(--hr-danger);
+  box-shadow: 0 0 8px var(--hr-danger);
+}
+@keyframes hrSublocPulse {
+  0%, 100% { opacity: 0.45; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.25); }
 }
 
 /* timer ring mirrors the existing .timer idiom (--p 1 -> 0) */
@@ -639,6 +703,48 @@
   will-change: transform;
   /* JS owns `transform` on this element; offsets live in the child */
 }
+.hr-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 11px 6px;
+  max-width: 220px;
+  min-width: 32px;
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+  background: rgba(14, 28, 44, 0.95);
+  border: 1.5px solid var(--hr-edge);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), 0 0 12px rgba(255, 214, 120, 0.3);
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.hr-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--hr-edge);
+}
+.hr-bubble.pop {
+  animation: hrBubblePop 0.35s cubic-bezier(0.18, 1.4, 0.4, 1) both;
+}
+@keyframes hrBubblePop {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.7); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
 .hr-np-name {
   display: block;
   white-space: nowrap;
@@ -675,9 +781,9 @@
 .hr-feed {
   position: absolute;
   left: calc(10px + var(--hr-in-l));
-  bottom: calc(12px + var(--hr-in-b));
-  width: min(58vw, 260px);
-  max-height: 30vh;
+  bottom: calc(54px + var(--hr-in-b));
+  width: min(60vw, 280px);
+  max-height: 28vh;
   margin: 0;
   padding: 8px 10px;
   overflow: hidden;
@@ -689,6 +795,7 @@
   border-radius: var(--hr-r);
   clip-path: polygon(0 22%, 100% 0, 100% 100%, 0 100%);
   font-size: 11.5px;
+  pointer-events: none;
 }
 .hr-feed > li {
   padding: 2px 0 2px 9px;
@@ -696,15 +803,148 @@
   color: var(--muted);
   animation: hrFeedIn 0.28s ease both;
 }
-.hr-feed > li:nth-last-child(1n + 5) { opacity: 0.55; }
-.hr-feed > li:nth-last-child(n + 7) { opacity: 0.3; }
+.hr-feed > li:nth-last-child(1n + 5) { opacity: 0.65; }
+.hr-feed > li:nth-last-child(n + 7) { opacity: 0.35; }
 .hr-feed > li[data-k="win"] { color: var(--hr-gold-1); border-left-color: var(--hr-gold-1); font-weight: 800; }
 .hr-feed > li[data-k="found"] { color: #ffe6a8; border-left-color: var(--amber); }
 .hr-feed > li[data-k="go"] { color: var(--mint); border-left-color: var(--mint); }
 .hr-feed > li[data-k="sys"] { color: var(--hr-neon); border-left-color: var(--hr-neon); }
 .hr-feed > li[data-k="join"] { color: var(--ink); }
 .hr-feed > li[data-k="reveal"] { color: var(--amber); border-left-color: var(--amber); }
+.hr-feed > li.hr-feed-chat {
+  border-left-color: var(--hr-gold-2);
+  color: #fff;
+  background: rgba(255, 214, 120, 0.08);
+  border-radius: 4px;
+  padding: 3px 6px 3px 8px;
+}
+.hr-feed > li.hr-feed-chat > b {
+  font-weight: 800;
+  margin-right: 4px;
+}
 @keyframes hrFeedIn { from { opacity: 0; transform: translateX(-10px); } }
+
+/* -------------------------- 9.5 in-map chat bar -------------------------- */
+
+.hr-chat-wrap {
+  position: absolute;
+  left: calc(10px + var(--hr-in-l));
+  bottom: calc(12px + var(--hr-in-b));
+  z-index: 4;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.hr-chat-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 9px;
+  cursor: pointer;
+  background: var(--hr-panel);
+  border: 1.5px solid var(--hr-edge);
+  border-radius: 999px;
+  color: var(--hr-gold-1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 236, 190, 0.2);
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.hr-chat-toggle:hover {
+  transform: translateY(-2px);
+  background: var(--hr-panel-2);
+}
+.hr-chat-toggle:active {
+  transform: translateY(1px);
+}
+.hr-chat-ico {
+  font-size: 15px;
+  line-height: 1;
+}
+.hr-chat-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hr-gold-1);
+}
+.hr-chat-key {
+  position: static;
+  display: inline-block;
+  margin-left: 2px;
+  font-size: 8.5px;
+}
+.hr-chat-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--hr-panel-2);
+  border: 2px solid var(--hr-edge);
+  border-radius: var(--hr-r);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 214, 120, 0.3);
+  width: min(88vw, 360px);
+  animation: hrChatBarIn 0.22s cubic-bezier(0.18, 1.3, 0.4, 1) both;
+}
+@keyframes hrChatBarIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.hr-chat-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: #fff;
+  background: rgba(4, 12, 20, 0.85);
+  border: 1px solid rgba(255, 214, 120, 0.3);
+  border-radius: 6px;
+  outline: none;
+}
+.hr-chat-input:focus {
+  border-color: var(--hr-neon);
+  box-shadow: 0 0 8px rgba(63, 210, 255, 0.4);
+}
+.hr-chat-input::placeholder {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.hr-chat-send {
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--hr-gold-ink);
+  background: linear-gradient(180deg, var(--hr-gold-1), var(--hr-gold-2));
+  border: 1px solid var(--hr-gold-3);
+  box-shadow: 0 2px 0 var(--hr-gold-3);
+}
+.hr-chat-send:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+.hr-chat-close {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+.hr-chat-close:hover {
+  color: #fff;
+  border-color: #ff5a4f;
+}
 
 /* ----------------------------- 10. announcer ----------------------------- */
 
@@ -1334,6 +1574,8 @@ body.mode-harta #howHarta > .tip { padding: 0 4px; }
   .hr-heat.burn,
   .hr-heat.burn .hr-heat-icon,
   .hr-decoy-alert.pop,
+  .hr-bubble.pop,
+  .hr-chat-bar,
   .hr-radar-wave.active,
   .hr-ping-dot,
   .hr-timer.low,

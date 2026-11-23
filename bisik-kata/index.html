@@ -118,9 +118,19 @@
 
       <div class="hr-hud">
         <div class="hr-top">
-          <div class="hr-plate">
-            <span class="hr-round">RONDE <b id="hrIdx">1</b>/<b id="hrTot">3</b></span>
-            <span class="hr-mapname" id="hrMap">—</span>
+          <div class="hr-plate" id="hrPlate">
+            <div class="hr-plate-top">
+              <span class="hr-round">RONDE <b id="hrIdx">1</b>/<b id="hrTot">3</b></span>
+              <span class="hr-coord" id="hrCoord">X: 0 · Z: 0</span>
+            </div>
+            <div class="hr-map-title">
+              <span class="hr-map-ico" id="hrMapIco">📦</span>
+              <span class="hr-mapname" id="hrMap">—</span>
+            </div>
+            <div class="hr-subloc" id="hrSubloc">
+              <span class="hr-subloc-dot"></span>
+              <span class="hr-subloc-txt" id="hrSublocTxt">Memetakan sektor…</span>
+            </div>
           </div>
           <div class="hr-compass" id="hrCompass" title="Kompas Arah">
             <div class="hr-compass-ring" id="hrCompassRing">
@@ -159,6 +169,20 @@
 
         <div class="hr-labels" id="hrLabels"></div>
         <div class="hr-feed" id="hrFeed"></div>
+
+        <div class="hr-chat-wrap" id="hrChatWrap">
+          <button type="button" class="hr-chat-toggle" id="hrChatToggle" title="Chatting di Peta (Tekan Enter)">
+            <span class="hr-chat-ico">💬</span>
+            <span class="hr-chat-lbl">Chat</span>
+            <span class="hr-key-hint hr-chat-key">Enter</span>
+          </button>
+          <form class="hr-chat-bar hidden" id="hrChatForm" autocomplete="off">
+            <input type="text" id="hrChatInput" class="hr-chat-input" placeholder="Ketik pesan di peta (Enter)..." maxlength="60" />
+            <button type="submit" class="hr-chat-send" id="hrChatSend">Kirim</button>
+            <button type="button" class="hr-chat-close" id="hrChatClose" aria-label="Tutup Chat">✕</button>
+          </form>
+        </div>
+
         <div class="hr-big" id="hrBig"></div>
         <div class="hr-help" id="hrHelp"></div>
       </div>

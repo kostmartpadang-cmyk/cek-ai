@@ -1,5 +1,5 @@
 import { CFG, onFound, onMove, onSonar, tick } from './logic.js';
-import { CFG as M, MAPS, layoutFor, resolveFeet, supportAt, insideSolid, zoneAt } from './maps.js';
+import { CFG as M, MAPS, layoutFor, resolveFeet, supportAt, insideSolid, zoneAt, sectorAt, MAP_ICONS } from './maps.js';
 import { createWorld } from './world.js';
 import { createControls } from './controls.js';
 
@@ -141,9 +141,13 @@ function labelNode(id, name, color) {
   if (!np) {
     np = document.createElement('div');
     np.className = 'hr-np';
+    const bubble = document.createElement('div');
+    bubble.className = 'hr-bubble hidden';
     const chip = document.createElement('span');
     chip.className = 'hr-np-name';
-    np.append(chip);
+    np.append(bubble, chip);
+    np._chip = chip;
+    np._bubble = bubble;
     R.labels.set(id, np);
     node('labels').append(np);
   }
@@ -156,7 +160,71 @@ function labelNode(id, name, color) {
 }
 
 function setLabel(np, text) {
-  np.firstChild.textContent = text;
+  (np._chip || np.firstChild).textContent = text;
+}
+
+function showSpeechBubble(id, text) {
+  if (!R) return;
+  const np = R.labels.get(id);
+  if (!np || !np._bubble) return;
+  np._bubble.textContent = text;
+  np._bubble.classList.remove('hidden');
+  np._bubble.classList.remove('pop');
+  void np._bubble.offsetWidth;
+  np._bubble.classList.add('pop');
+  if (np._bubbleTimer) clearTimeout(np._bubbleTimer);
+  np._bubbleTimer = setTimeout(() => {
+    if (np && np._bubble) {
+      np._bubble.classList.add('hidden');
+      np._bubble.classList.remove('pop');
+    }
+  }, 4500);
+}
+
+function appendChatFeed(pkt) {
+  const box = node('feed');
+  if (!box) return;
+  const li = document.createElement('li');
+  li.dataset.k = 'chat';
+  li.className = 'hr-feed-chat';
+  const b = document.createElement('b');
+  b.textContent = pkt.name + ': ';
+  b.style.color = pkt.color || 'var(--hr-gold-1)';
+  const s = document.createElement('span');
+  s.textContent = pkt.text;
+  li.append(b, s);
+  box.prepend(li);
+  while (box.children.length > 8) box.lastChild.remove();
+}
+
+function onChatReceived(pkt) {
+  beep(580, 0.05, 0.035, 'sine');
+  showSpeechBubble(pkt.id, pkt.text);
+  appendChatFeed(pkt);
+}
+
+function sendChat(rawText) {
+  const text = String(rawText || '').trim().slice(0, 60);
+  if (!text || !R) return;
+  const v = R.view;
+  const myId = R.myId();
+  const mine = v && v.race ? v.race.racers.find((p) => p.id === myId) : null;
+  const myName = mine ? mine.name : (v && v.you ? v.you.name : 'Kamu');
+  const myColor = mine ? mine.color : (v && v.you ? v.you.color : '#ffd76b');
+
+  if (R.isHost()) {
+    const pkt = { t: 'chat', id: myId, name: myName, color: myColor, text, ts: nowMs() };
+    const net = R.net();
+    const st = R.ctx.state();
+    if (net && st && st.players) {
+      for (const p of st.players) {
+        if (p.id !== myId) net.send(p.id, pkt);
+      }
+    }
+    onChatReceived(pkt);
+  } else if (R.net()) {
+    R.net().send({ t: 'chat', text });
+  }
 }
 
 function syncRound(v) {
@@ -224,6 +292,10 @@ function relayPackets() {
 export function message(id, msg) {
   if (!R || !msg) return false;
   if (!R.isHost()) {
+    if (msg.t === 'chat') {
+      onChatReceived(msg);
+      return true;
+    }
     if (msg.t !== 'p' || !Array.isArray(msg.r)) return false;
     for (const row of msg.r) {
       if (!Array.isArray(row) || row.length < 5) continue;
@@ -250,6 +322,27 @@ export function message(id, msg) {
   const st = R.ctx.state();
   if (!st || !st.race) return false;
   const ts = nowMs();
+  if (msg.t === 'chat') {
+    const text = String(msg.text || '').trim().slice(0, 60);
+    if (!text) return true;
+    const p = st.players.find((x) => x.id === id);
+    const pkt = {
+      t: 'chat',
+      id,
+      name: p ? p.name : 'Pemburu',
+      color: p ? p.color : '#3fd2ff',
+      text,
+      ts,
+    };
+    const net = R.net();
+    if (net) {
+      for (const pl of st.players) {
+        if (pl.id !== st.hostId) net.send(pl.id, pkt);
+      }
+    }
+    onChatReceived(pkt);
+    return true;
+  }
   if (msg.t === 'mv') {
     onMove(st, id, msg, ts);
     return true;
@@ -549,6 +642,12 @@ function updateHud(v, dt) {
   setTxt(node('idx'), r.index + 1);
   setTxt(node('tot'), r.total);
   setTxt(node('map'), r.mapName);
+  setTxt(node('mapIco'), MAP_ICONS[r.mapId] || '🗺️');
+  setTxt(node('coord'), 'X: ' + R.me.x.toFixed(1) + ' · Z: ' + R.me.z.toFixed(1));
+  const subloc = sectorAt(R.layout, R.me.x, R.me.z);
+  setTxt(node('sublocTxt'), subloc);
+  const subEl = node('subloc');
+  if (subEl) subEl.classList.toggle('warning', subloc.startsWith('⚠️'));
 
   const clock = hostNow();
   const counting = r.status === 'countdown';
@@ -792,6 +891,15 @@ export function attach(ctx) {
       idx: $('hrIdx'),
       tot: $('hrTot'),
       map: $('hrMap'),
+      mapIco: $('hrMapIco'),
+      coord: $('hrCoord'),
+      subloc: $('hrSubloc'),
+      sublocTxt: $('hrSublocTxt'),
+      chatWrap: $('hrChatWrap'),
+      chatToggle: $('hrChatToggle'),
+      chatForm: $('hrChatForm'),
+      chatInput: $('hrChatInput'),
+      chatClose: $('hrChatClose'),
       reveal: $('hrReveal'),
       revealK: $('hrRevealK'),
       revealWho: $('hrRevealWho'),
@@ -854,6 +962,63 @@ export function attach(ctx) {
       R.ready = true;
       R.e.load.classList.add('hidden');
       resize();
+
+      const openChat = () => {
+        if (!R || !R.e.chatForm) return;
+        R.e.chatForm.classList.remove('hidden');
+        if (R.e.chatInput) R.e.chatInput.focus();
+      };
+      const closeChat = () => {
+        if (!R || !R.e.chatForm) return;
+        R.e.chatForm.classList.add('hidden');
+        if (R.e.chatInput) R.e.chatInput.blur();
+        if (R.e.canvas && R.e.canvas.focus) R.e.canvas.focus();
+      };
+      if (R.e.chatToggle) {
+        R.onChatToggle = (e) => {
+          e.preventDefault();
+          if (!R.e.chatForm) return;
+          if (R.e.chatForm.classList.contains('hidden')) openChat();
+          else closeChat();
+        };
+        R.e.chatToggle.addEventListener('click', R.onChatToggle);
+      }
+      if (R.e.chatClose) {
+        R.onChatClose = (e) => {
+          e.preventDefault();
+          closeChat();
+        };
+        R.e.chatClose.addEventListener('click', R.onChatClose);
+      }
+      if (R.e.chatForm) {
+        R.onChatSubmit = (e) => {
+          e.preventDefault();
+          if (R.e.chatInput) {
+            sendChat(R.e.chatInput.value);
+            R.e.chatInput.value = '';
+          }
+          closeChat();
+        };
+        R.e.chatForm.addEventListener('submit', R.onChatSubmit);
+      }
+      R.onChatKey = (e) => {
+        if (!R || !R.onScreen) return;
+        if (e.code === 'Enter') {
+          const active = document.activeElement;
+          const typing = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+          if (!typing) {
+            e.preventDefault();
+            openChat();
+          }
+        } else if (e.code === 'Escape') {
+          if (document.activeElement === R.e.chatInput || (R.e.chatForm && !R.e.chatForm.classList.contains('hidden'))) {
+            e.preventDefault();
+            closeChat();
+          }
+        }
+      };
+      window.addEventListener('keydown', R.onChatKey);
+
       R.onResize = () => resize();
       window.addEventListener('resize', R.onResize);
       window.addEventListener('orientationchange', R.onResize);
@@ -972,6 +1137,7 @@ export function onScreen(name) {
     node('stick').style.cssText = '';
     node('arrow').classList.add('hidden');
     node('heat').classList.add('hidden');
+    if (node('chatForm')) node('chatForm').classList.add('hidden');
     big(null);
   } else resize();
 }
@@ -1092,6 +1258,10 @@ export function dispose() {
   window.removeEventListener('resize', R.onResize);
   window.removeEventListener('orientationchange', R.onResize);
   document.removeEventListener('visibilitychange', R.onVis);
+  if (R.e.chatToggle && R.onChatToggle) R.e.chatToggle.removeEventListener('click', R.onChatToggle);
+  if (R.e.chatClose && R.onChatClose) R.e.chatClose.removeEventListener('click', R.onChatClose);
+  if (R.e.chatForm && R.onChatSubmit) R.e.chatForm.removeEventListener('submit', R.onChatSubmit);
+  if (R.onChatKey) window.removeEventListener('keydown', R.onChatKey);
   try {
     if (R.controls) R.controls.destroy();
     if (R.world) R.world.dispose();
@@ -1108,7 +1278,7 @@ export function dispose() {
     clearTimeout(R.decoyTimer);
     R.decoyTimer = null;
   }
-  for (const k of ['mapCard', 'reveal', 'heat', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'compass'])
+  for (const k of ['mapCard', 'reveal', 'heat', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'compass', 'chatForm'])
     if (e[k]) {
       e[k].classList.add('hidden');
       delete e[k].dataset.sig;

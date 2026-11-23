@@ -948,6 +948,110 @@ export function zoneAt(layout, x, z) {
   return layout.grid ? zoneCell(layout.grid, x, z) : 0;
 }
 
+export const MAP_ICONS = {
+  gudang: '📦',
+  kebun: '🌿',
+  kuil: '🏛️',
+  mainan: '🧸',
+  tambang: '⛏️',
+};
+
+const SECTORS = {
+  gudang: {
+    center: 'Aula Logistik Pusat',
+    e: 'Gudang Arsip Timur',
+    ne: 'Bilik Kargo Bawah B',
+    n: 'Ruang Kargo Utara',
+    nw: 'Kamar Peti Kuno A',
+    w: 'Bilik Penyimpanan Barat',
+    sw: 'Ruang Perkakas C',
+    s: 'Dermaga Bongkar Muat',
+    se: 'Penyimpanan Cadangan D',
+    soft: 'Lantai Berdebu Pekat',
+    pit: '⚠️ Ruang Bawah Tanah!',
+  },
+  kebun: {
+    center: 'Plaza Air Mancur Pusat',
+    e: 'Koridor Labirin Bambu',
+    ne: 'Lorong Rahasia Cemara',
+    n: 'Lorong Semak Rindang',
+    nw: 'Taman Melati Sudut',
+    w: 'Jalan Buntu Mawar Barat',
+    sw: 'Area Bangku Rindang',
+    s: 'Gerbang Labirin Selatan',
+    se: 'Labirin Sudut Bunga',
+    soft: 'Genangan Lumpur Basah',
+    pit: '⚠️ Saluran Drainase Curam!',
+  },
+  kuil: {
+    center: 'Sanctum Altar Keramat',
+    e: 'Ruang Meditasi Batu',
+    ne: 'Aula Runtuhan Kolom',
+    n: 'Katakombe Pilar Utara',
+    nw: 'Kripta Rahasia Kuno',
+    w: 'Koridor Arca Kuno',
+    sw: 'Serambi Batu Lumut',
+    s: 'Tangga Masuk Kuil',
+    se: 'Ruang Relik Tersembunyi',
+    soft: 'Lantai Lumut Licin',
+    pit: '⚠️ Lubang Makam Tua!',
+  },
+  mainan: {
+    center: 'Menara Balok Putih',
+    e: 'Bilik Boneka & Karpet',
+    ne: 'Menara Balok Merah',
+    n: 'Zona Kereta Mini Utara',
+    nw: 'Istana Benteng Biru',
+    w: 'Kamar Balok Lego Barat',
+    sw: 'Ruang Karpet Mewah',
+    s: 'Gerbang Istana Bermain',
+    se: 'Area Balok Kuning',
+    soft: 'Karpet Busa Lembut',
+    pit: '⚠️ Jurang Kolam Mainan!',
+  },
+  tambang: {
+    center: 'Poros Tambang Utama',
+    e: 'Stasiun Rel Lori Timur',
+    ne: 'Kantung Bebatuan Granit',
+    n: 'Terowongan Batubara Dalam',
+    nw: 'Gua Urat Bijih Emas',
+    w: 'Gua Batuan Lembek Barat',
+    sw: 'Terowongan Kayu Lama',
+    s: 'Mulut Poros Tambang',
+    se: 'Lorong Penyangga Miring',
+    soft: 'Tanah Kerikil Ambles',
+    pit: '⚠️ Sumur Poros Maut!',
+  },
+};
+
+export function sectorAt(layout, x, z) {
+  if (!layout || !layout.map) return 'Zona Eksplorasi';
+  const kind = layout.map.kind || layout.map.id || 'gudang';
+  const table = SECTORS[kind] || SECTORS.gudang;
+  const zCode = zoneAt(layout, x, z);
+  if (zCode === 2) return table.pit || '⚠️ Lubang Jebakan!';
+  if (zCode === 1) return table.soft || 'Tanah Lembek';
+
+  const hw = (layout.bounds && layout.bounds.hw) || 40;
+  const hd = (layout.bounds && layout.bounds.hd) || 30;
+  const nx = x / hw;
+  const nz = z / hd;
+  const r = Math.hypot(nx, nz);
+  if (r < 0.28) return table.center;
+
+  const ang = Math.atan2(nz, nx);
+  const oct = Math.round((ang / Math.PI) * 4);
+  if (oct === 0) return table.e;
+  if (oct === 1) return table.se;
+  if (oct === 2) return table.s;
+  if (oct === 3) return table.sw;
+  if (oct === 4 || oct === -4) return table.w;
+  if (oct === -3) return table.nw;
+  if (oct === -2) return table.n;
+  if (oct === -1) return table.ne;
+  return table.center;
+}
+
 function reachFrom(g, seeds) {
   const seen = new Uint8Array(g.cols * g.rows);
   const q = [];

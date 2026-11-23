@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAPS, CFG as M, mulberry32, buildLayout, layoutFor, blockedAt, supportAt, insideSolid, zoneAt } from '../js/harta/maps.js';
+import { MAPS, CFG as M, mulberry32, buildLayout, layoutFor, blockedAt, supportAt, insideSolid, zoneAt, sectorAt, MAP_ICONS } from '../js/harta/maps.js';
 import {
   CFG,
   COLORS,
@@ -99,6 +99,26 @@ test('peta: harta selalu di ruang terbuka, jauh dari spawn, dan bisa dijangkau',
       assert.notEqual(zoneAt(L, t.x, t.z), 2, map.id + '/' + seed + ' harta jatuh ke dalam lubang');
       for (const s of L.spawns) assert.notEqual(zoneAt(L, s.x, s.z), 2, map.id + '/' + seed + ' spawn di dalam lubang');
       for (const d of L.decoys) assert.notEqual(zoneAt(L, d.x, d.z), 2, map.id + '/' + seed + ' umpan di dalam lubang');
+    }
+  }
+});
+
+test('sektor: nama sub-lokasi dinamis dan valid di semua peta', () => {
+  for (const map of MAPS) {
+    const L = layoutFor(map.id, 4242);
+    assert.ok(MAP_ICONS[map.id], 'tiap peta punya ikon visual');
+    const center = sectorAt(L, 0, 0);
+    assert.ok(typeof center === 'string' && center.length > 0, 'pusat peta punya nama');
+    const north = sectorAt(L, 0, -L.bounds.hd * 0.7);
+    assert.ok(typeof north === 'string' && north.length > 0, 'sektor utara punya nama');
+    const east = sectorAt(L, L.bounds.hw * 0.7, 0);
+    assert.ok(typeof east === 'string' && east.length > 0, 'sektor timur punya nama');
+    for (const b of L.boxes) {
+      if (b.k === 'pit') {
+        const pitSec = sectorAt(L, b.x, b.z);
+        assert.ok(pitSec.startsWith('⚠️'), 'lubang dikenali dengan peringatan');
+        break;
+      }
     }
   }
 });

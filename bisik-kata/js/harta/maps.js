@@ -8,6 +8,7 @@ const PALETTES = {
     rope: '#b99a63',
     trim: '#c8963e',
     dust: '#6f5b3f',
+    hole: '#241a10',
     floor: '#4a3826',
     floor2: '#3d2e1f',
   },
@@ -76,64 +77,63 @@ export const MAPS = [
   {
     id: 'gudang',
     name: 'Gudang Kuno',
-    sub: 'rak kayu, tumpukan peti, tong tua',
+    sub: 'bilik kamar muatan, sekat ruangan, tumpukan peti',
     kind: 'gudang',
     size: { w: 80, d: 58 },
     wallH: 10,
     startAt: { x: 0.4, z: 0.02 },
     sky: '#1b1409',
-    fog: [19, 86],
+    fog: [16, 62],
     hemi: ['#7d8ea6', '#3a2c1c', 0.85],
     key: ['#ffe1b0', 0.75, 0.7],
     theme: 'gudang',
-    partitions: [
-      { x: 0.06, z: -0.19, w: 0.02, d: 0.42 },
-      { x: -0.2, z: 0.02, w: 0.34, d: 0.02 },
-    ],
     recipes: [
-      { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'dust', w: [5, 8], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'dust', w: [5, 8], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
+      // Ruang bawah tanah gudang: tiga mulut lubang yang cuma bisa keluar dengan lompatan.
+      { mode: 'random', n: 3, kinds: [{ s: 'cyl', c: 'hole', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Kompleks gudang bersekat: ruang dibagi menjadi 6-8 kamar penyimpanan dengan dinding tinggi dan pintu lebar
+      { mode: 'rooms', depth: 3, min: [14, 11], door: 3.2, t: 1.3, h: 0.88 },
       {
         mode: 'rows',
         n: 20,
         lane: 'z',
-        aisle: 3.6,
-        band: 3.2,
-        avenue: 5,
+        aisle: 3.2,
+        band: 3.0,
+        avenue: 4.4,
         max: 6.2,
-        gap: 2.6,
-        kinds: [{ s: 'box', c: 'woodDark', w: [1.3, 2.2], d: [3.6, 6.2], h: [3.6, 5.2], p: 'shelf' }],
+        gap: 2.2,
+        kinds: [{ s: 'box', c: 'woodDark', w: [1.3, 2.0], d: [3.4, 5.8], h: [3.6, 5.0], p: 'shelf' }],
       },
       {
         mode: 'random',
-        n: 40,
+        n: 46,
         kinds: [
-          { s: 'box', c: 'wood', w: [1.7, 3.1], d: [1.7, 3.1], h: [1.5, 3.2], p: 'crate' },
-          { s: 'box', c: 'woodDark', w: [1.5, 2.4], d: [1.5, 2.4], h: [1.3, 2.6], p: 'crate' },
+          { s: 'box', c: 'wood', w: [1.6, 2.8], d: [1.6, 2.8], h: [1.4, 3.0], p: 'crate' },
+          { s: 'box', c: 'woodDark', w: [1.4, 2.2], d: [1.4, 2.2], h: [1.2, 2.4], p: 'crate' },
           { s: 'box', c: 'wood', w: [0.95, 1.35], d: [0.95, 1.35], h: [0.95, 1.12], p: 'crate' },
         ],
       },
-      { mode: 'random', n: 20, kinds: [{ s: 'cyl', c: 'cask', w: [1.2, 1.7], d: [1.2, 1.7], h: [1.7, 2.5], p: 'barrel' }] },
+      { mode: 'random', n: 22, kinds: [{ s: 'cyl', c: 'cask', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.6, 2.4], p: 'barrel' }] },
       {
         mode: 'random',
-        n: 19,
+        n: 18,
         kinds: [
-          { s: 'box', c: 'rope', w: [2.0, 3.0], d: [1.3, 2.1], h: [0.35, 0.55], p: 'pallet' },
+          { s: 'box', c: 'rope', w: [2.0, 2.8], d: [1.3, 2.0], h: [0.35, 0.55], p: 'pallet' },
           { s: 'cyl', c: 'rope', w: [0.9, 1.2], d: [0.9, 1.2], h: [0.95, 1.1], p: 'barrel' },
         ],
       },
-      // Muatan yang tumpah: tiga sampai tujuh benda serong di satu titik, jadi gudang punya bekas
-      // kejadian, bukan sekadar barang yang dirapikan robot.
+      // Muatan yang tumpah: beberapa benda serong di satu titik
       {
         mode: 'clump',
         n: 8,
         rad: 2.6,
-        spread: 5,
+        spread: 6,
         rot: 0.7,
         kinds: [
           { s: 'box', c: 'wood', w: [1.1, 1.6], d: [1.1, 1.6], h: [0.95, 1.12], p: 'crate' },
-          { s: 'box', c: 'woodDark', w: [1.6, 2.4], d: [1.6, 2.4], h: [1.4, 2.4], p: 'crate' },
-          { s: 'cyl', c: 'cask', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.7, 2.4], p: 'barrel' },
-          { s: 'box', c: 'rope', w: [2.0, 2.8], d: [1.3, 1.8], h: [0.35, 0.5], p: 'pallet' },
+          { s: 'box', c: 'woodDark', w: [1.5, 2.2], d: [1.5, 2.2], h: [1.3, 2.2], p: 'crate' },
+          { s: 'cyl', c: 'cask', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.6, 2.2], p: 'barrel' },
+          { s: 'box', c: 'rope', w: [1.9, 2.6], d: [1.3, 1.8], h: [0.35, 0.5], p: 'pallet' },
         ],
       },
     ],
@@ -141,21 +141,21 @@ export const MAPS = [
   {
     id: 'mainan',
     name: 'Ruang Mainan',
-    sub: 'balok besar bersol, karpet, tumpukan kotak',
+    sub: 'kamar-kamar balok raksasa, menara mainan, labirin pintu',
     kind: 'mainan',
     size: { w: 70, d: 68 },
     wallH: 9,
     startAt: { x: 0.0, z: 0.4 },
     sky: '#122436',
-    fog: [22, 95],
+    fog: [18, 68],
     hemi: ['#9fd0ff', '#2a4157', 0.95],
     key: ['#ffffff', 0.65, 0.8],
     theme: 'mainan',
     recipes: [
       { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'rug', w: [6, 9], h: [0.05, 0.09], p: 'rug', k: 'soft' }] },
-      // Kamar bermain: ruang dibagi dua dua kali, tiap dinding internal punya satu pintu selebar
-      // 3,2 m supaya graf daunnya terhubung dan flood fill 4 arah tidak pernah buntu.
-      { mode: 'rooms', depth: 3, min: [13, 11], door: 3.4, t: 1.2, h: 0.5 },
+      // Kamar bermain bersekat tinggi: dinding ruangan setinggi 7.6 meter membagi ruangan menjadi
+      // bilik-bilik bermain yang harus dijelajahi lewat pintunya.
+      { mode: 'rooms', depth: 4, min: [12, 10], door: 3.0, t: 1.4, h: 0.85 },
       // Menara balok melingkar: kolom tertinggi di ruangan, dengan dua pintu masuk berhadapan.
       {
         mode: 'ring',
@@ -165,26 +165,26 @@ export const MAPS = [
       },
       {
         mode: 'random',
-        n: 50,
+        n: 46,
         kinds: [
-          { s: 'brick', c: 'red', w: [1.8, 3.2], d: [1.8, 3.2], h: [1.0, 2.6], p: 'block' },
-          { s: 'brick', c: 'blue', w: [1.8, 3.2], d: [1.8, 3.2], h: [1.0, 2.6], p: 'block' },
-          { s: 'brick', c: 'green', w: [1.6, 2.6], d: [1.6, 2.6], h: [0.9, 2.2], p: 'block' },
-          { s: 'brick', c: 'yellow', w: [1.6, 2.6], d: [1.6, 2.6], h: [0.9, 2.2], p: 'block' },
-          { s: 'brick', c: 'white', w: [2.0, 3.4], d: [2.0, 3.4], h: [1.1, 2.8], p: 'block' },
+          { s: 'brick', c: 'red', w: [1.8, 3.0], d: [1.8, 3.0], h: [1.2, 2.6], p: 'block' },
+          { s: 'brick', c: 'blue', w: [1.8, 3.0], d: [1.8, 3.0], h: [1.2, 2.6], p: 'block' },
+          { s: 'brick', c: 'green', w: [1.6, 2.4], d: [1.6, 2.4], h: [1.0, 2.2], p: 'block' },
+          { s: 'brick', c: 'yellow', w: [1.6, 2.4], d: [1.6, 2.4], h: [1.0, 2.2], p: 'block' },
+          { s: 'brick', c: 'white', w: [2.0, 3.2], d: [2.0, 3.2], h: [1.2, 2.8], p: 'block' },
         ],
       },
       {
         mode: 'random',
         n: 20,
         kinds: [
-          { s: 'brick', c: 'yellow', w: [0.9, 1.25], d: [0.9, 1.25], h: [0.95, 1.12], p: 'block' },
+          { s: 'brick', c: 'yellow', w: [0.95, 1.3], d: [0.95, 1.3], h: [0.95, 1.12], p: 'block' },
           { s: 'brick', c: 'red', w: [1.0, 1.4], d: [1.0, 1.4], h: [0.95, 1.1], p: 'block' },
         ],
       },
-      { mode: 'random', n: 17, kinds: [{ s: 'brick', c: 'blue', w: [2.8, 4.4], d: [2.2, 3.4], h: [0.3, 0.5], p: 'mat' }] },
-      { mode: 'random', n: 14, kinds: [{ s: 'cyl', c: 'red', w: [1.2, 1.6], d: [1.2, 1.6], h: [0.95, 1.12], p: 'block' }] },
-      // Menara yang sudah roboh: balok berserakan di satu sudut, sebagian masih setinggi langkah.
+      { mode: 'random', n: 14, kinds: [{ s: 'brick', c: 'blue', w: [2.6, 3.8], d: [2.0, 3.0], h: [0.3, 0.5], p: 'mat' }] },
+      { mode: 'random', n: 12, kinds: [{ s: 'cyl', c: 'red', w: [1.2, 1.6], d: [1.2, 1.6], h: [0.95, 1.12], p: 'block' }] },
+      // Menara yang sudah roboh
       {
         mode: 'clump',
         n: 8,
@@ -203,44 +203,47 @@ export const MAPS = [
   {
     id: 'kuil',
     name: 'Kuil Terbengkalai',
-    sub: 'pilar batu, arca, bara api',
+    sub: 'labirin katakomba batu, arca keramat, pilar kuno',
     kind: 'kuil',
     size: { w: 74, d: 64 },
     wallH: 12,
     startAt: { x: -0.4, z: 0.0 },
     sky: '#101a16',
-    fog: [18, 78],
+    fog: [15, 56],
     hemi: ['#88a89a', '#2b2f22', 0.8],
     key: ['#ffeccb', 0.7, 0.6],
     theme: 'kuil',
-    partitions: [
-      { x: 0.12, z: 0.0, w: 0.02, d: 0.36 },
-      { x: -0.1, z: -0.22, w: 0.3, d: 0.02 },
-      { x: -0.1, z: 0.24, w: 0.3, d: 0.02 },
-      { x: 0.3, z: -0.12, w: 0.2, d: 0.02 },
-    ],
     recipes: [
-      { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'mossFlat', w: [5, 8], h: [0.05, 0.09], p: 'moss', k: 'soft' }] },
-      { mode: 'random', n: 5, kinds: [{ s: 'cyl', c: 'cellar', w: [3.2, 4.6], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'mossFlat', w: [5, 8], h: [0.05, 0.09], p: 'moss', k: 'soft' }] },
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'cellar', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Labirin katakomba batu kuno: lorong-lorong berliku dengan dinding batu setinggi 5.4m
+      {
+        mode: 'maze',
+        aisle: 4.2,
+        t: 1.4,
+        h: 5.4,
+        color: 'stone',
+        kind: 'pillar',
+        braid: 0.38,
+      },
       {
         mode: 'ring',
-        n: 22,
-        fx: 0.68,
-        kinds: [{ s: 'cyl', c: 'stone', w: [1.7, 2.3], d: [1.7, 2.3], h: [5.5, 7.5], p: 'pillar' }],
+        n: 14,
+        fx: 0.45,
+        kinds: [{ s: 'cyl', c: 'stone', w: [1.6, 2.2], d: [1.6, 2.2], h: [5.0, 7.0], p: 'pillar' }],
       },
-      { mode: 'random', n: 12, kinds: [{ s: 'box', c: 'stoneLight', w: [1.7, 2.1], d: [3.2, 4.2], h: [1.7, 2.3], p: 'statue' }] },
-      { mode: 'random', n: 14, kinds: [{ s: 'box', c: 'moss', w: [1.6, 2.4], d: [1.6, 2.6], h: [2.6, 4.2], p: 'statue' }] },
+      { mode: 'random', n: 12, kinds: [{ s: 'box', c: 'stoneLight', w: [1.6, 2.0], d: [2.8, 3.8], h: [1.8, 2.4], p: 'statue' }] },
+      { mode: 'random', n: 12, kinds: [{ s: 'box', c: 'moss', w: [1.5, 2.2], d: [1.5, 2.4], h: [2.4, 3.8], p: 'statue' }] },
       {
         mode: 'random',
-        n: 27,
+        n: 24,
         kinds: [
-          { s: 'box', c: 'stoneDim', w: [0.7, 1.7], d: [0.7, 1.7], h: [0.5, 1.5], p: 'rubble' },
+          { s: 'box', c: 'stoneDim', w: [0.8, 1.6], d: [0.8, 1.6], h: [0.6, 1.4], p: 'rubble' },
           { s: 'cyl', c: 'stoneLight', w: [1.0, 1.35], d: [1.0, 1.35], h: [0.95, 1.1], p: 'pillar' },
         ],
       },
       { mode: 'random', n: 10, kinds: [{ s: 'cyl', c: 'bronze', w: [0.9, 1.2], d: [0.9, 1.2], h: [1.3, 1.7], p: 'planter' }] },
-      // Runtuhan kolom: satu titik kejadian tempat batu besar dan drum puing bertumpuk serong,
-      // sebagian masih bisa dinaiki sehingga atap jebakan punya tangga.
+      // Runtuhan kolom batu
       {
         mode: 'clump',
         n: 8,
@@ -250,7 +253,7 @@ export const MAPS = [
         kinds: [
           { s: 'box', c: 'stoneDim', w: [1.4, 2.2], d: [1.4, 2.2], h: [0.95, 1.12], p: 'rubble' },
           { s: 'cyl', c: 'stoneLight', w: [1.0, 1.35], d: [1.0, 1.35], h: [0.95, 1.1], p: 'pillar' },
-          { s: 'box', c: 'stoneDim', w: [0.7, 1.7], d: [0.7, 1.7], h: [0.5, 1.5], p: 'rubble' },
+          { s: 'box', c: 'stoneDim', w: [0.7, 1.6], d: [0.7, 1.6], h: [0.5, 1.4], p: 'rubble' },
           { s: 'box', c: 'moss', w: [1.6, 2.2], d: [1.6, 2.4], h: [2.4, 3.6], p: 'statue' },
         ],
       },
@@ -259,7 +262,7 @@ export const MAPS = [
   {
     id: 'tambang',
     name: 'Tambang Tua',
-    sub: 'terowongan kayu, gerobak bijih, sumur tua',
+    sub: 'bilik bawah tanah, terowongan kayu, rel & gerobak bijih',
     kind: 'tambang',
     size: { w: 76, d: 62 },
     wallH: 9,
@@ -270,44 +273,43 @@ export const MAPS = [
     key: ['#ffd9a0', 0.62, 0.55],
     theme: 'tambang',
     recipes: [
-      { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'grit', w: [5, 8], h: [0.05, 0.09], p: 'grit', k: 'soft' }] },
-      // Sumur tua: lubang adalah satu-satunya cara turun, jadi dia ditaruh dekat jejak terowongan.
-      { mode: 'random', n: 5, kinds: [{ s: 'cyl', c: 'shaft', w: [3.0, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      // Kamar-berdinding rendah: bilik kerja yang hanya bisa dimasuki lewat pintunya.
-      { mode: 'rooms', depth: 3, min: [14, 11], door: 3.4, t: 1.2, h: 0.72 },
-      // Barisan penyangga: dinding kayu sejajar terowongan, gangnya cukup lebar untuk dua orang.
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'grit', w: [5, 8], h: [0.05, 0.09], p: 'grit', k: 'soft' }] },
+      // Sumur tua
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'shaft', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Bilik-bilik tambang bawah tanah: ruangan kerja bersekat dinding kokoh dengan pintu terowongan
+      { mode: 'rooms', depth: 3, min: [14, 11], door: 3.0, t: 1.4, h: 0.88 },
+      // Barisan penyangga: dinding kayu sejajar terowongan
       {
         mode: 'rows',
-        n: 20,
+        n: 18,
         lane: 'x',
-        aisle: 3.8,
-        band: 3.4,
-        avenue: 5,
+        aisle: 3.2,
+        band: 3.0,
+        avenue: 4.4,
         max: 6.4,
-        gap: 2.8,
+        gap: 2.2,
         rot: 0.03,
-        kinds: [{ s: 'box', c: 'timber', w: [4.6, 6.4], d: [0.8, 1.1], h: [3.2, 4.6], p: 'shelf' }],
+        kinds: [{ s: 'box', c: 'timber', w: [4.4, 6.0], d: [0.8, 1.1], h: [3.2, 4.4], p: 'shelf' }],
       },
       {
         mode: 'random',
-        n: 26,
+        n: 28,
         kinds: [
-          { s: 'box', c: 'rock', w: [1.6, 2.6], d: [1.6, 2.6], h: [1.4, 2.6], p: 'block' },
-          { s: 'box', c: 'rockLight', w: [1.3, 2.1], d: [1.3, 2.1], h: [0.9, 1.4], p: 'block' },
+          { s: 'box', c: 'rock', w: [1.5, 2.4], d: [1.5, 2.4], h: [1.2, 2.4], p: 'block' },
+          { s: 'box', c: 'rockLight', w: [1.2, 1.8], d: [1.2, 1.8], h: [0.8, 1.4], p: 'block' },
         ],
       },
-      // Kereta bijih: badan gerobak setinggi pinggang, masih bisa didorong naik ke atasnya.
       {
         mode: 'random',
-        n: 14,
+        n: 16,
         rot: 0.5,
         kinds: [
-          { s: 'box', c: 'ore', w: [1.5, 2.1], d: [1.0, 1.4], h: [0.95, 1.12], p: 'cart' },
-          { s: 'box', c: 'timber', w: [2.0, 2.8], d: [1.2, 1.8], h: [0.35, 0.5], p: 'pallet' },
+          { s: 'box', c: 'ore', w: [1.4, 2.0], d: [1.0, 1.4], h: [0.95, 1.12], p: 'cart' },
+          { s: 'box', c: 'timber', w: [1.8, 2.6], d: [1.2, 1.8], h: [0.35, 0.5], p: 'pallet' },
         ],
       },
-      { mode: 'random', n: 12, kinds: [{ s: 'cyl', c: 'coal', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.6, 2.4], p: 'barrel' }] },
-      // Longsor: satu sudut tempat batu, papan, dan kereta bertumpuk serong.
+      { mode: 'random', n: 14, kinds: [{ s: 'cyl', c: 'coal', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.6, 2.4], p: 'barrel' }] },
+      // Longsor
       {
         mode: 'clump',
         n: 8,
@@ -318,7 +320,7 @@ export const MAPS = [
           { s: 'box', c: 'rock', w: [1.4, 2.2], d: [1.4, 2.2], h: [0.95, 1.12], p: 'block' },
           { s: 'box', c: 'rockLight', w: [0.7, 1.6], d: [0.7, 1.6], h: [0.5, 1.4], p: 'rubble' },
           { s: 'box', c: 'timber', w: [1.8, 2.6], d: [1.0, 1.4], h: [0.35, 0.5], p: 'pallet' },
-          { s: 'box', c: 'ore', w: [1.5, 2.0], d: [1.0, 1.4], h: [0.95, 1.12], p: 'cart' },
+          { s: 'box', c: 'ore', w: [1.4, 1.9], d: [1.0, 1.4], h: [0.95, 1.12], p: 'cart' },
         ],
       },
     ],
@@ -326,7 +328,7 @@ export const MAPS = [
   {
     id: 'kebun',
     name: 'Kebun Raya',
-    sub: 'pagar tanaman, kolam, rumah kaca',
+    sub: 'labirin pagar tanaman, kolam air, bangku batu',
     kind: 'kebun',
     size: { w: 68, d: 72 },
     wallH: 7,
@@ -337,46 +339,42 @@ export const MAPS = [
     key: ['#ffffff', 0.72, 0.75],
     theme: 'kebun',
     recipes: [
-      { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'mud', w: [5, 8], h: [0.05, 0.09], p: 'mud', k: 'soft' }] },
-      // Kolam drainase: air yang surut sampai dasar, sama mahal dengan sumur tambang.
-      { mode: 'random', n: 5, kinds: [{ s: 'cyl', c: 'drain', w: [3.4, 5.0], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      // Labirin pagar: lorong tanaman tinggi yang memotong pandangan, dengan jalan tengah yang lega.
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'mud', w: [4, 7], h: [0.05, 0.09], p: 'mud', k: 'soft' }] },
+      { mode: 'random', n: 5, kinds: [{ s: 'cyl', c: 'drain', w: [3.2, 4.6], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Labirin pagar tanaman raksasa: lorong-lorong tanaman tinggi yang memotong pandangan total
       {
-        mode: 'rows',
-        n: 24,
-        lane: 'z',
+        mode: 'maze',
         aisle: 4.2,
-        band: 3.6,
-        avenue: 6,
-        max: 9.0,
-        gap: 3.0,
-        rot: 0.03,
-        kinds: [{ s: 'box', c: 'hedge', w: [1.3, 1.9], d: [5.0, 9.0], h: [2.4, 3.4], p: 'hedge' }],
+        t: 1.4,
+        h: 3.5,
+        color: 'hedge',
+        kind: 'hedge',
+        braid: 0.36,
       },
-      { mode: 'random', n: 14, kinds: [{ s: 'box', c: 'hedgeDark', w: [1.2, 1.7], d: [1.2, 1.7], h: [1.8, 2.6], p: 'hedge' }] },
       {
         mode: 'ring',
-        n: 12,
-        fx: 0.4,
-        kinds: [{ s: 'box', c: 'stoneLight', w: [1.5, 2.1], d: [1.5, 2.1], h: [0.6, 0.8], p: 'planter' }],
+        n: 10,
+        fx: 0.38,
+        kinds: [{ s: 'box', c: 'stoneLight', w: [1.4, 2.0], d: [1.4, 2.0], h: [0.6, 0.8], p: 'planter' }],
       },
       {
         mode: 'random',
-        n: 18,
+        n: 16,
         kinds: [
-          { s: 'cyl', c: 'stone', w: [1.5, 2.2], d: [1.5, 2.2], h: [1.1, 1.9], p: 'planter' },
-          { s: 'box', c: 'water', w: [2.4, 3.8], d: [2.4, 3.8], h: [0.4, 0.6], p: 'planter' },
+          { s: 'cyl', c: 'flower', w: [1.0, 1.4], d: [1.0, 1.4], h: [1.2, 1.8], p: 'planter' },
+          { s: 'box', c: 'stone', w: [2.0, 2.8], d: [0.7, 1.0], h: [0.5, 0.7], p: 'bench' },
         ],
       },
+      { mode: 'random', n: 12, kinds: [{ s: 'box', c: 'hedgeDark', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.6, 2.4], p: 'hedge' }] },
       {
         mode: 'random',
-        n: 14,
+        n: 10,
         kinds: [
-          { s: 'box', c: 'soil', w: [0.95, 1.3], d: [0.95, 1.3], h: [0.95, 1.12], p: 'crate' },
-          { s: 'box', c: 'stone', w: [2.2, 3.2], d: [0.7, 1.0], h: [0.5, 0.7], p: 'bench' },
+          { s: 'cyl', c: 'stone', w: [1.4, 2.0], d: [1.4, 2.0], h: [1.0, 1.6], p: 'planter' },
+          { s: 'box', c: 'water', w: [2.2, 3.4], d: [2.2, 3.4], h: [0.4, 0.6], p: 'planter' },
         ],
       },
-      // Meja kebun yang terbalik: pot dan bangku batu bertumpuk di satu titik.
+      // Meja kebun dan pot tanaman yang terbalik
       {
         mode: 'clump',
         n: 8,
@@ -386,8 +384,8 @@ export const MAPS = [
         kinds: [
           { s: 'box', c: 'soil', w: [0.95, 1.3], d: [0.95, 1.3], h: [0.95, 1.12], p: 'crate' },
           { s: 'cyl', c: 'flower', w: [1.0, 1.4], d: [1.0, 1.4], h: [1.2, 1.8], p: 'planter' },
-          { s: 'box', c: 'stone', w: [2.0, 3.0], d: [0.7, 1.0], h: [0.5, 0.7], p: 'bench' },
-          { s: 'box', c: 'hedgeDark', w: [1.2, 1.7], d: [1.2, 1.7], h: [1.6, 2.4], p: 'hedge' },
+          { s: 'box', c: 'stone', w: [2.0, 2.8], d: [0.7, 1.0], h: [0.5, 0.7], p: 'bench' },
+          { s: 'box', c: 'hedgeDark', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.6, 2.4], p: 'hedge' },
         ],
       },
     ],
@@ -400,7 +398,7 @@ export const CFG = {
   walkSpeed: 6.2,
   runSpeed: 9.2,
   touchRadius: 1.5,
-  spotRadius: 14,
+  spotRadius: 8,
   maxPlayers: 8,
   nameMax: 16,
   cell: 1,
@@ -736,7 +734,153 @@ function genRooms(rng, boxes, map, rec, pads) {
   return placed;
 }
 
-const GEN = { random: scatter, lattice: scatter, rows: genRows, ring: genRing, clump: genClump, rooms: genRooms };
+/* Labirin berdinding tebal dan tinggi: lorong berliku, persimpangan, dan jalan buntu
+   yang memotong pandangan total. Menggunakan randomized DFS dengan braiding (menghubungkan
+   sebagian jalan buntu untuk rute alternatif/loop). */
+function genMaze(rng, boxes, map, rec, pads) {
+  const W = map.size.w;
+  const D = map.size.d;
+  const aisle = rec.aisle || 4.0;
+  const t = rec.t || 1.4;
+  const h = rec.h || map.wallH * 0.85;
+  const margin = rec.margin || 3.4;
+  const color = rec.color || (rec.kinds && rec.kinds[0] && rec.kinds[0].c) || 'wall';
+  const kind = (rec.kinds && rec.kinds[0] && rec.kinds[0].p) || 'hedge';
+  const shape = (rec.kinds && rec.kinds[0] && rec.kinds[0].s) || 'box';
+
+  const usableW = W - 2 * margin;
+  const usableD = D - 2 * margin;
+  const step = aisle + t;
+  const cols = Math.max(3, Math.floor((usableW - t) / step));
+  const rows = Math.max(3, Math.floor((usableD - t) / step));
+
+  const totalW = cols * step + t;
+  const totalD = rows * step + t;
+  const startX = -totalW / 2;
+  const startZ = -totalD / 2;
+
+  const vWalls = Array.from({ length: cols + 1 }, () => new Uint8Array(rows).fill(1));
+  const hWalls = Array.from({ length: cols }, () => new Uint8Array(rows + 1).fill(1));
+
+  const visited = Array.from({ length: cols }, () => new Uint8Array(rows));
+  const stack = [];
+  const startCol = Math.floor(rng() * cols);
+  const startRow = Math.floor(rng() * rows);
+  visited[startCol][startRow] = 1;
+  stack.push([startCol, startRow]);
+
+  while (stack.length > 0) {
+    const [c, r] = stack[stack.length - 1];
+    const neighbors = [];
+    if (c > 0 && !visited[c - 1][r]) neighbors.push([c - 1, r, 'L']);
+    if (c < cols - 1 && !visited[c + 1][r]) neighbors.push([c + 1, r, 'R']);
+    if (r > 0 && !visited[c][r - 1]) neighbors.push([c, r - 1, 'U']);
+    if (r < rows - 1 && !visited[c][r + 1]) neighbors.push([c, r + 1, 'D']);
+
+    if (neighbors.length > 0) {
+      const idx = Math.floor(rng() * neighbors.length);
+      const [nc, nr, dir] = neighbors[idx];
+      if (dir === 'L') vWalls[c][r] = 0;
+      else if (dir === 'R') vWalls[c + 1][r] = 0;
+      else if (dir === 'U') hWalls[c][r] = 0;
+      else if (dir === 'D') hWalls[c][r + 1] = 0;
+      visited[nc][nr] = 1;
+      stack.push([nc, nr]);
+    } else {
+      stack.pop();
+    }
+  }
+
+  // Braid: buka sebagian dinding acak untuk membentuk loop (rute alternatif)
+  const braidRate = rec.braid != null ? rec.braid : 0.36;
+  for (let c = 1; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      if (vWalls[c][r] && rng() < braidRate) vWalls[c][r] = 0;
+    }
+  }
+  for (let c = 0; c < cols; c++) {
+    for (let r = 1; r < rows; r++) {
+      if (hWalls[c][r] && rng() < braidRate) hWalls[c][r] = 0;
+    }
+  }
+
+  // Bersihkan dinding di sekitar pads (misal spawn awal)
+  for (const pad of pads) {
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const cellX = startX + t + c * step + aisle / 2;
+        const cellZ = startZ + t + r * step + aisle / 2;
+        if (Math.hypot(cellX - pad.x, cellZ - pad.z) < pad.r + 2.5) {
+          if (c > 0) vWalls[c][r] = 0;
+          if (c < cols) vWalls[c + 1][r] = 0;
+          if (r > 0) hWalls[c][r] = 0;
+          if (r < rows) hWalls[c][r + 1] = 0;
+        }
+      }
+    }
+  }
+
+  // Pasang dinding vertikal (sepanjang Z)
+  let placed = 0;
+  for (let c = 1; c < cols; c++) {
+    let r0 = -1;
+    for (let r = 0; r < rows; r++) {
+      if (vWalls[c][r]) {
+        if (r0 === -1) r0 = r;
+      } else if (r0 !== -1) {
+        const z0 = startZ + r0 * step;
+        const z1 = startZ + r * step + t;
+        const cand = mkBox(startX + c * step + t / 2, (z0 + z1) / 2, t, z1 - z0, h, color, shape, true, '', kind);
+        if (freeSpot(boxes, cand, pads, map)) {
+          boxes.push(cand);
+          placed++;
+        }
+        r0 = -1;
+      }
+    }
+    if (r0 !== -1) {
+      const z0 = startZ + r0 * step;
+      const z1 = startZ + rows * step + t;
+      const cand = mkBox(startX + c * step + t / 2, (z0 + z1) / 2, t, z1 - z0, h, color, shape, true, '', kind);
+      if (freeSpot(boxes, cand, pads, map)) {
+        boxes.push(cand);
+        placed++;
+      }
+    }
+  }
+
+  // Pasang dinding horizontal (sepanjang X)
+  for (let r = 1; r < rows; r++) {
+    let c0 = -1;
+    for (let c = 0; c < cols; c++) {
+      if (hWalls[c][r]) {
+        if (c0 === -1) c0 = c;
+      } else if (c0 !== -1) {
+        const x0 = startX + c0 * step;
+        const x1 = startX + c * step + t;
+        const cand = mkBox((x0 + x1) / 2, startZ + r * step + t / 2, x1 - x0, t, h, color, shape, true, '', kind);
+        if (freeSpot(boxes, cand, pads, map)) {
+          boxes.push(cand);
+          placed++;
+        }
+        c0 = -1;
+      }
+    }
+    if (c0 !== -1) {
+      const x0 = startX + c0 * step;
+      const x1 = startX + cols * step + t;
+      const cand = mkBox((x0 + x1) / 2, startZ + r * step + t / 2, x1 - x0, t, h, color, shape, true, '', kind);
+      if (freeSpot(boxes, cand, pads, map)) {
+        boxes.push(cand);
+        placed++;
+      }
+    }
+  }
+
+  return placed;
+}
+
+const GEN = { random: scatter, lattice: scatter, rows: genRows, ring: genRing, clump: genClump, rooms: genRooms, maze: genMaze };
 
 function makeGrid(map) {
   const cell = CFG.cell;
@@ -942,10 +1086,10 @@ export function buildLayout(map, rng) {
   };
 
   let ruang = measure(pass.open);
-  // Ruang yang cuma bisa didatangi sejauh 8 meter dari spawn bukan peta, itu kantong. Satu-satunya
+  // Ruang yang cuma bisa didatangi sejauh 22 meter dari spawn bukan peta, itu kantong. Satu-satunya
   // cara hartanya masih jauh adalah lewat di leher yang tersumbat, jadi singkirkan penyumbatnya —
   // selalu benda, dan hanya saat layout ini memang akan gagal, jadi peta yang lapang tidak disentuh.
-  for (let k = 0; k < 6 && ruang.far < 18 && ruang.spots.length >= 4; k++) {
+  for (let k = 0; k < 6 && ruang.far < 22 && ruang.spots.length >= 4; k++) {
     if (!unseal(g, boxes, pass.seen)) break;
     paint(g, boxes);
     pass = openReach(g, start);
@@ -956,16 +1100,58 @@ export function buildLayout(map, rng) {
   const { spawns, spots, far } = ruang;
   if (spawns.length < 2) return null;
   if (spots.length < 4) return null;
-  const floor = Math.max(18, far * 0.62);
-  let treasure = null;
-  let bestScore = -1;
-  for (const p of spots) {
-    if (p.dmin < floor) continue;
-    const score = p.dmin + rng() * 7;
-    if (score > bestScore) {
-      bestScore = score;
-      treasure = p;
+
+  /* Sembunyi, bukan cuma jauh. Sepuluh titik sampel melingkar ditembakkan lewat grid: arah yang
+     keluar peta, arah yang mentok benda, dan arah yang terpotong di tengah semuanya dihitung buta.
+     Grid sudah memuat semua benda setinggi langkah (dan tidak memuat lumpur/lubang yang memang tidak
+     menghalangi pandangan), jadi satu pemeriksaan sel sudah cukup sebagai proxy garis pandang. */
+  const buta = (p) => {
+    if (p.buta != null) return p.buta;
+    let n = 0;
+    for (let k = 0; k < 10; k++) {
+      const ang = (k / 10) * Math.PI * 2 + p.x * 0.07;
+      const sx = p.x + Math.cos(ang) * 9;
+      const sz = p.z + Math.sin(ang) * 9;
+      if (Math.abs(sx) > half(W) - 1 || Math.abs(sz) > half(D) - 1) {
+        n += 2;
+        continue;
+      }
+      const c = cz(g, sz) * g.cols + cx(g, sx);
+      if (c < 0 || c >= g.blocked.length || g.blocked[c]) {
+        n += 1;
+        continue;
+      }
+      const steps = Math.max(2, Math.ceil(9 / 0.8));
+      let terpotong = false;
+      for (let i = 1; i < steps; i++) {
+        const t = i / steps;
+        const cc = cz(g, sz + (p.z - sz) * t) * g.cols + cx(g, sx + (p.x - sx) * t);
+        if (g.blocked[cc]) {
+          terpotong = true;
+          break;
+        }
+      }
+      if (terpotong) n += 2;
     }
+    p.buta = n;
+    return n;
+  };
+
+  // Tangga ambang: peta tanpa kantung sedalam 26 m boleh menyerah ke 20, lalu 12. Mengembalikan null
+  // di sini berarti layout dibuang dan seed cadangan yang bekerja, jadi anak tangga terakhir sengaja
+  // nol — yang tersisa tinggal memilih yang paling buta.
+  let treasure = null;
+  for (const floor of [Math.max(26, far * 0.8), Math.max(20, far * 0.7), 12, 0]) {
+    let bestScore = -1;
+    for (const p of spots) {
+      if (p.dmin < floor) continue;
+      const score = p.dmin + buta(p) * 1.9 + rng() * 8;
+      if (score > bestScore) {
+        bestScore = score;
+        treasure = p;
+      }
+    }
+    if (treasure) break;
   }
   if (!treasure) return null;
   treasure = { x: treasure.x, z: treasure.z };
@@ -973,17 +1159,17 @@ export function buildLayout(map, rng) {
   const decoys = [];
   const pool = spots.filter(
     (p) =>
-      Math.hypot(p.x - treasure.x, p.z - treasure.z) > 12 &&
-      Math.hypot(p.x - treasure.x, p.z - treasure.z) < 44 &&
-      p.dmin > 9,
+      Math.hypot(p.x - treasure.x, p.z - treasure.z) > 9 &&
+      Math.hypot(p.x - treasure.x, p.z - treasure.z) < 48 &&
+      p.dmin > 8,
   );
   let cursor = treasure;
-  for (let k = 0; k < 3; k++) {
+  for (let k = 0; k < 8; k++) {
     let pick = null;
     let bd = -1;
     for (const p of pool) {
-      if (decoys.some((d) => Math.hypot(d.x - p.x, d.z - p.z) < 9)) continue;
-      if (Math.hypot(p.x - cursor.x, p.z - cursor.z) < 10) continue;
+      if (decoys.some((d) => Math.hypot(d.x - p.x, d.z - p.z) < 7.5)) continue;
+      if (Math.hypot(p.x - cursor.x, p.z - cursor.z) < 8.5) continue;
       const d = rng();
       if (d > bd) {
         bd = d;

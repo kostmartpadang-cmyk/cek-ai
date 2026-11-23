@@ -10,12 +10,12 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const nowMs = () => Date.now();
 
 const BANDS = [
-  { max: 8, label: 'Membakar', k: 1 },
-  { max: 15, label: 'Panas', k: 0.8 },
-  { max: 26, label: 'Hangat', k: 0.6 },
-  { max: 45, label: 'Sejuk', k: 0.35 },
-  { max: 70, label: 'Dingin', k: 0.18 },
-  { max: Infinity, label: 'Beku', k: 0.06 },
+  { max: 6, label: 'Membakar', icon: '⚡', k: 1 },
+  { max: 14, label: 'Panas', icon: '🔥', k: 0.8 },
+  { max: 24, label: 'Hangat', icon: '🌤️', k: 0.6 },
+  { max: 40, label: 'Sejuk', icon: '🍃', k: 0.35 },
+  { max: 65, label: 'Dingin', icon: '🧊', k: 0.18 },
+  { max: Infinity, label: 'Beku', icon: '❄️', k: 0.06 },
 ];
 
 let R = null;
@@ -172,6 +172,15 @@ function syncRound(v) {
   R.cdShown = null;
   R.arrowUntil = 0;
   R.wantSnap = nowMs() + 400;
+  if (R.decoyTimer) {
+    clearTimeout(R.decoyTimer);
+    R.decoyTimer = null;
+  }
+  const decAlert = node('decoyAlert');
+  if (decAlert) {
+    decAlert.classList.add('hidden');
+    decAlert.classList.remove('pop');
+  }
   const i = v.players.findIndex((p) => p.id === v.you.id);
   const sp = R.layout.spawns[Math.max(0, i) % R.layout.spawns.length];
   R.me.x = sp.x;
@@ -351,6 +360,36 @@ function stepPhysics(dt, canMove) {
     R.claimed = true;
     claim();
   }
+  if (canMove && R.layout.decoys) {
+    for (const dec of R.layout.decoys) {
+      if (Math.hypot(R.me.x - dec.x, R.me.z - dec.z) <= CFG.touchRadius * 1.3) {
+        if (!dec._opened) {
+          dec._opened = true;
+          if (R.world.openDecoyAt) R.world.openDecoyAt(dec.x, dec.z);
+          triggerDecoyAlert();
+        }
+      }
+    }
+  }
+}
+
+function triggerDecoyAlert() {
+  beep(240, 0.14, 0.05, 'sawtooth');
+  beep(170, 0.22, 0.05, 'sawtooth', 0.1);
+  const al = node('decoyAlert');
+  if (al) {
+    al.classList.remove('hidden');
+    al.classList.remove('pop');
+    void al.offsetWidth;
+    al.classList.add('pop');
+    if (R.decoyTimer) clearTimeout(R.decoyTimer);
+    R.decoyTimer = setTimeout(() => {
+      if (al) {
+        al.classList.add('hidden');
+        al.classList.remove('pop');
+      }
+    }, 2800);
+  }
 }
 
 function updateAvatars(v, dt) {
@@ -453,6 +492,7 @@ function drawHeat(v, dt) {
   const band = BANDS.find((b) => d <= b.max) || BANDS[BANDS.length - 1];
   node('heatFill').style.width = Math.round(band.k * 100) + '%';
   setTxt(node('heatTxt'), band.label);
+  setTxt(node('heatIcon'), band.icon);
   heat.classList.toggle('hot', band.k >= 0.6);
   heat.classList.toggle('burn', band.k >= 0.8);
   const spot = clamp(1 - (d - CFG.touchRadius) / (CFG.spotRadius - CFG.touchRadius), 0, 1);
@@ -466,6 +506,40 @@ function drawHeat(v, dt) {
   if (R.beat >= gap) {
     R.beat = 0;
     beep(280 + (26 - Math.min(26, d)) * 20, 0.05, 0.03, 'sine');
+  }
+}
+
+function drawCompass(v) {
+  const comp = node('compass');
+  if (!comp) return;
+  const running = v.race && (v.race.status === 'running' || v.race.status === 'countdown');
+  comp.classList.toggle('hidden', !running);
+  if (!running) return;
+
+  const ring = node('compassRing');
+  if (ring) {
+    const deg = (R.world.camState.yaw * 180) / Math.PI;
+    ring.style.transform = `rotate(${deg.toFixed(1)}deg)`;
+  }
+
+  const wave = node('radarWave');
+  const dot = node('pingDot');
+  const sonarActive = R.arrowUntil > nowMs() && !!R.layout;
+  if (wave) wave.classList.toggle('active', sonarActive);
+
+  if (dot) {
+    dot.classList.toggle('hidden', !sonarActive);
+    if (sonarActive && R.layout.treasure) {
+      const t = R.layout.treasure;
+      const yaw = R.world.camState.yaw;
+      const ahead = -(t.x - R.me.x) * Math.sin(yaw) - (t.z - R.me.z) * Math.cos(yaw);
+      const side = (t.x - R.me.x) * Math.cos(yaw) - (t.z - R.me.z) * Math.sin(yaw);
+      const ang = Math.atan2(side, ahead);
+      const pingDist = Math.min(22, Math.max(6, (R.meDist / 60) * 22));
+      const px = Math.sin(ang) * pingDist;
+      const py = -Math.cos(ang) * pingDist;
+      dot.style.transform = `translate(calc(-50% + ${px.toFixed(1)}px), calc(-50% + ${py.toFixed(1)}px))`;
+    }
   }
 }
 
@@ -514,6 +588,7 @@ function updateHud(v, dt) {
   if (cd) cd.style.height = Math.round(clamp((R.cdUntil - nowMs()) / 1400, 0, 1) * 100) + '%';
 
   drawHeat(v, dt);
+  drawCompass(v);
   drawArrow(v);
   buildTrack(v);
   buildReveal(v);
@@ -704,7 +779,13 @@ export function attach(ctx) {
       heat: $('hrHeat'),
       heatFill: $('hrHeatFill'),
       heatTxt: $('hrHeatTxt'),
+      heatIcon: $('hrHeatIcon'),
       arrow: $('hrArrow'),
+      compass: $('hrCompass'),
+      compassRing: $('hrCompassRing'),
+      radarWave: $('hrRadarWave'),
+      pingDot: $('hrPingDot'),
+      decoyAlert: $('hrDecoyAlert'),
       timer: $('hrTimer'),
       timerTxt: $('hrTimerTxt'),
       track: $('hrTrack'),
@@ -937,6 +1018,8 @@ function fiturOf(mapId) {
   if (!FITUR.has(mapId)) {
     const l = layoutFor(mapId, 4242);
     const chip = [];
+    if (l.map && l.map.type === 'maze') chip.push('labirin');
+    else if (l.map && l.map.type === 'rooms') chip.push('banyak ruangan');
     if (l.boxes.some((b) => !b.wall && b.h >= M.stepH && b.h <= 1.25)) chip.push('bisa dinaiki');
     if (l.boxes.some((b) => b.k === 'soft')) chip.push('tanah lembek');
     if (l.boxes.some((b) => b.k === 'pit')) chip.push('lubang jebakan');
@@ -1021,7 +1104,11 @@ export function dispose() {
       e[k].classList.remove('show');
       delete e[k].dataset.sig;
     }
-  for (const k of ['mapCard', 'reveal', 'heat', 'arrow', 'stick', 'help', 'nogl'])
+  if (R.decoyTimer) {
+    clearTimeout(R.decoyTimer);
+    R.decoyTimer = null;
+  }
+  for (const k of ['mapCard', 'reveal', 'heat', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'compass'])
     if (e[k]) {
       e[k].classList.add('hidden');
       delete e[k].dataset.sig;

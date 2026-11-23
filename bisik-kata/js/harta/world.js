@@ -442,8 +442,8 @@ export function createWorld(THREE, canvas) {
   }
 
   function buildChest(l, at, real) {
-    const gold = paint(real ? '#f4c943' : '#8c7a55', real ? '#4a2f00' : '#000000');
-    const wood = paint(real ? '#7d5330' : '#5d4a38');
+    const gold = paint(real ? '#f4c943' : '#b89445', real ? '#4a2f00' : '#1a1204');
+    const wood = paint(real ? '#7d5330' : '#5f4632');
     const g = new THREE.Group();
     const body = new THREE.Mesh(partGeo.chestBody, gold);
     body.position.y = 0.4;
@@ -459,6 +459,8 @@ export function createWorld(THREE, canvas) {
     g.add(body, lid, lock);
     g.position.copy(at);
     g.userData.lid = lid;
+    g.userData.real = real;
+    g.userData.opened = false;
     return g;
   }
 
@@ -725,7 +727,13 @@ export function createWorld(THREE, canvas) {
         arr[i + 2] = base[i + 2] + Math.cos(t * 1.1 + i) * 0.2;
       }
       sparks.geometry.attributes.position.needsUpdate = true;
-      sparks.material.opacity = 0.15 + spot * 0.8;
+      sparks.material.opacity = spot * 0.92;
+    }
+
+    for (const d of decoys) {
+      if (d.userData && d.userData.opened && d.userData.lid) {
+        d.userData.lid.rotation.x += (-1.65 - d.userData.lid.rotation.x) * Math.min(1, dt * 6);
+      }
     }
 
     if (confetti) {
@@ -838,6 +846,17 @@ export function createWorld(THREE, canvas) {
     setQuality,
     setSpot: (v) => (spot = Math.max(0, Math.min(1, v))),
     openChest: () => (opened = true),
+    openDecoyAt: (x, z) => {
+      for (const d of decoys) {
+        if (Math.hypot(d.position.x - x, d.position.z - z) < 2.2) {
+          if (d.userData && d.userData.lid) {
+            d.userData.opened = true;
+            return true;
+          }
+        }
+      }
+      return false;
+    },
     treasureAt: () => treasure.clone(),
     dbg: () => ({
       calls: renderer.info.render.calls,

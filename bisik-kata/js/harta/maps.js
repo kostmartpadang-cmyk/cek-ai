@@ -102,11 +102,11 @@ export const MAPS = [
     key: ['#ffe1b0', 0.75, 0.7],
     theme: 'gudang',
     recipes: [
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'dust', w: [5, 8], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
-      // Ruang bawah tanah gudang: tiga mulut lubang yang cuma bisa keluar dengan lompatan.
-      { mode: 'random', n: 3, kinds: [{ s: 'cyl', c: 'hole', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      { mode: 'random', n: 9, kinds: [{ s: 'cyl', c: 'dust', w: [5, 8], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
+      // Ruang bawah tanah gudang: mulut lubang yang cuma bisa keluar dengan lompatan.
+      { mode: 'random', n: 5, kinds: [{ s: 'cyl', c: 'hole', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
       // Kompleks gudang bersekat: bilik-bilik penyimpanan dan lorong berbelok antar-ruangan
-      { mode: 'rooms', depth: 4, min: [11, 9], door: 3.2, t: 1.3, h: 0.88 },
+      { mode: 'rooms', depth: 4, min: [11, 9], door: 3.2, t: 1.3, h: 1.0 },
       {
         mode: 'rows',
         n: 14,
@@ -166,10 +166,12 @@ export const MAPS = [
     key: ['#ffffff', 0.65, 0.8],
     theme: 'mainan',
     recipes: [
-      { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'rug', w: [6, 9], h: [0.05, 0.09], p: 'rug', k: 'soft' }] },
-      // Kamar bermain bersekat tinggi: dinding ruangan setinggi 7.6 meter membagi ruangan menjadi
+      { mode: 'random', n: 10, kinds: [{ s: 'cyl', c: 'rug', w: [6, 9], h: [0.05, 0.09], p: 'rug', k: 'soft' }] },
+      // Jebakan lubang balok mainan
+      { mode: 'random', n: 4, kinds: [{ s: 'cyl', c: 'blue', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Kamar bermain bersekat tinggi: dinding ruangan setinggi penuh membagi ruangan menjadi
       // bilik-bilik bermain yang harus dijelajahi lewat pintunya.
-      { mode: 'rooms', depth: 4, min: [10, 8], door: 3.2, t: 1.4, h: 0.85 },
+      { mode: 'rooms', depth: 4, min: [10, 8], door: 3.2, t: 1.4, h: 1.0 },
       // Menara balok melingkar: kolom tertinggi di ruangan, dengan dua pintu masuk berhadapan.
       {
         mode: 'ring',
@@ -228,14 +230,14 @@ export const MAPS = [
     key: ['#ffeccb', 0.7, 0.6],
     theme: 'kuil',
     recipes: [
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'mossFlat', w: [5, 8], h: [0.05, 0.09], p: 'moss', k: 'soft' }] },
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'cellar', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      // Labirin katakomba batu kuno: lorong-lorong berliku dengan dinding batu setinggi 5.4m
+      { mode: 'random', n: 9, kinds: [{ s: 'cyl', c: 'mossFlat', w: [5, 8], h: [0.05, 0.09], p: 'moss', k: 'soft' }] },
+      { mode: 'random', n: 8, kinds: [{ s: 'cyl', c: 'cellar', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Labirin katakomba batu kuno: lorong-lorong berliku dengan dinding batu setinggi penuh
       {
         mode: 'maze',
         aisle: 4.2,
         t: 1.4,
-        h: 5.4,
+        h: 12,
         color: 'stone',
         kind: 'pillar',
         braid: 0.38,
@@ -287,11 +289,11 @@ export const MAPS = [
     key: ['#ffd9a0', 0.62, 0.55],
     theme: 'tambang',
     recipes: [
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'grit', w: [5, 8], h: [0.05, 0.09], p: 'grit', k: 'soft' }] },
+      { mode: 'random', n: 9, kinds: [{ s: 'cyl', c: 'grit', w: [5, 8], h: [0.05, 0.09], p: 'grit', k: 'soft' }] },
       // Sumur tua
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'shaft', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      { mode: 'random', n: 8, kinds: [{ s: 'cyl', c: 'shaft', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
       // Bilik-bilik tambang bawah tanah: ruangan kerja bersekat dinding kokoh dengan lorong belokan antar-bilik
-      { mode: 'rooms', depth: 4, min: [11, 9], door: 3.2, t: 1.4, h: 0.88 },
+      { mode: 'rooms', depth: 4, min: [11, 9], door: 3.2, t: 1.4, h: 1.0 },
       // Barisan penyangga: dinding kayu sejajar terowongan
       {
         mode: 'rows',
@@ -353,14 +355,14 @@ export const MAPS = [
     key: ['#ffffff', 0.72, 0.75],
     theme: 'kebun',
     recipes: [
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'mud', w: [4, 7], h: [0.05, 0.09], p: 'mud', k: 'soft' }] },
-      { mode: 'random', n: 5, kinds: [{ s: 'cyl', c: 'drain', w: [3.2, 4.6], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      // Labirin pagar tanaman raksasa: lorong-lorong tanaman tinggi yang memotong pandangan total
+      { mode: 'random', n: 9, kinds: [{ s: 'cyl', c: 'mud', w: [4, 7], h: [0.05, 0.09], p: 'mud', k: 'soft' }] },
+      { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'drain', w: [3.2, 4.6], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      // Labirin pagar tanaman raksasa: lorong-lorong tanaman tinggi setinggi kanopi
       {
         mode: 'maze',
         aisle: 4.2,
         t: 1.4,
-        h: 3.5,
+        h: 7,
         color: 'hedge',
         kind: 'hedge',
         braid: 0.36,
@@ -418,9 +420,9 @@ export const MAPS = [
     key: ['#38bdf8', 0.5, 0.65],
     theme: 'hantu',
     recipes: [
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'blood', w: [4, 7], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
-      { mode: 'random', n: 3, kinds: [{ s: 'cyl', c: 'pit', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      { mode: 'rooms', depth: 4, min: [10, 9], door: 3.2, t: 1.4, h: 0.9 },
+      { mode: 'random', n: 10, kinds: [{ s: 'cyl', c: 'blood', w: [4, 7], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'pit', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      { mode: 'rooms', depth: 4, min: [10, 9], door: 3.2, t: 1.4, h: 1.0 },
       {
         mode: 'rows',
         n: 12,
@@ -744,7 +746,7 @@ function genRooms(rng, boxes, map, rec, pads) {
   const leafMin = rec.min || [11, 9];
   const door = rec.door || 3.2;
   const t = rec.t || 1.1;
-  const h = map.wallH * (rec.h || 0.86);
+  const h = map.wallH;
   const leaves = [{ x0: -half(map.size.w), z0: -half(map.size.d), x1: half(map.size.w), z1: half(map.size.d) }];
   const walls = [];
   let pool = leaves;
@@ -901,7 +903,7 @@ function genMaze(rng, boxes, map, rec, pads) {
   const D = map.size.d;
   const aisle = rec.aisle || 4.0;
   const t = rec.t || 1.4;
-  const h = rec.h || map.wallH * 0.85;
+  const h = rec.h || map.wallH;
   const margin = rec.margin || 3.4;
   const color = rec.color || (rec.kinds && rec.kinds[0] && rec.kinds[0].c) || 'wall';
   const kind = (rec.kinds && rec.kinds[0] && rec.kinds[0].p) || 'hedge';
@@ -1325,7 +1327,7 @@ export function buildLayout(map, rng) {
   pushBox(boxes, -half(W) - half(t), 0, t, D, map.wallH, 'wall', 'box', true);
   pushBox(boxes, half(W) + half(t), 0, t, D, map.wallH, 'wall', 'box', true);
   for (const p of map.partitions || [])
-    pushBox(boxes, p.x * W, p.z * D, Math.max(0.8, p.w * W), Math.max(0.8, p.d * D), map.wallH * 0.86, 'wallDark', 'box', true);
+    pushBox(boxes, p.x * W, p.z * D, Math.max(0.8, p.w * W), Math.max(0.8, p.d * D), map.wallH, 'wallDark', 'box', true);
 
   const g = makeGrid(map);
   paint(g, boxes);
@@ -1418,11 +1420,11 @@ export function buildLayout(map, rng) {
   // di sini berarti layout dibuang dan seed cadangan yang bekerja, jadi anak tangga terakhir sengaja
   // nol — yang tersisa tinggal memilih yang paling buta.
   let treasure = null;
-  for (const floor of [Math.max(26, far * 0.8), Math.max(20, far * 0.7), 12, 0]) {
+  for (const floor of [Math.max(28, far * 0.82), Math.max(20, far * 0.7), 12, 0]) {
     let bestScore = -1;
     for (const p of spots) {
       if (p.dmin < floor) continue;
-      const score = p.dmin + buta(p) * 1.9 + rng() * 8;
+      const score = p.dmin * 1.4 + buta(p) * 3.4 + rng() * 6;
       if (score > bestScore) {
         bestScore = score;
         treasure = p;
@@ -1436,18 +1438,18 @@ export function buildLayout(map, rng) {
   const decoys = [];
   const pool = spots.filter(
     (p) =>
-      Math.hypot(p.x - treasure.x, p.z - treasure.z) > 9 &&
-      Math.hypot(p.x - treasure.x, p.z - treasure.z) < 48 &&
-      p.dmin > 8,
+      Math.hypot(p.x - treasure.x, p.z - treasure.z) > 8 &&
+      Math.hypot(p.x - treasure.x, p.z - treasure.z) < 52 &&
+      p.dmin > 7,
   );
   let cursor = treasure;
-  for (let k = 0; k < 8; k++) {
+  for (let k = 0; k < 12; k++) {
     let pick = null;
     let bd = -1;
     for (const p of pool) {
-      if (decoys.some((d) => Math.hypot(d.x - p.x, d.z - p.z) < 7.5)) continue;
-      if (Math.hypot(p.x - cursor.x, p.z - cursor.z) < 8.5) continue;
-      const d = rng();
+      if (decoys.some((d) => Math.hypot(d.x - p.x, d.z - p.z) < 6.8)) continue;
+      if (Math.hypot(p.x - cursor.x, p.z - cursor.z) < 7.8) continue;
+      const d = rng() + buta(p) * 0.08;
       if (d > bd) {
         bd = d;
         pick = p;

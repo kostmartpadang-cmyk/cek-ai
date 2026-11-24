@@ -155,6 +155,86 @@ function makeWallTexture(THREE, kind) {
   return tex;
 }
 
+function makeCeilTexture(THREE, pal, kind) {
+  const s = 128;
+  const cv = canvasOf(s);
+  const g = cv.getContext('2d');
+  g.fillStyle = pal.floor2 || '#1a1a1a';
+  g.fillRect(0, 0, s, s);
+
+  if (kind === 'gudang' || kind === 'hantu') {
+    // Heavy timber rafters and ceiling joists
+    g.fillStyle = pal.woodDark || '#26190f';
+    for (let x = 0; x < s; x += 32) {
+      g.fillRect(x, 0, 10, s);
+      g.fillStyle = 'rgba(0,0,0,0.35)';
+      g.fillRect(x + 8, 0, 2, s);
+      g.fillStyle = pal.woodDark || '#26190f';
+    }
+    // Main cross beams
+    g.fillStyle = pal.wood || '#3d2919';
+    g.fillRect(0, 26, s, 14);
+    g.fillRect(0, 90, s, 14);
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    g.fillRect(0, 40, s, 2.5);
+    g.fillRect(0, 104, s, 2.5);
+    if (kind === 'hantu') {
+      g.strokeStyle = 'rgba(200, 200, 200, 0.22)';
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.moveTo(0, 0); g.lineTo(40, 40);
+      g.moveTo(s, 0); g.lineTo(s - 40, 40);
+      g.stroke();
+    }
+  } else if (kind === 'kuil') {
+    // Vaulted ancient stone ceiling slabs with carved relief
+    g.fillStyle = pal.wallDark || '#38332c';
+    g.fillRect(3, 3, s - 6, s - 6);
+    g.strokeStyle = 'rgba(0,0,0,0.4)';
+    g.lineWidth = 3;
+    g.strokeRect(2, 2, s - 4, s - 4);
+    g.strokeStyle = 'rgba(224, 179, 82, 0.2)';
+    g.strokeRect(16, 16, s - 32, s - 32);
+    g.fillStyle = 'rgba(0,0,0,0.18)';
+    g.fillRect(28, 28, s - 56, s - 56);
+  } else if (kind === 'tambang') {
+    // Rough cavern timber lagging and rock
+    g.fillStyle = '#1c1612';
+    g.fillRect(0, 0, s, s);
+    g.fillStyle = pal.timber || '#5e4324';
+    g.fillRect(0, 12, s, 16);
+    g.fillRect(0, 76, s, 16);
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    g.fillRect(0, 28, s, 3);
+    g.fillRect(0, 92, s, 3);
+  } else if (kind === 'kebun') {
+    // High conservatory glasshouse iron lattice canopy
+    g.fillStyle = '#18241c';
+    g.fillRect(0, 0, s, s);
+    g.strokeStyle = 'rgba(30, 48, 35, 0.85)';
+    g.lineWidth = 3.5;
+    g.strokeRect(2, 2, s - 4, s - 4);
+    g.beginPath();
+    g.moveTo(0, 0); g.lineTo(s, s);
+    g.moveTo(s, 0); g.lineTo(0, s);
+    g.stroke();
+    g.fillStyle = 'rgba(76, 186, 105, 0.16)';
+    g.beginPath(); g.arc(s / 2, s / 2, 18, 0, 7); g.fill();
+  } else {
+    // Mainan: coffered square ceiling tiles
+    g.fillStyle = pal.wallDark || '#204566';
+    g.fillRect(4, 4, s - 8, s - 8);
+    g.strokeStyle = 'rgba(255,255,255,0.12)';
+    g.lineWidth = 2.5;
+    g.strokeRect(14, 14, s - 28, s - 28);
+  }
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 function makeBlobTexture(THREE) {
   const s = 64;
   const cv = canvasOf(s);
@@ -298,7 +378,7 @@ export function createWorld(THREE, canvas) {
     return c;
   }
 
-  const camState = { yaw: Math.PI, pitch: 0.4, dist: 9.2 };
+  const camState = { yaw: Math.PI, pitch: 0.32, dist: 5.6 };
   const orbit = { on: false, ang: 0 };
   const camPos = new THREE.Vector3(0, 8, 16);
   const lookAt = new THREE.Vector3();
@@ -319,6 +399,7 @@ export function createWorld(THREE, canvas) {
   let secChests = [];
   let itemMeshes = [];
   let flashlightOn = false;
+  let speedBoostOn = false;
   let levelTex = [];
   let spot = 0;
   let opened = false;
@@ -428,6 +509,18 @@ export function createWorld(THREE, canvas) {
     const floor = new THREE.Mesh(new THREE.BoxGeometry(fw, 1.2, fd), new THREE.MeshLambertMaterial({ map: floorTex }));
     floor.position.y = -0.6;
     grp.add(floor);
+
+    // Plafon / Langit-langit tertutup (Enclosed Ceiling): membuat ruangan tertutup rapat dari atas
+    const ceilTex = makeCeilTexture(THREE, pal, map.kind);
+    levelTex.push(ceilTex);
+    ceilTex.repeat.set(fw / 4, fd / 4);
+    ceilTex.anisotropy = Math.min(4, maxAniso);
+    const ceilMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(fw, fd).rotateX(Math.PI / 2),
+      new THREE.MeshLambertMaterial({ map: ceilTex, side: THREE.DoubleSide }),
+    );
+    ceilMesh.position.y = map.wallH;
+    grp.add(ceilMesh);
     return grp;
   }
 
@@ -934,9 +1027,10 @@ export function createWorld(THREE, canvas) {
   function camDesired(target, out) {
     const yaw = orbit.on ? camState.yaw + orbit.ang : camState.yaw;
     const cp = Math.cos(camState.pitch);
+    const maxCamY = layout && layout.map ? layout.map.wallH - 0.75 : 8.5;
     out.set(
       target.x + Math.sin(yaw) * cp * camState.dist,
-      target.y + Math.sin(camState.pitch) * camState.dist + 1.2,
+      Math.min(maxCamY, Math.max(0.9, target.y + Math.sin(camState.pitch) * camState.dist + 1.2)),
       target.z + Math.cos(yaw) * cp * camState.dist,
     );
     return out;
@@ -945,6 +1039,12 @@ export function createWorld(THREE, canvas) {
   const desired = new THREE.Vector3();
 
   function render(dt, t, focusId) {
+    const targetFov = speedBoostOn ? 70 : 62;
+    if (Math.abs(camera.fov - targetFov) > 0.1) {
+      camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 7);
+      camera.updateProjectionMatrix();
+    }
+
     let fallback = null;
     for (const a of avatars.values()) {
       const tg = a.t;
@@ -1171,6 +1271,7 @@ export function createWorld(THREE, canvas) {
     setQuality,
     setSpot: (v) => (spot = Math.max(0, Math.min(1, v))),
     setFlashlight: (on) => (flashlightOn = !!on),
+    setSpeedBoost: (on) => (speedBoostOn = !!on),
     openChest: () => (opened = true),
     openChestById: (id) => {
       const sc = secChests.find((x) => x.userData && x.userData.chestId === id);

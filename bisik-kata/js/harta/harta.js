@@ -279,7 +279,7 @@ function syncRound(v) {
   R.me.zone = 0;
   R.me.a = Math.atan2(R.layout.treasure.x - sp.x, R.layout.treasure.z - sp.z) + Math.PI;
   R.world.camState.yaw = R.me.a;
-  R.world.camState.pitch = 0.42;
+  R.world.camState.pitch = 0.28;
   R.meDist = Math.hypot(R.me.x - R.layout.treasure.x, R.me.z - R.layout.treasure.z);
   big(null);
 }
@@ -440,7 +440,9 @@ function stepPhysics(dt, canMove) {
   }
   R.moveS = mag > 0.08 ? (inp.run ? 2 : 1) : 0;
   const hasSpeed = R.me.speedBoostUntil && nowMs() < R.me.speedBoostUntil;
-  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (hasSpeed ? 1.35 : 1) * (zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1);
+  if (R.world && R.world.setSpeedBoost) R.world.setSpeedBoost(hasSpeed && inp.run);
+  const slowFactor = hasSpeed ? 0.95 : zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1;
+  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (hasSpeed ? 1.85 : 1) * slowFactor;
   const solved = resolveFeet(R.layout, R.me.x + vx * speed * dt, R.me.z + vz * speed * dt, M.playerR, R.me.y);
   // Tepi lubang berperilaku seperti dinding selama kaki masih di bawah lantai: satu-satunya jalan
   // keluar adalah melompat. Tanpa ini, melangkah ke bibir lubang berarti naik sendiri menembus lantai.
@@ -1068,7 +1070,7 @@ function loop(ts) {
 
   const look = R.controls.consumeLook();
   R.world.camState.yaw -= look.yaw;
-  R.world.camState.pitch = clamp(R.world.camState.pitch - look.pitch, -0.22, 1.15);
+  R.world.camState.pitch = clamp(R.world.camState.pitch - look.pitch, -0.42, 0.65);
   if (canMove && R.controls.consumeJump() && !R.me.air && R.me.y - R.me.sup < 0.3) {
     R.me.air = true;
     R.me.vy = 7.4;

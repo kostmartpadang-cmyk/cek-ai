@@ -517,3 +517,37 @@ test('multi-harta & barang klaim: senter, sepatu kilat, sonar, permata, koin dan
   assert.equal(mine.speedBoost, true);
   assert.equal(mine.lootPoints, coin.pts + silver.pts);
 });
+
+test('tantangan unik di masing-masing peta: hazards dan jebakan interaktif', () => {
+  for (const map of MAPS) {
+    const L = layoutFor(map.id, 4242);
+    assert.ok(Array.isArray(L.hazards) && L.hazards.length >= 3, map.id + ' punya tantangan/hazards');
+    for (const hz of L.hazards) {
+      assert.ok(hz.id && hz.kind && hz.name && hz.icon, map.id + ' hazard punya atribut lengkap');
+      assert.equal(blockedAt(L, hz.x, hz.z), false, map.id + ' hazard tidak tertanam dalam tembok');
+    }
+  }
+
+  // Cek jenis tantangan spesifik per peta
+  const hantu = layoutFor('hantu', 4242);
+  assert.ok(hantu.hazards.some((h) => h.kind === 'curse_mist'), 'hantu ada kabut arwah');
+
+  const gudang = layoutFor('gudang', 4242);
+  assert.ok(gudang.hazards.some((h) => h.kind === 'tripwire'), 'gudang ada kawat sandung');
+  assert.ok(gudang.hazards.some((h) => h.kind === 'steam_vent'), 'gudang ada pipa uap');
+
+  const mainan = layoutFor('mainan', 4242);
+  assert.ok(mainan.hazards.some((h) => h.kind === 'ice_slide'), 'mainan ada lantai licin');
+  assert.ok(mainan.hazards.some((h) => h.kind === 'spring_pad'), 'mainan ada pegas pemantul');
+
+  const kuil = layoutFor('kuil', 4242);
+  assert.ok(kuil.hazards.some((h) => h.kind === 'spikes'), 'kuil ada duri kuno');
+  assert.ok(kuil.hazards.some((h) => h.kind === 'poison_gas'), 'kuil ada gas racun');
+
+  const tambang = layoutFor('tambang', 4242);
+  assert.ok(tambang.hazards.some((h) => h.kind === 'dynamite'), 'tambang ada dinamit');
+
+  const kebun = layoutFor('kebun', 4242);
+  assert.ok(kebun.hazards.some((h) => h.kind === 'brambles'), 'kebun ada sulur berduri');
+  assert.ok(kebun.hazards.some((h) => h.kind === 'geyser'), 'kebun ada geyser air');
+});

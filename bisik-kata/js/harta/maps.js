@@ -1545,6 +1545,81 @@ export function buildLayout(map, rng) {
     }
   }
 
+  // 3. Tantangan & Rintangan Khusus Tiap Peta (Hazards / Traps)
+  const hazards = [];
+  const hazardSpecsByMap = {
+    hantu: [
+      { kind: 'curse_mist', name: 'Kabut Dingin Arwah', icon: '👻', r: 2.2 },
+      { kind: 'curse_mist', name: 'Kabut Dingin Arwah', icon: '👻', r: 2.2 },
+      { kind: 'curse_mist', name: 'Kabut Dingin Arwah', icon: '👻', r: 2.2 },
+      { kind: 'curse_mist', name: 'Kabut Dingin Arwah', icon: '👻', r: 2.2 },
+    ],
+    gudang: [
+      { kind: 'tripwire', name: 'Kawat Sandung Kargo', icon: '⛓️', r: 1.6 },
+      { kind: 'tripwire', name: 'Kawat Sandung Kargo', icon: '⛓️', r: 1.6 },
+      { kind: 'tripwire', name: 'Kawat Sandung Kargo', icon: '⛓️', r: 1.6 },
+      { kind: 'steam_vent', name: 'Pipa Uap Bocor', icon: '💨', r: 2.0 },
+      { kind: 'steam_vent', name: 'Pipa Uap Bocor', icon: '💨', r: 2.0 },
+    ],
+    mainan: [
+      { kind: 'ice_slide', name: 'Lantai Balok Licin', icon: '⛸️', r: 2.6 },
+      { kind: 'ice_slide', name: 'Lantai Balok Licin', icon: '⛸️', r: 2.6 },
+      { kind: 'ice_slide', name: 'Lantai Balok Licin', icon: '⛸️', r: 2.6 },
+      { kind: 'spring_pad', name: 'Pegas Pemantul Mainan', icon: '🚀', r: 1.5 },
+      { kind: 'spring_pad', name: 'Pegas Pemantul Mainan', icon: '🚀', r: 1.5 },
+      { kind: 'spring_pad', name: 'Pegas Pemantul Mainan', icon: '🚀', r: 1.5 },
+    ],
+    kuil: [
+      { kind: 'spikes', name: 'Jebakan Duri Lantai Kuno', icon: '⚔️', r: 1.6 },
+      { kind: 'spikes', name: 'Jebakan Duri Lantai Kuno', icon: '⚔️', r: 1.6 },
+      { kind: 'spikes', name: 'Jebakan Duri Lantai Kuno', icon: '⚔️', r: 1.6 },
+      { kind: 'poison_gas', name: 'Kabut Racun Katakomba', icon: '☣️', r: 2.4 },
+      { kind: 'poison_gas', name: 'Kabut Racun Katakomba', icon: '☣️', r: 2.4 },
+    ],
+    tambang: [
+      { kind: 'dynamite', name: 'Barel Dinamit Mesiu', icon: '💥', r: 1.6 },
+      { kind: 'dynamite', name: 'Barel Dinamit Mesiu', icon: '💥', r: 1.6 },
+      { kind: 'dynamite', name: 'Barel Dinamit Mesiu', icon: '💥', r: 1.6 },
+      { kind: 'dynamite', name: 'Barel Dinamit Mesiu', icon: '💥', r: 1.6 },
+    ],
+    kebun: [
+      { kind: 'brambles', name: 'Semak Sulur Berduri', icon: '🌿', r: 1.8 },
+      { kind: 'brambles', name: 'Semak Sulur Berduri', icon: '🌿', r: 1.8 },
+      { kind: 'brambles', name: 'Semak Sulur Berduri', icon: '🌿', r: 1.8 },
+      { kind: 'geyser', name: 'Geyser Semburan Air', icon: '💦', r: 2.0 },
+      { kind: 'geyser', name: 'Geyser Semburan Air', icon: '💦', r: 2.0 },
+    ],
+  };
+
+  const mapHazards = hazardSpecsByMap[map.id] || hazardSpecsByMap[map.kind] || [];
+  let hSeq = 1;
+  for (const hz of mapHazards) {
+    let best = null;
+    let bd = -1;
+    for (const p of spots) {
+      if (p.dmin < 5.5) continue;
+      if (tooClose(p, 3.8)) continue;
+      const d = rng();
+      if (d > bd) {
+        bd = d;
+        best = p;
+      }
+    }
+    if (best) {
+      hazards.push({
+        id: `hz_${map.id}_${hSeq++}_${hz.kind}`,
+        kind: hz.kind,
+        name: hz.name,
+        icon: hz.icon,
+        r: hz.r || 1.8,
+        x: best.x,
+        z: best.z,
+        rot: Number((rng() * Math.PI * 2).toFixed(3)),
+      });
+      allOccupied.push({ x: best.x, z: best.z });
+    }
+  }
+
   return {
     map,
     boxes,
@@ -1556,6 +1631,7 @@ export function buildLayout(map, rng) {
     treasures,
     secondaryChests,
     items,
+    hazards,
     decoys,
     start,
   };

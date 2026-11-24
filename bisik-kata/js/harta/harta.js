@@ -283,6 +283,15 @@ function syncRound(v) {
   R.me.a = mine && Number.isFinite(mine.a)
     ? mine.a
     : Math.atan2(R.layout.treasure.x - sp.x, R.layout.treasure.z - sp.z) + Math.PI;
+  R.me.stumbleUntil = 0;
+  R.me.entangled = false;
+  R.me.slowPenaltyUntil = 0;
+  R.me.dizzyUntil = 0;
+  R.me.frostUntil = 0;
+  R.me.slideVx = 0;
+  R.me.slideVz = 0;
+  R.shakeUntil = 0;
+  R._inQuake = false;
   R.world.camState.yaw = R.me.a;
   R.world.camState.pitch = 0.20;
   R.meDist = Math.hypot(R.me.x - R.layout.treasure.x, R.me.z - R.layout.treasure.z);
@@ -429,7 +438,16 @@ function useSonar() {
 
 function stepPhysics(dt, canMove) {
   if (!R.layout) return;
-  const inp = canMove ? R.controls.read() : { x: 0, z: 0, run: false, moving: false };
+  const rawInp = canMove ? R.controls.read() : { x: 0, z: 0, run: false, moving: false };
+  const inp = { ...rawInp };
+  const now = nowMs();
+
+  if (R.me.stumbleUntil && now < R.me.stumbleUntil) {
+    inp.x = 0;
+    inp.z = 0;
+    inp.run = false;
+  }
+
   const yaw = R.world.camState.yaw;
   const fx = -Math.sin(yaw);
   const fz = -Math.cos(yaw);
@@ -444,10 +462,25 @@ function stepPhysics(dt, canMove) {
     R.me.zone = zone;
   }
   R.moveS = mag > 0.08 ? (inp.run ? 2 : 1) : 0;
-  const hasSpeed = R.me.speedBoostUntil && nowMs() < R.me.speedBoostUntil;
+  const hasSpeed = R.me.speedBoostUntil && now < R.me.speedBoostUntil;
   if (R.world && R.world.setSpeedBoost) R.world.setSpeedBoost(hasSpeed && inp.run);
-  const slowFactor = hasSpeed ? 0.95 : zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1;
-  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (hasSpeed ? 1.85 : 1) * slowFactor;
+  let slowFactor = hasSpeed ? 0.95 : zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1;
+  if (R.me.entangled) slowFactor *= 0.12;
+  if (R.me.slowPenaltyUntil && now < R.me.slowPenaltyUntil) slowFactor *= 0.48;
+
+  let speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (hasSpeed ? 1.85 : 1) * slowFactor;
+
+  if (R.me.onIce) {
+    R.me.slideVx = (R.me.slideVx || 0) * 0.95 + vx * speed * dt * 0.22;
+    R.me.slideVz = (R.me.slideVz || 0) * 0.95 + vz * speed * dt * 0.22;
+    vx += (R.me.slideVx || 0) / (speed * dt || 0.001);
+    vz += (R.me.slideVz || 0) / (speed * dt || 0.001);
+  } else {
+    R.me.slideVx = (R.me.slideVx || 0) * 0.72;
+    R.me.slideVz = (R.me.slideVz || 0) * 0.72;
+  }
+  R.me.onIce = false;
+
   const solved = resolveFeet(R.layout, R.me.x + vx * speed * dt, R.me.z + vz * speed * dt, M.playerR, R.me.y);
   // Tepi lubang berperilaku seperti dinding selama kaki masih di bawah lantai: satu-satunya jalan
   // keluar adalah melompat. Tanpa ini, melangkah ke bibir lubang berarti naik sendiri menembus lantai.
@@ -518,6 +551,145 @@ function stepPhysics(dt, canMove) {
         R.claimedItems.add(it.id);
         claimItem(it.id);
       }
+    }
+  }
+
+  // Interaksi Rintangan Khusus Peta (Hazards & Traps)
+  if (canMove && R.layout.hazards) {
+    for (const hz of R.layout.hazards) {
+      const hd = Math.hypot(R.me.x - hz.x, R.me.z - hz.z);
+      if (hd <= (hz.r || 1.8)) {
+        const canTrigger = !hz._cd || now > hz._cd;
+        if (hz.kind === 'tripwire') {
+          if (!R.me.air && mag > 0.12 && canTrigger) {
+            hz._cd = now + 3500;
+            R.me.stumbleUntil = now + 900;
+            beep(280, 0.08, 0.06, 'sawtooth');
+            beep(140, 0.16, 0.08, 'sawtooth', 0.06);
+            triggerHazardAlert('⛓️', 'Tersandung Kawat Sandung!', 'Melompatlah (Spasi) untuk lewat', '#f59e0b');
+          }
+        } else if (hz.kind === 'steam_vent') {
+          const active = (now % 6000) < 3200;
+          if (active) {
+            const ang = Math.atan2(R.me.z - hz.z, R.me.x - hz.x);
+            R.me.x += Math.cos(ang) * 4.5 * dt;
+            R.me.z += Math.sin(ang) * 4.5 * dt;
+            if (canTrigger) {
+              hz._cd = now + 3000;
+              beep(580, 0.22, 0.05, 'triangle');
+              triggerHazardAlert('💨', 'Semburan Uap Panas!', 'Terhempas pipa uap bocor!', '#e2e8f0');
+            }
+          }
+        } else if (hz.kind === 'ice_slide') {
+          R.me.onIce = true;
+          if (canTrigger && mag > 0.2) {
+            hz._cd = now + 3000;
+            beep(640, 0.08, 0.03, 'sine');
+            triggerHazardAlert('⛸️', 'Lantai Balok Licin!', 'Terpeleset meluncur!', '#38bdf8');
+          }
+        } else if (hz.kind === 'spring_pad') {
+          if (!R.me.air && canTrigger) {
+            hz._cd = now + 1200;
+            R.me.vy = 7.2;
+            R.me.air = true;
+            beep(320, 0.06, 0.08, 'sine');
+            beep(640, 0.1, 0.08, 'triangle', 0.04);
+            beep(960, 0.16, 0.08, 'sine', 0.08);
+            triggerHazardAlert('🚀', 'Pegas Pemantul Mainan!', 'Melompat tinggi ke udara!', '#facc15');
+          }
+        } else if (hz.kind === 'spikes') {
+          if (!R.me.air && canTrigger) {
+            hz._cd = now + 3200;
+            R.me.slowPenaltyUntil = now + 2400;
+            triggerDamageFlash();
+            beep(780, 0.09, 0.08, 'square');
+            beep(220, 0.18, 0.08, 'sawtooth', 0.06);
+            triggerHazardAlert('⚔️', 'Jebakan Duri Kuno!', 'Tertusuk duri lantai! Gerak melambat.', '#ef4444');
+          }
+        } else if (hz.kind === 'poison_gas') {
+          R.me.dizzyUntil = Math.max(R.me.dizzyUntil || 0, now + 3200);
+          if (canTrigger) {
+            hz._cd = now + 4000;
+            beep(180, 0.12, 0.06, 'triangle');
+            triggerHazardAlert('☣️', 'Gas Racun Katakomba!', 'Pandangan pusing & kompas kacau!', '#10b981');
+          }
+        } else if (hz.kind === 'dynamite') {
+          if (!hz._exploded) {
+            hz._exploded = true;
+            if (R.world && R.world.triggerHazardExplosion) R.world.triggerHazardExplosion(hz.id);
+            triggerScreenShake(700);
+            triggerDamageFlash();
+            const ang = Math.atan2(R.me.z - hz.z, R.me.x - hz.x);
+            R.me.x += Math.cos(ang) * 2.4;
+            R.me.z += Math.sin(ang) * 2.4;
+            beep(90, 0.35, 0.1, 'sawtooth');
+            beep(45, 0.5, 0.12, 'square', 0.08);
+            triggerHazardAlert('💥', 'Barel Dinamit Meledak!', 'Terhempas ledakan mesiu!', '#f97316');
+          }
+        } else if (hz.kind === 'brambles') {
+          if (!R.me.entangled && canTrigger) {
+            hz._cd = now + 3500;
+            R.me.entangled = true;
+            beep(190, 0.12, 0.06, 'sawtooth');
+            triggerHazardAlert('🌿', 'Terlilit Sulur Berduri!', 'Tekan LOMPAT (Spasi) untuk lepas!', '#22c55e');
+          }
+        } else if (hz.kind === 'geyser') {
+          const active = (now % 5000) < 2500;
+          if (active) {
+            const ang = Math.atan2(R.me.z - hz.z, R.me.x - hz.x);
+            R.me.x += Math.cos(ang) * 4.8 * dt;
+            R.me.z += Math.sin(ang) * 4.8 * dt;
+            if (canTrigger) {
+              hz._cd = now + 3000;
+              beep(420, 0.15, 0.06, 'sine');
+              beep(620, 0.2, 0.06, 'triangle', 0.05);
+              triggerHazardAlert('💦', 'Geyser Semburan Air!', 'Terhempas semburan air taman!', '#06b6d4');
+            }
+          }
+        } else if (hz.kind === 'curse_mist') {
+          R.me.frostUntil = Math.max(R.me.frostUntil || 0, now + 2600);
+          R.me.slowPenaltyUntil = Math.max(R.me.slowPenaltyUntil || 0, now + 2600);
+          if (canTrigger) {
+            hz._cd = now + 4200;
+            beep(140, 0.25, 0.08, 'sawtooth');
+            triggerHazardAlert('👻', 'Kabut Dingin Arwah!', 'Dingin membekukan & senter berkedip!', '#a855f7');
+          }
+        }
+      }
+    }
+  }
+
+  // Event Global Peta Tambang (Gempa Terowongan Berkala)
+  if (canMove && R.layout.map && R.layout.map.id === 'tambang') {
+    const quakeCycle = now % 38000;
+    if (quakeCycle < 3500) {
+      if (!R._inQuake) {
+        R._inQuake = true;
+        triggerScreenShake(3500);
+        triggerHazardAlert('⛏️', 'Gempa Reruntuhan Tambang!', 'Terowongan berguncang hebat!', '#f59e0b');
+        beep(55, 0.5, 0.08, 'sawtooth');
+        beep(40, 0.7, 0.1, 'triangle', 0.15);
+      }
+      speed *= 0.75;
+    } else {
+      R._inQuake = false;
+    }
+  }
+
+  // Update efek layar
+  const frostEl = node('screenFrost');
+  if (frostEl) {
+    if (R.me.frostUntil && now < R.me.frostUntil) frostEl.classList.remove('hidden');
+    else frostEl.classList.add('hidden');
+  }
+  const toxicEl = node('screenToxic');
+  if (toxicEl) {
+    if (R.me.dizzyUntil && now < R.me.dizzyUntil) {
+      toxicEl.classList.remove('hidden');
+      R.world.camState.pitch += Math.sin(now * 0.005) * 0.04 * dt;
+      R.world.camState.yaw += Math.cos(now * 0.004) * 0.05 * dt;
+    } else {
+      toxicEl.classList.add('hidden');
     }
   }
 }
@@ -684,6 +856,52 @@ function triggerDecoyAlert() {
   if (R && R.layout && R.layout.map && R.layout.map.id === 'hantu') {
     triggerJumpscare('ARWAH PENASARAN MENYERANG!', 'Peti ini telah dikutuk!');
   }
+}
+
+function triggerHazardAlert(icon, text, subtext, color = '#f59e0b') {
+  const al = node('hazardAlert');
+  if (!al) return;
+  const ico = node('hazardAlertIco');
+  const txt = node('hazardAlertTxt');
+  const sub = node('hazardAlertSub');
+  if (ico) ico.textContent = icon;
+  if (txt) txt.textContent = text;
+  if (sub) sub.textContent = subtext;
+  al.style.borderColor = color;
+  al.classList.remove('hidden');
+  al.classList.remove('pop');
+  void al.offsetWidth;
+  al.classList.add('pop');
+  if (R.hazardTimer) clearTimeout(R.hazardTimer);
+  R.hazardTimer = setTimeout(() => {
+    if (al) {
+      al.classList.add('hidden');
+      al.classList.remove('pop');
+    }
+  }, 2600);
+}
+
+function triggerScreenShake(durationMs = 500) {
+  const race = document.getElementById('race');
+  if (!race) return;
+  race.classList.remove('hr-shake');
+  void race.offsetWidth;
+  race.classList.add('hr-shake');
+  if (R.shakeTimer) clearTimeout(R.shakeTimer);
+  R.shakeTimer = setTimeout(() => {
+    if (race) race.classList.remove('hr-shake');
+  }, durationMs);
+}
+
+function triggerDamageFlash() {
+  const el = node('screenDamage');
+  if (!el) return;
+  el.classList.remove('hidden');
+  void el.offsetWidth;
+  if (R.damageTimer) clearTimeout(R.damageTimer);
+  R.damageTimer = setTimeout(() => {
+    if (el) el.classList.add('hidden');
+  }, 350);
 }
 
 function updateAvatars(v, dt) {
@@ -1080,6 +1298,11 @@ function loop(ts) {
     R.me.air = true;
     R.me.vy = 7.4;
     beep(420, 0.07, 0.035);
+    if (R.me.entangled) {
+      R.me.entangled = false;
+      beep(520, 0.08, 0.05);
+      triggerHazardAlert('🌿', 'Sulur Terputus!', 'Kamu melompat bebas!', '#4ade80');
+    }
   }
   if (canMove && R.controls.consumeSonar()) useSonar();
 
@@ -1211,6 +1434,13 @@ export function attach(ctx) {
       itemAlertIco: $('hrItemAlertIco'),
       itemAlertTxt: $('hrItemAlertTxt'),
       decoyAlert: $('hrDecoyAlert'),
+      hazardAlert: $('hrHazardAlert'),
+      hazardAlertIco: $('hrHazardAlertIco'),
+      hazardAlertTxt: $('hrHazardAlertTxt'),
+      hazardAlertSub: $('hrHazardAlertSub'),
+      screenFrost: $('hrScreenFrost'),
+      screenToxic: $('hrScreenToxic'),
+      screenDamage: $('hrScreenDamage'),
       jumpscare: $('hrJumpscare'),
       jumpscareTxt: $('hrJumpscareTxt'),
       jumpscareSub: $('hrJumpscareSub'),
@@ -1239,7 +1469,7 @@ export function attach(ctx) {
       mapPick: $('mapPick'),
       mapCard: $('mapCard'),
     },
-    me: { x: 0, z: 0, y: 0, sup: 0, vy: 0, a: 0, air: false, zone: 0, flashlightUntil: 0, speedBoostUntil: 0, lootPoints: 0 },
+    me: { x: 0, z: 0, y: 0, sup: 0, vy: 0, a: 0, air: false, zone: 0, flashlightUntil: 0, speedBoostUntil: 0, lootPoints: 0, stumbleUntil: 0, entangled: false, slowPenaltyUntil: 0, dizzyUntil: 0, frostUntil: 0, slideVx: 0, slideVz: 0 },
     remote: new Map(),
     labels: new Map(),
     itemTags: new Map(),
@@ -1635,7 +1865,7 @@ export function dispose() {
   }
   const raceEl = document.getElementById('race');
   if (raceEl) raceEl.classList.remove('hr-shake');
-  for (const k of ['mapCard', 'reveal', 'itemSensor', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'jumpscare', 'compass', 'chatForm'])
+  for (const k of ['mapCard', 'reveal', 'itemSensor', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'jumpscare', 'compass', 'chatForm', 'hazardAlert', 'screenFrost', 'screenToxic', 'screenDamage'])
     if (e[k]) {
       e[k].classList.add('hidden');
       delete e[k].dataset.sig;

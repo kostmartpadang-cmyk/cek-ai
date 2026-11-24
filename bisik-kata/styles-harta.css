@@ -444,6 +444,96 @@
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
+/* Hazard Alert HUD */
+.hr-hazard-alert {
+  position: absolute;
+  top: calc(115px + var(--hr-in-t));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: var(--hr-r);
+  background: linear-gradient(180deg, rgba(30, 20, 10, 0.94), rgba(15, 10, 5, 0.94));
+  border: 2px solid #f59e0b;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.45), 0 8px 24px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.hr-hazard-alert-ico {
+  font-size: 22px;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+.hr-hazard-alert-body {
+  display: flex;
+  flex-direction: column;
+}
+.hr-hazard-alert-txt {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fffbeb;
+  text-shadow: 0 1px 3px #000;
+}
+.hr-hazard-alert-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fde68a;
+  text-shadow: 0 1px 2px #000;
+}
+.hr-hazard-alert.pop {
+  animation: hrHazardPop 0.35s cubic-bezier(0.18, 1.4, 0.4, 1) both;
+}
+@keyframes hrHazardPop {
+  0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* Screen Effects (Frost, Toxic, Damage, Screen Shake) */
+.hr-screen-effect {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  transition: opacity 0.4s ease;
+}
+.hr-screen-frost {
+  background: radial-gradient(circle, transparent 45%, rgba(147, 197, 253, 0.35) 80%, rgba(96, 165, 250, 0.65) 100%);
+  box-shadow: inset 0 0 80px rgba(59, 130, 246, 0.6);
+  mix-blend-mode: screen;
+}
+.hr-screen-toxic {
+  background: radial-gradient(circle, transparent 40%, rgba(52, 211, 153, 0.28) 80%, rgba(16, 185, 129, 0.55) 100%);
+  box-shadow: inset 0 0 90px rgba(16, 185, 129, 0.5);
+  animation: hrToxicPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes hrToxicPulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 0.95; }
+}
+.hr-screen-damage {
+  background: radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0.5) 85%, rgba(185, 28, 28, 0.8) 100%);
+  animation: hrDamageFlash 0.35s ease-out both;
+}
+@keyframes hrDamageFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+#race.shake {
+  animation: hrScreenShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes hrScreenShake {
+  10%, 90% { transform: translate3d(-3px, 2px, 0); }
+  20%, 80% { transform: translate3d(4px, -3px, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, 4px, 0); }
+  40%, 60% { transform: translate3d(5px, -4px, 0); }
+}
+
 /* ------------------------- 3.6 buff bar & item alert ------------------------ */
 
 .hr-buff-bar {

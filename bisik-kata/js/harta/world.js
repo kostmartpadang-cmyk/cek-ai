@@ -398,6 +398,7 @@ export function createWorld(THREE, canvas) {
   let decoys = [];
   let secChests = [];
   let itemMeshes = [];
+  let hazardMeshes = [];
   let flashlightOn = false;
   let speedBoostOn = false;
   let levelTex = [];
@@ -418,7 +419,7 @@ export function createWorld(THREE, canvas) {
   }
 
   function disposeLevel() {
-    for (const o of [level, studs, chest, beam, halo, sparks, lamp, ...decoys, ...secChests, ...itemMeshes.map((x) => x.group)])
+    for (const o of [level, studs, chest, beam, halo, sparks, lamp, ...decoys, ...secChests, ...itemMeshes.map((x) => x.group), ...hazardMeshes.map((x) => x.group)])
       if (o) {
         scene.remove(o);
         throwAway(o);
@@ -429,6 +430,7 @@ export function createWorld(THREE, canvas) {
     decoys = [];
     secChests = [];
     itemMeshes = [];
+    hazardMeshes = [];
   }
 
   function buildLevel(l) {
@@ -800,6 +802,200 @@ export function createWorld(THREE, canvas) {
     return g;
   }
 
+  function buildHazard(hz) {
+    const g = new THREE.Group();
+    const kind = hz.kind;
+    let mainColor = '#ffffff';
+
+    if (kind === 'curse_mist') {
+      mainColor = '#a855f7';
+      const ring = new THREE.Mesh(
+        geo(new THREE.RingGeometry(0.6, hz.r || 2.2, 24)),
+        new THREE.MeshBasicMaterial({
+          color: '#581c87',
+          transparent: true,
+          opacity: 0.55,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.04;
+      g.add(ring);
+
+      const skull = new THREE.Mesh(octGeo, paint('#9333ea', '#581c87'));
+      skull.scale.set(0.9, 1.2, 0.9);
+      skull.position.y = 0.7;
+      g.add(skull);
+      g.userData.spin = skull;
+      g.userData.ring = ring;
+    } else if (kind === 'tripwire') {
+      mainColor = '#f59e0b';
+      const span = (hz.r || 1.6) * 1.5;
+      const post1 = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8)), paint('#78350f'));
+      post1.position.set(-span / 2, 0.35, 0);
+      const post2 = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8)), paint('#78350f'));
+      post2.position.set(span / 2, 0.35, 0);
+      const wire = new THREE.Mesh(geo(new THREE.BoxGeometry(span, 0.03, 0.03)), paint('#ef4444', '#b91c1c'));
+      wire.position.set(0, 0.28, 0);
+      const flag = new THREE.Mesh(geo(new THREE.PlaneGeometry(0.2, 0.15)), paint('#dc2626'));
+      flag.position.set(0, 0.22, 0);
+      g.add(post1, post2, wire, flag);
+      g.rotation.y = hz.rot || 0;
+    } else if (kind === 'steam_vent') {
+      mainColor = '#94a3b8';
+      const grate = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.65, 0.75, 0.1, 16)), paint('#334155', '#1e293b'));
+      grate.position.y = 0.05;
+      const cone = new THREE.Mesh(
+        geo(new THREE.ConeGeometry(0.55, 2.4, 12, 1, true).translate(0, 1.2, 0)),
+        new THREE.MeshBasicMaterial({
+          color: '#e2e8f0',
+          transparent: true,
+          opacity: 0.35,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      g.add(grate, cone);
+      g.userData.cone = cone;
+    } else if (kind === 'ice_slide') {
+      mainColor = '#38bdf8';
+      const rad = hz.r || 2.6;
+      const icePlate = new THREE.Mesh(
+        geo(new THREE.CylinderGeometry(rad, rad, 0.06, 20)),
+        new THREE.MeshBasicMaterial({
+          color: '#7dd3fc',
+          transparent: true,
+          opacity: 0.65,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      icePlate.position.y = 0.03;
+      const ring = new THREE.Mesh(
+        geo(new THREE.RingGeometry(rad * 0.85, rad, 20)),
+        paint('#e0f2fe', '#0284c7'),
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.04;
+      g.add(icePlate, ring);
+      g.userData.ice = icePlate;
+    } else if (kind === 'spring_pad') {
+      mainColor = '#facc15';
+      const pad = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.65, 0.7, 0.15, 16)), paint('#eab308', '#ca8a04'));
+      pad.position.y = 0.12;
+      const target = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.38, 0.38, 0.16, 12)), paint('#ef4444', '#b91c1c'));
+      target.position.y = 0.13;
+      const coil = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.25, 0.25, 0.18, 8)), paint('#94a3b8'));
+      coil.position.y = 0.06;
+      g.add(coil, pad, target);
+      g.userData.pad = pad;
+      g.userData.target = target;
+    } else if (kind === 'spikes') {
+      mainColor = '#ef4444';
+      const plate = new THREE.Mesh(geo(new THREE.BoxGeometry(1.6, 0.08, 1.6)), paint('#57534e', '#292524'));
+      plate.position.y = 0.04;
+      g.add(plate);
+      const spikesGroup = new THREE.Group();
+      const spikeGeo = geo(new THREE.ConeGeometry(0.08, 0.45, 6).translate(0, 0.22, 0));
+      const spikeMat = paint('#cbd5e1', '#475569');
+      for (let ix = -0.5; ix <= 0.5; ix += 0.5) {
+        for (let iz = -0.5; iz <= 0.5; iz += 0.5) {
+          const spk = new THREE.Mesh(spikeGeo, spikeMat);
+          spk.position.set(ix, 0.04, iz);
+          spikesGroup.add(spk);
+        }
+      }
+      g.add(spikesGroup);
+      g.userData.spikes = spikesGroup;
+    } else if (kind === 'poison_gas') {
+      mainColor = '#10b981';
+      const rad = hz.r || 2.4;
+      const gasDisc = new THREE.Mesh(
+        geo(new THREE.RingGeometry(0.4, rad, 20)),
+        new THREE.MeshBasicMaterial({
+          color: '#059669',
+          transparent: true,
+          opacity: 0.5,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      gasDisc.rotation.x = -Math.PI / 2;
+      gasDisc.position.y = 0.05;
+      const gasCloud = new THREE.Mesh(
+        geo(new THREE.IcosahedronGeometry(0.65)),
+        new THREE.MeshBasicMaterial({
+          color: '#34d399',
+          transparent: true,
+          opacity: 0.4,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      gasCloud.position.y = 0.6;
+      g.add(gasDisc, gasCloud);
+      g.userData.gas = gasCloud;
+      g.userData.disc = gasDisc;
+    } else if (kind === 'dynamite') {
+      mainColor = '#f97316';
+      const barrel = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.38, 0.38, 0.9, 12)), paint('#dc2626', '#7f1d1d'));
+      barrel.position.y = 0.45;
+      const hoop1 = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.39, 0.39, 0.1, 12)), paint('#18181b'));
+      hoop1.position.y = 0.65;
+      const hoop2 = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.39, 0.39, 0.1, 12)), paint('#18181b'));
+      hoop2.position.y = 0.25;
+      const fuse = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 6)), paint('#fde047', '#ca8a04'));
+      fuse.position.set(0.12, 0.98, 0);
+      fuse.rotation.z = -0.3;
+      const spark = new THREE.Mesh(octGeo, paint('#f59e0b', '#b45309'));
+      spark.scale.set(0.3, 0.3, 0.3);
+      spark.position.set(0.18, 1.08, 0);
+      g.add(barrel, hoop1, hoop2, fuse, spark);
+      g.userData.spark = spark;
+      g.userData.barrel = barrel;
+    } else if (kind === 'brambles') {
+      mainColor = '#15803d';
+      const trunk = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.6, 0.8, 0.45, 8)), paint('#3f2314'));
+      trunk.position.y = 0.22;
+      const vine1 = new THREE.Mesh(geo(new THREE.TorusGeometry(0.7, 0.1, 6, 12)), paint('#14532d'));
+      vine1.rotation.x = Math.PI / 2.3;
+      vine1.position.y = 0.28;
+      const vine2 = new THREE.Mesh(geo(new THREE.TorusGeometry(0.55, 0.09, 6, 12)), paint('#166534'));
+      vine2.rotation.y = Math.PI / 2.5;
+      vine2.position.y = 0.32;
+      g.add(trunk, vine1, vine2);
+      g.userData.vine = vine1;
+    } else if (kind === 'geyser') {
+      mainColor = '#06b6d4';
+      const rim = new THREE.Mesh(geo(new THREE.TorusGeometry(0.8, 0.18, 8, 16)), paint('#64748b', '#334155'));
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.12;
+      const water = new THREE.Mesh(
+        geo(new THREE.ConeGeometry(0.6, 3.2, 12, 1, true).translate(0, 1.6, 0)),
+        new THREE.MeshBasicMaterial({
+          color: '#38bdf8',
+          transparent: true,
+          opacity: 0.55,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      g.add(rim, water);
+      g.userData.water = water;
+    }
+
+    g.position.set(hz.x, 0, hz.z);
+    g.userData.hazard = hz;
+    g.userData.mainColor = mainColor;
+    return g;
+  }
+
   function buildSparks(at) {
     const n = 64;
     const arr = new Float32Array(n * 3);
@@ -914,6 +1110,13 @@ export function createWorld(THREE, canvas) {
       const m = buildItem(it);
       scene.add(m);
       itemMeshes.push({ id: it.id, group: m, kind: it.kind, item: it, col: m.userData.col, baseY: 0.55, offset: Math.random() * 6 });
+    }
+
+    hazardMeshes = [];
+    for (const hz of l.hazards || []) {
+      const hm = buildHazard(hz);
+      scene.add(hm);
+      hazardMeshes.push({ id: hz.id, group: hm, kind: hz.kind, hazard: hz, offset: Math.random() * 6 });
     }
 
     spot = 0;
@@ -1135,6 +1338,36 @@ export function createWorld(THREE, canvas) {
       }
     }
 
+    for (const hm of hazardMeshes) {
+      if (!hm.group.visible) continue;
+      const g = hm.group;
+      const k = hm.kind;
+      if (k === 'curse_mist' && g.userData.spin) {
+        g.userData.spin.rotation.y += dt * 1.8;
+        g.userData.spin.position.y = 0.7 + Math.sin(t * 3.2 + hm.offset) * 0.14;
+      } else if (k === 'steam_vent' && g.userData.cone) {
+        const cycle = Math.sin(t * 4.0 + hm.offset);
+        g.userData.cone.scale.y = Math.max(0.2, 1 + cycle * 0.5);
+        g.userData.cone.material.opacity = Math.max(0.1, 0.35 + cycle * 0.25);
+      } else if (k === 'ice_slide' && g.userData.ice) {
+        g.userData.ice.material.opacity = 0.55 + Math.sin(t * 2.8 + hm.offset) * 0.18;
+      } else if (k === 'spring_pad' && g.userData.pad) {
+        g.userData.pad.position.y = 0.12 + Math.abs(Math.sin(t * 4.2 + hm.offset)) * 0.08;
+      } else if (k === 'spikes' && g.userData.spikes) {
+        g.userData.spikes.position.y = 0.04 + Math.sin(t * 3.5 + hm.offset) * 0.05;
+      } else if (k === 'poison_gas' && g.userData.gas) {
+        g.userData.gas.rotation.y += dt * 1.4;
+        g.userData.gas.scale.setScalar(1 + Math.sin(t * 2.6 + hm.offset) * 0.18);
+      } else if (k === 'dynamite' && g.userData.spark) {
+        g.userData.spark.scale.setScalar(0.3 + Math.random() * 0.25);
+      } else if (k === 'brambles' && g.userData.vine) {
+        g.userData.vine.rotation.z += dt * 0.3;
+      } else if (k === 'geyser' && g.userData.water) {
+        const cycle = Math.sin(t * 5.0 + hm.offset);
+        g.userData.water.scale.set(1 + cycle * 0.15, Math.max(0.3, 1 + cycle * 0.6), 1 + cycle * 0.15);
+      }
+    }
+
     if (flashlightOn) {
       flashLight.intensity = Math.min(8.5, flashLight.intensity + dt * 16);
       flashLight.position.set(lookAt.x, lookAt.y + 1.2, lookAt.z);
@@ -1278,6 +1511,13 @@ export function createWorld(THREE, canvas) {
       if (sc && sc.userData && !sc.userData.opened) {
         sc.userData.opened = true;
         burst(sc.position, [sc.userData.kind === 'silver' ? '#c7d2dd' : '#cd7f32', '#ffffff']);
+      }
+    },
+    triggerHazardExplosion: (id) => {
+      const hm = hazardMeshes.find((x) => x.id === id);
+      if (hm && hm.group.visible) {
+        hm.group.visible = false;
+        burst(hm.group.position, ['#f97316', '#ef4444', '#1c1917', '#ffffff']);
       }
     },
     hideItem: (id) => {

@@ -1835,3 +1835,103 @@ body.mode-harta #howHarta > .tip { padding: 0 4px; }
   .hr-help,
   .hr-big { transition: none !important; }
 }
+
+/* -------------------------- 19. jumpscare system ------------------------- */
+
+.hr-jumpscare {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+.hr-jumpscare.hidden {
+  display: none;
+}
+.hr-jumpscare-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 0, 50, 0.95) 0%, rgba(140, 0, 20, 0.98) 50%, rgba(10, 0, 2, 1) 100%);
+  animation: hrJumpscareFlash 0.35s ease-in-out infinite alternate;
+}
+@keyframes hrJumpscareFlash {
+  0% { opacity: 0.95; filter: contrast(180%) brightness(1.2); }
+  50% { opacity: 0.7; filter: contrast(120%) brightness(0.8); }
+  100% { opacity: 1; filter: contrast(220%) brightness(1.4); }
+}
+.hr-jumpscare-vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 100px 40px #000000;
+  mix-blend-mode: multiply;
+}
+.hr-jumpscare-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 2;
+  animation: hrScareZoom 0.22s cubic-bezier(0.12, 1.4, 0.3, 1) both;
+}
+@keyframes hrScareZoom {
+  0% { transform: scale(0.15) rotate(-12deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.hr-jumpscare-face {
+  width: min(72vw, 320px);
+  height: min(72vw, 320px);
+  filter: drop-shadow(0 0 35px rgba(255, 0, 40, 0.95)) drop-shadow(0 0 10px #ffffff);
+  animation: hrGhostWrath 0.08s infinite alternate;
+}
+@keyframes hrGhostWrath {
+  0% { transform: translate(-3px, -2px) scale(1); }
+  50% { transform: translate(4px, 3px) scale(1.05); }
+  100% { transform: translate(-2px, 3px) scale(0.98); }
+}
+.hr-ghost-svg {
+  width: 100%;
+  height: 100%;
+}
+.hr-jumpscare-txt {
+  margin-top: 16px;
+  font-size: clamp(24px, 6vw, 42px);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #fff1f2;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px #ff0033, 0 0 40px #ff0022, 0 4px 10px #000000;
+  animation: hrGlitch 0.1s infinite;
+}
+.hr-jumpscare-sub {
+  margin-top: 6px;
+  font-size: clamp(14px, 3.5vw, 20px);
+  font-weight: 800;
+  color: #fca5a5;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 6px #000000;
+}
+@keyframes hrGlitch {
+  0% { transform: translate(0, 0); text-shadow: 2px 0 #00ffff, -2px 0 #ff0055; }
+  25% { transform: translate(-3px, 2px); text-shadow: -2px 0 #00ffff, 2px 0 #ff0055; }
+  50% { transform: translate(2px, -2px); text-shadow: 2px 0 #00ffff, -2px 0 #ff0055; }
+  75% { transform: translate(-2px, -1px); text-shadow: -2px 0 #00ffff, 2px 0 #ff0055; }
+  100% { transform: translate(0, 0); text-shadow: 2px 0 #00ffff, -2px 0 #ff0055; }
+}
+
+/* Violent screen earthquake shake */
+.hr-shake {
+  animation: hrEarthquake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes hrEarthquake {
+  10%, 90% { transform: translate3d(-4px, 3px, 0) rotate(-0.5deg); }
+  20%, 80% { transform: translate3d(6px, -4px, 0) rotate(0.8deg); }
+  30%, 50%, 70% { transform: translate3d(-7px, 6px, 0) rotate(-1deg); }
+  40%, 60% { transform: translate3d(7px, -6px, 0) rotate(1deg); }
+}

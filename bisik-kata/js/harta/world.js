@@ -6,34 +6,149 @@ function canvasOf(size) {
   return cv;
 }
 
-function makeFloorTexture(THREE, a, b, stud) {
+function makeFloorTexture(THREE, a, b, kind) {
   const s = 128;
   const cv = canvasOf(s);
   const g = cv.getContext('2d');
   g.fillStyle = a;
   g.fillRect(0, 0, s, s);
-  g.fillStyle = b;
-  g.fillRect(0, 0, s, s / 2);
-  g.fillRect(s / 2, s / 2, s / 2, s / 2);
-  if (stud) {
+
+  if (kind === 'mainan') {
+    g.fillStyle = b;
+    g.fillRect(0, 0, s, s / 2);
+    g.fillRect(s / 2, s / 2, s / 2, s / 2);
     for (const [cx, cy] of [[32, 32], [96, 32], [32, 96], [96, 96]]) {
-      g.fillStyle = 'rgba(0,0,0,.13)';
-      g.beginPath();
-      g.arc(cx, cy + 3, 12, 0, 7);
-      g.fill();
-      g.fillStyle = 'rgba(255,255,255,.14)';
-      g.beginPath();
-      g.arc(cx, cy, 12, 0, 7);
-      g.fill();
-      g.fillStyle = 'rgba(255,255,255,.10)';
-      g.beginPath();
-      g.arc(cx, cy - 3, 8, 0, 7);
-      g.fill();
+      g.fillStyle = 'rgba(0,0,0,.15)';
+      g.beginPath(); g.arc(cx, cy + 3, 12, 0, 7); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.18)';
+      g.beginPath(); g.arc(cx, cy, 12, 0, 7); g.fill();
     }
+  } else if (kind === 'gudang') {
+    // Realistic wooden floorboards with dark longitudinal seams & iron nails
+    g.fillStyle = b;
+    for (let y = 0; y < s; y += 32) {
+      g.fillRect(0, y, s, 30);
+      g.fillStyle = 'rgba(0,0,0,0.22)';
+      g.fillRect(0, y + 30, s, 2);
+      g.fillStyle = 'rgba(0,0,0,0.06)';
+      g.fillRect(0, y + 9, s, 1.5);
+      g.fillRect(0, y + 19, s, 1);
+      g.fillStyle = 'rgba(0,0,0,0.35)';
+      g.fillRect(12, y + 14, 3, 3);
+      g.fillRect(s - 16, y + 14, 3, 3);
+      g.fillStyle = b;
+    }
+  } else if (kind === 'kuil') {
+    // Ancient stone flagstones with beveled mortar seams & moss
+    g.fillStyle = b;
+    g.fillRect(2, 2, s / 2 - 4, s / 2 - 4);
+    g.fillRect(s / 2 + 2, s / 2 + 2, s / 2 - 4, s / 2 - 4);
+    g.strokeStyle = 'rgba(0,0,0,0.28)';
+    g.lineWidth = 2.5;
+    g.strokeRect(1, 1, s - 2, s - 2);
+    g.strokeRect(1, 1, s / 2, s / 2);
+    g.strokeRect(s / 2, s / 2, s / 2, s / 2);
+    g.fillStyle = 'rgba(95, 122, 69, 0.25)';
+    for (let i = 0; i < 14; i++) {
+      g.fillRect((i * 19) % s, (i * 29) % s, 4, 3);
+    }
+  } else if (kind === 'hantu') {
+    // Dilapidated decaying floorboards with dark blood splatters & scratches
+    g.fillStyle = b;
+    for (let y = 0; y < s; y += 32) {
+      g.fillRect(0, y, s, 30);
+      g.fillStyle = 'rgba(0,0,0,0.38)';
+      g.fillRect(0, y + 30, s, 2);
+    }
+    g.strokeStyle = 'rgba(136, 19, 55, 0.45)';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(20, 15); g.lineTo(55, 38);
+    g.moveTo(25, 12); g.lineTo(60, 35);
+    g.stroke();
+    g.fillStyle = 'rgba(136, 19, 55, 0.35)';
+    g.beginPath(); g.arc(88, 75, 14, 0, 7); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let i = 0; i < 16; i++) g.fillRect((i * 23) % s, (i * 31) % s, 3, 2);
+  } else if (kind === 'kebun') {
+    // Cobblestone garden pavers with grass edge lining
+    g.fillStyle = b;
+    g.fillRect(3, 3, s - 6, s - 6);
+    g.strokeStyle = 'rgba(40, 80, 30, 0.35)';
+    g.lineWidth = 3;
+    g.strokeRect(2, 2, s - 4, s - 4);
+    g.fillStyle = 'rgba(76, 186, 105, 0.35)';
+    g.fillRect(10, 8, 2, 5); g.fillRect(14, 6, 2, 7);
+    g.fillRect(s - 20, s - 18, 2, 6); g.fillRect(s - 16, s - 20, 2, 7);
+  } else {
+    // Tambang: Rock / gravel mining tiles with ore flecks
+    g.fillStyle = b;
+    g.fillRect(2, 2, s - 4, s - 4);
+    g.strokeStyle = 'rgba(0,0,0,0.25)';
+    g.lineWidth = 2;
+    g.strokeRect(1, 1, s - 2, s - 2);
+    g.fillStyle = 'rgba(224, 192, 112, 0.3)';
+    g.fillRect(24, 30, 4, 3); g.fillRect(80, 92, 5, 4);
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    g.fillRect(45, 70, 3, 3); g.fillRect(95, 20, 4, 3);
   }
+
   g.strokeStyle = 'rgba(0,0,0,.16)';
   g.lineWidth = 2;
   g.strokeRect(1, 1, s - 2, s - 2);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeWallTexture(THREE, kind) {
+  const s = 128;
+  const cv = canvasOf(s);
+  const g = cv.getContext('2d');
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, s, s);
+
+  if (kind === 'gudang') {
+    g.strokeStyle = 'rgba(0,0,0,0.18)';
+    g.lineWidth = 2;
+    for (let x = 0; x <= s; x += 16) {
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, s); g.stroke();
+      g.fillStyle = 'rgba(0,0,0,0.04)';
+      g.fillRect(x + 4, 0, 1.5, s);
+    }
+  } else if (kind === 'hantu') {
+    g.strokeStyle = 'rgba(0,0,0,0.28)';
+    g.lineWidth = 2;
+    for (let y = 0; y <= s; y += 16) {
+      g.beginPath(); g.moveTo(0, y); g.lineTo(s, y); g.stroke();
+      const shift = (y / 16) % 2 === 0 ? 0 : 16;
+      for (let x = shift; x <= s; x += 32) {
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 16); g.stroke();
+      }
+    }
+    g.fillStyle = 'rgba(120, 15, 30, 0.35)';
+    g.beginPath();
+    g.arc(36, 16, 4, 0, 7); g.rect(34, 16, 4, 18);
+    g.arc(88, 32, 5, 0, 7); g.rect(86, 32, 4, 24);
+    g.fill();
+  } else {
+    g.strokeStyle = 'rgba(0,0,0,0.16)';
+    g.lineWidth = 2;
+    for (let y = 0; y <= s; y += 16) {
+      g.beginPath(); g.moveTo(0, y); g.lineTo(s, y); g.stroke();
+      const shift = (y / 16) % 2 === 0 ? 0 : 16;
+      for (let x = shift; x <= s; x += 32) {
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 16); g.stroke();
+      }
+    }
+  }
+
+  g.fillStyle = 'rgba(0,0,0,0.04)';
+  for (let i = 0; i < 30; i++) {
+    g.fillRect((i * 17) % s, (i * 29) % s, 2, 2);
+  }
+
   const tex = new THREE.CanvasTexture(cv);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -145,9 +260,26 @@ export function createWorld(THREE, canvas) {
     lock: geo(new THREE.BoxGeometry(0.26, 0.34, 0.14)),
   };
 
-  const flashLight = new THREE.SpotLight('#fffced', 0, 38, Math.PI / 3.8, 0.45, 1.4);
+  const flashLight = new THREE.SpotLight('#fffef0', 0, 75, Math.PI / 2.7, 0.6, 1.05);
   scene.add(flashLight);
   scene.add(flashLight.target);
+
+  const flashAura = new THREE.PointLight('#fffbe8', 0, 24, 1.4);
+  scene.add(flashAura);
+
+  const flashBeamGeo = geo(new THREE.ConeGeometry(3.6, 18, 16, 1, true).translate(0, -9, 0).rotateX(-Math.PI / 2));
+  const flashBeamMat = mtl(
+    new THREE.MeshBasicMaterial({
+      color: '#fffbe8',
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  const flashBeam = new THREE.Mesh(flashBeamGeo, flashBeamMat);
+  scene.add(flashBeam);
 
   const matCache = new Map();
   function paint(hex, emissive) {
@@ -223,7 +355,16 @@ export function createWorld(THREE, canvas) {
     const map = l.map;
     const boxes = l.boxes;
 
-    const solids = new THREE.InstancedMesh(boxGeo, new THREE.MeshLambertMaterial({ color: '#ffffff' }), boxes.length);
+    const wallTex = makeWallTexture(THREE, map.kind);
+    levelTex.push(wallTex);
+    wallTex.repeat.set(2, 2);
+    wallTex.anisotropy = Math.min(4, maxAniso);
+
+    const solids = new THREE.InstancedMesh(
+      boxGeo,
+      new THREE.MeshLambertMaterial({ color: '#ffffff', map: wallTex }),
+      boxes.length,
+    );
     const walls = boxes.filter((b) => b.wall);
     const trims = new THREE.InstancedMesh(boxGeo, paint(pal.trim), Math.max(1, walls.length));
     let bi = 0;
@@ -257,7 +398,7 @@ export function createWorld(THREE, canvas) {
 
     const cyls = boxes.filter((b) => b.s === 'cyl');
     if (cyls.length) {
-      const cm = new THREE.InstancedMesh(cylGeo, new THREE.MeshLambertMaterial({ color: '#ffffff' }), cyls.length);
+      const cm = new THREE.InstancedMesh(cylGeo, new THREE.MeshLambertMaterial({ color: '#ffffff', map: wallTex }), cyls.length);
       cyls.forEach((b, i) => {
         dummy.position.set(b.x, b.h / 2, b.z);
         dummy.scale.set(b.rw || b.w, b.h, b.rd || b.d);
@@ -280,7 +421,7 @@ export function createWorld(THREE, canvas) {
 
     const fw = l.bounds.w + 8;
     const fd = l.bounds.d + 8;
-    const floorTex = makeFloorTexture(THREE, pal.floor, pal.floor2, map.kind === 'mainan');
+    const floorTex = makeFloorTexture(THREE, pal.floor, pal.floor2, map.kind);
     levelTex.push(floorTex);
     floorTex.repeat.set(fw / 2, fd / 2);
     floorTex.anisotropy = Math.min(4, maxAniso);
@@ -895,16 +1036,26 @@ export function createWorld(THREE, canvas) {
     }
 
     if (flashlightOn) {
-      flashLight.intensity = Math.min(3.8, flashLight.intensity + dt * 10);
+      flashLight.intensity = Math.min(8.5, flashLight.intensity + dt * 16);
       flashLight.position.set(lookAt.x, lookAt.y + 1.2, lookAt.z);
       const fx = -Math.sin(camState.yaw);
       const fz = -Math.cos(camState.yaw);
-      flashLight.target.position.set(lookAt.x + fx * 14, lookAt.y + 0.4, lookAt.z + fz * 14);
+      flashLight.target.position.set(lookAt.x + fx * 18, lookAt.y + 0.4, lookAt.z + fz * 18);
+
+      flashAura.intensity = Math.min(2.4, flashAura.intensity + dt * 10);
+      flashAura.position.set(lookAt.x, lookAt.y + 1.2, lookAt.z);
+
+      flashBeam.material.opacity = Math.min(0.24, flashBeam.material.opacity + dt * 1.5);
+      flashBeam.position.set(lookAt.x, lookAt.y + 1.2, lookAt.z);
+      flashBeam.rotation.y = camState.yaw + Math.PI;
+
       if (layout && layout.map) {
-        scene.fog.far += (layout.map.fog[1] * 1.65 - scene.fog.far) * Math.min(1, dt * 3.5);
+        scene.fog.far += (layout.map.fog[1] * 2.8 - scene.fog.far) * Math.min(1, dt * 3.5);
       }
     } else {
-      flashLight.intensity = Math.max(0, flashLight.intensity - dt * 6);
+      flashLight.intensity = Math.max(0, flashLight.intensity - dt * 8);
+      flashAura.intensity = Math.max(0, flashAura.intensity - dt * 8);
+      flashBeam.material.opacity = Math.max(0, flashBeam.material.opacity - dt * 2.5);
       if (layout && layout.map) {
         scene.fog.far += (layout.map.fog[1] - scene.fog.far) * Math.min(1, dt * 3.5);
       }

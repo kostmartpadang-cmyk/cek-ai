@@ -71,6 +71,20 @@ const PALETTES = {
     floor: '#5d6b48',
     floor2: '#4f5c3d',
   },
+  hantu: {
+    wall: '#261b24',
+    wallDark: '#180f16',
+    blood: '#881337',
+    bone: '#d6d3d1',
+    candle: '#f59e0b',
+    ghost: '#38bdf8',
+    cobweb: '#57534e',
+    decay: '#18181b',
+    pit: '#080307',
+    trim: '#991b1b',
+    floor: '#1c1917',
+    floor2: '#120f12',
+  },
 };
 
 export const MAPS = [
@@ -386,6 +400,57 @@ export const MAPS = [
           { s: 'cyl', c: 'flower', w: [1.0, 1.4], d: [1.0, 1.4], h: [1.2, 1.8], p: 'planter' },
           { s: 'box', c: 'stone', w: [2.0, 2.8], d: [0.7, 1.0], h: [0.5, 0.7], p: 'bench' },
           { s: 'box', c: 'hedgeDark', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.6, 2.4], p: 'hedge' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'hantu',
+    name: 'Mansion Berhantu',
+    sub: 'lorong angker gelap, kamar mayat, labirin terkutuk & jumpscare arwah',
+    kind: 'hantu',
+    size: { w: 76, d: 64 },
+    wallH: 10,
+    startAt: { x: 0.4, z: 0.02 },
+    sky: '#020105',
+    fog: [12, 36],
+    hemi: ['#1e1b4b', '#030712', 0.5],
+    key: ['#38bdf8', 0.5, 0.65],
+    theme: 'hantu',
+    recipes: [
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'blood', w: [4, 7], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
+      { mode: 'random', n: 3, kinds: [{ s: 'cyl', c: 'pit', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      { mode: 'rooms', depth: 4, min: [10, 9], door: 3.2, t: 1.4, h: 0.9 },
+      {
+        mode: 'rows',
+        n: 12,
+        lane: 'x',
+        aisle: 3.2,
+        band: 3.0,
+        avenue: 4.4,
+        max: 6.0,
+        gap: 2.4,
+        kinds: [{ s: 'box', c: 'decay', w: [3.2, 5.4], d: [1.3, 1.9], h: [3.6, 5.0], p: 'shelf' }],
+      },
+      {
+        mode: 'random',
+        n: 28,
+        kinds: [
+          { s: 'box', c: 'bone', w: [1.4, 2.4], d: [1.4, 2.4], h: [1.2, 2.6], p: 'crate' },
+          { s: 'box', c: 'blood', w: [1.2, 2.0], d: [1.2, 2.0], h: [1.0, 2.0], p: 'crate' },
+          { s: 'cyl', c: 'decay', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.4, 2.2], p: 'barrel' },
+        ],
+      },
+      { mode: 'random', n: 18, kinds: [{ s: 'box', c: 'cobweb', w: [1.8, 2.6], d: [1.2, 1.8], h: [0.4, 0.6], p: 'pallet' }] },
+      {
+        mode: 'clump',
+        n: 6,
+        rad: 2.4,
+        spread: 5,
+        rot: 0.8,
+        kinds: [
+          { s: 'box', c: 'decay', w: [1.2, 1.8], d: [1.2, 1.8], h: [1.2, 2.0], p: 'crate' },
+          { s: 'cyl', c: 'candle', w: [0.6, 0.9], d: [0.6, 0.9], h: [1.2, 1.8], p: 'barrel' },
         ],
       },
     ],
@@ -1048,6 +1113,7 @@ export const MAP_ICONS = {
   kuil: '🏛️',
   mainan: '🧸',
   tambang: '⛏️',
+  hantu: '👻',
 };
 
 const SECTORS = {
@@ -1115,6 +1181,19 @@ const SECTORS = {
     se: 'Lorong Penyangga Miring',
     soft: 'Tanah Kerikil Ambles',
     pit: '⚠️ Sumur Poros Maut!',
+  },
+  hantu: {
+    center: 'Aula Perjamuan Arwah',
+    e: 'Perpustakaan Kuno Angker',
+    ne: 'Bilik Ritual Terlarang',
+    n: 'Lorong Berbisik Utara',
+    nw: 'Kamar Pengantin Berdarah',
+    w: 'Kamar Mayat Dingin Barat',
+    sw: 'Ruang Cermin Terkutuk',
+    s: 'Serambi Pintu Berderit',
+    se: 'Kripta Kerangka Tua',
+    soft: 'Kubangan Darah Gelap',
+    pit: '⚠️ Jurang Kematian Dingin!',
   },
 };
 

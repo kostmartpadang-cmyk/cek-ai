@@ -577,6 +577,86 @@ function handleItemClaimSuccess(res) {
   if (R.world && R.world.openChestById) R.world.openChestById(res.itemId);
 }
 
+function playHorrorScreech() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      if (!R._sndCtx) R._sndCtx = new AudioCtx();
+      const ac = R._sndCtx;
+      if (ac.state === 'suspended') ac.resume();
+      const t = ac.currentTime;
+
+      const osc1 = ac.createOscillator();
+      const osc2 = ac.createOscillator();
+      const gain = ac.createGain();
+      osc1.type = 'sawtooth';
+      osc2.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(1420, t);
+      osc1.frequency.exponentialRampToValueAtTime(120, t + 0.65);
+      osc2.frequency.setValueAtTime(1380, t);
+      osc2.frequency.exponentialRampToValueAtTime(95, t + 0.65);
+
+      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.85);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ac.destination);
+      osc1.start(t);
+      osc2.start(t);
+      osc1.stop(t + 0.9);
+      osc2.stop(t + 0.9);
+
+      const sub = ac.createOscillator();
+      const subG = ac.createGain();
+      sub.type = 'triangle';
+      sub.frequency.setValueAtTime(95, t);
+      sub.frequency.exponentialRampToValueAtTime(28, t + 0.5);
+      subG.gain.setValueAtTime(0.35, t);
+      subG.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      sub.connect(subG);
+      subG.connect(ac.destination);
+      sub.start(t);
+      sub.stop(t + 0.65);
+      return;
+    }
+  } catch (e) {}
+
+  [1400, 1100, 750, 420, 180].forEach((f, i) => beep(f, 0.15, 0.08, 'sawtooth', i * 0.08));
+}
+
+function triggerJumpscare(msg, subMsg) {
+  playHorrorScreech();
+  const el = node('jumpscare');
+  const txt = node('jumpscareTxt');
+  const sub = node('jumpscareSub');
+  const race = document.getElementById('race');
+
+  if (txt && msg) setTxt(txt, msg);
+  if (sub && subMsg) setTxt(sub, subMsg);
+
+  if (race) {
+    race.classList.remove('hr-shake');
+    void race.offsetWidth;
+    race.classList.add('hr-shake');
+  }
+
+  if (el) {
+    el.classList.remove('hidden');
+    el.style.opacity = '1';
+    if (R._scareTimer) clearTimeout(R._scareTimer);
+    R._scareTimer = setTimeout(() => {
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(() => {
+          if (el) el.classList.add('hidden');
+          if (race) race.classList.remove('hr-shake');
+        }, 400);
+      }
+    }, 1250);
+  }
+}
+
 function triggerDecoyAlert() {
   beep(240, 0.14, 0.05, 'sawtooth');
   beep(170, 0.22, 0.05, 'sawtooth', 0.1);
@@ -593,6 +673,9 @@ function triggerDecoyAlert() {
         al.classList.remove('pop');
       }
     }, 2800);
+  }
+  if (R && R.layout && R.layout.map && R.layout.map.id === 'hantu') {
+    triggerJumpscare('ARWAH PENASARAN MENYERANG!', 'Peti ini telah dikutuk!');
   }
 }
 
@@ -863,6 +946,17 @@ function updateHud(v, dt) {
   const subEl = node('subloc');
   if (subEl) subEl.classList.toggle('warning', subloc.startsWith('⚠️'));
 
+  if (r.mapId === 'hantu' && r.status === 'running') {
+    const isCreepy = /Mayat|Ritual|Altar|Pengantin|Arwah|Terkutuk/i.test(subloc);
+    const now = nowMs();
+    if (isCreepy && (!R._lastAmbScare || now - R._lastAmbScare > 30000)) {
+      if (Math.random() < 0.35) {
+        R._lastAmbScare = now;
+        triggerJumpscare('BAYANGAN ARWAH MENDEKAT!', subloc);
+      }
+    }
+  }
+
   const clock = hostNow();
   const counting = r.status === 'countdown';
   const left = counting ? r.goAt - clock : r.deadline - clock;
@@ -1110,6 +1204,9 @@ export function attach(ctx) {
       itemAlertIco: $('hrItemAlertIco'),
       itemAlertTxt: $('hrItemAlertTxt'),
       decoyAlert: $('hrDecoyAlert'),
+      jumpscare: $('hrJumpscare'),
+      jumpscareTxt: $('hrJumpscareTxt'),
+      jumpscareSub: $('hrJumpscareSub'),
       timer: $('hrTimer'),
       timerTxt: $('hrTimerTxt'),
       track: $('hrTrack'),
@@ -1517,7 +1614,13 @@ export function dispose() {
     clearTimeout(R.decoyTimer);
     R.decoyTimer = null;
   }
-  for (const k of ['mapCard', 'reveal', 'itemSensor', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'compass', 'chatForm'])
+  if (R._scareTimer) {
+    clearTimeout(R._scareTimer);
+    R._scareTimer = null;
+  }
+  const raceEl = document.getElementById('race');
+  if (raceEl) raceEl.classList.remove('hr-shake');
+  for (const k of ['mapCard', 'reveal', 'itemSensor', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'jumpscare', 'compass', 'chatForm'])
     if (e[k]) {
       e[k].classList.add('hidden');
       delete e[k].dataset.sig;

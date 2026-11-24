@@ -148,6 +148,17 @@
 
         <div class="hr-track" id="hrTrack"></div>
 
+        <div class="hr-buff-bar" id="hrBuffBar">
+          <div class="hr-buff-pill hidden" id="hrBuffFlashlight">🔦 Senter <b id="hrBuffFlashlightTime">30s</b></div>
+          <div class="hr-buff-pill hidden" id="hrBuffSpeed">⚡ Kilat <b id="hrBuffSpeedTime">12s</b></div>
+          <div class="hr-buff-pill hidden" id="hrLootPoints">🪙 <b id="hrLootPointsVal">+0</b> Poin</div>
+        </div>
+
+        <div class="hr-item-alert hidden" id="hrItemAlert">
+          <span class="hr-item-alert-ico" id="hrItemAlertIco">💎</span>
+          <span class="hr-item-alert-txt" id="hrItemAlertTxt">+25 Poin! Permata Zamrud</span>
+        </div>
+
         <div class="hr-decoy-alert hidden" id="hrDecoyAlert">
           <span>⚠️ Peti Kosong! (Umpan Palsu)</span>
         </div>
@@ -177,6 +188,7 @@
             <span class="hr-key-hint hr-chat-key">Enter</span>
           </button>
           <form class="hr-chat-bar hidden" id="hrChatForm" autocomplete="off">
+            <span class="hr-chat-bar-ico" aria-hidden="true">💬</span>
             <input type="text" id="hrChatInput" class="hr-chat-input" placeholder="Ketik pesan di peta (Enter)..." maxlength="60" />
             <button type="submit" class="hr-chat-send" id="hrChatSend">Kirim</button>
             <button type="button" class="hr-chat-close" id="hrChatClose" aria-label="Tutup Chat">✕</button>

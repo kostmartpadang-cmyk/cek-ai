@@ -1,4 +1,4 @@
-import { CFG, onFound, onMove, onSonar, tick } from './logic.js';
+import { CFG, onFound, onMove, onSonar, onClaimItem, tick } from './logic.js';
 import { CFG as M, MAPS, layoutFor, resolveFeet, supportAt, insideSolid, zoneAt, sectorAt, MAP_ICONS } from './maps.js';
 import { createWorld } from './world.js';
 import { createControls } from './controls.js';
@@ -235,14 +235,28 @@ function syncRound(v) {
   R.world.loadLayout(R.layout);
   R.world.clearAvatars();
   R.remote.clear();
+  R.claimedItems = new Set();
   R.claimed = false;
   R.winFx = false;
   R.cdShown = null;
   R.arrowUntil = 0;
   R.wantSnap = nowMs() + 400;
+  R.me.flashlightUntil = 0;
+  R.me.speedBoostUntil = 0;
+  R.me.lootPoints = 0;
+  if (R.world && R.world.setFlashlight) R.world.setFlashlight(false);
   if (R.decoyTimer) {
     clearTimeout(R.decoyTimer);
     R.decoyTimer = null;
+  }
+  if (R.itemTimer) {
+    clearTimeout(R.itemTimer);
+    R.itemTimer = null;
+  }
+  const itemAlert = node('itemAlert');
+  if (itemAlert) {
+    itemAlert.classList.add('hidden');
+    itemAlert.classList.remove('pop');
   }
   const decAlert = node('decoyAlert');
   if (decAlert) {
@@ -294,6 +308,10 @@ export function message(id, msg) {
   if (!R.isHost()) {
     if (msg.t === 'chat') {
       onChatReceived(msg);
+      return true;
+    }
+    if (msg.t === 'item_ok') {
+      handleItemClaimSuccess(msg);
       return true;
     }
     if (msg.t !== 'p' || !Array.isArray(msg.r)) return false;
@@ -357,6 +375,15 @@ export function message(id, msg) {
     if (!res.ok && res.error && R.net()) R.net().send(id, { t: 'toast', msg: res.error });
     return true;
   }
+  if (msg.t === 'claim_item') {
+    const res = onClaimItem(st, id, msg, ts);
+    if (res.ok) {
+      if (R.net()) R.net().send(id, { t: 'item_ok', ...res });
+    } else if (res.error && R.net()) {
+      R.net().send(id, { t: 'toast', msg: res.error });
+    }
+    return true;
+  }
   return false;
 }
 
@@ -407,7 +434,8 @@ function stepPhysics(dt, canMove) {
     R.me.zone = zone;
   }
   R.moveS = mag > 0.08 ? (inp.run ? 2 : 1) : 0;
-  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1);
+  const hasSpeed = R.me.speedBoostUntil && nowMs() < R.me.speedBoostUntil;
+  const speed = (inp.run ? CFG.runSpeed : CFG.walkSpeed) * mag * (hasSpeed ? 1.35 : 1) * (zone === 1 ? M.slowMul : zone === 2 ? M.pitMul : 1);
   const solved = resolveFeet(R.layout, R.me.x + vx * speed * dt, R.me.z + vz * speed * dt, M.playerR, R.me.y);
   // Tepi lubang berperilaku seperti dinding selama kaki masih di bawah lantai: satu-satunya jalan
   // keluar adalah melompat. Tanpa ini, melangkah ke bibir lubang berarti naik sendiri menembus lantai.
@@ -464,6 +492,84 @@ function stepPhysics(dt, canMove) {
       }
     }
   }
+  if (canMove && R.layout.secondaryChests) {
+    for (const sc of R.layout.secondaryChests) {
+      if (!R.claimedItems.has(sc.id) && Math.hypot(R.me.x - sc.x, R.me.z - sc.z) <= CFG.touchRadius * 1.3) {
+        R.claimedItems.add(sc.id);
+        claimItem(sc.id);
+      }
+    }
+  }
+  if (canMove && R.layout.items) {
+    for (const it of R.layout.items) {
+      if (!R.claimedItems.has(it.id) && Math.hypot(R.me.x - it.x, R.me.z - it.z) <= CFG.touchRadius * 1.3) {
+        R.claimedItems.add(it.id);
+        claimItem(it.id);
+      }
+    }
+  }
+}
+
+function claimItem(itemId) {
+  if (R.isHost()) {
+    const st = R.ctx.state();
+    const res = onClaimItem(st, R.myId(), { id: itemId }, nowMs());
+    if (res.ok) {
+      handleItemClaimSuccess(res);
+    }
+  } else if (R.net()) {
+    R.net().send({ t: 'claim_item', id: itemId });
+  }
+}
+
+function triggerItemAlert(icon, text) {
+  const al = node('itemAlert');
+  if (!al) return;
+  const ico = node('itemAlertIco');
+  const txt = node('itemAlertTxt');
+  if (ico) ico.textContent = icon;
+  if (txt) txt.textContent = text;
+  al.classList.remove('hidden');
+  al.classList.remove('pop');
+  void al.offsetWidth;
+  al.classList.add('pop');
+  if (R.itemTimer) clearTimeout(R.itemTimer);
+  R.itemTimer = setTimeout(() => {
+    if (al) {
+      al.classList.add('hidden');
+      al.classList.remove('pop');
+    }
+  }, 2600);
+}
+
+function handleItemClaimSuccess(res) {
+  if (res.kind === 'senter') {
+    beep(440, 0.07, 0.05, 'square');
+    beep(880, 0.14, 0.06, 'triangle', 0.08);
+    triggerItemAlert('🔦', 'Senter Diambil! Jarak Pandang Bertambah');
+    R.me.flashlightUntil = nowMs() + 40000;
+    if (R.world && R.world.setFlashlight) R.world.setFlashlight(true);
+  } else if (res.kind === 'boots') {
+    beep(523, 0.06, 0.05);
+    beep(784, 0.08, 0.05, 'sine', 0.05);
+    beep(1046, 0.14, 0.06, 'triangle', 0.1);
+    triggerItemAlert('⚡', 'Sepatu Kilat! Lari Cepat 12 Detik');
+    R.me.speedBoostUntil = nowMs() + 12000;
+  } else if (res.kind === 'sonar') {
+    beep(1200, 0.1, 0.06);
+    beep(1600, 0.1, 0.06, 'sine', 0.08);
+    triggerItemAlert('📡', '+1 Baterai Radar Sonar!');
+    const mine = freshMe();
+    if (mine) mine.sonar = Math.min(4, (mine.sonar || 0) + 1);
+  } else {
+    beep(880, 0.08, 0.05, 'triangle');
+    beep(1320, 0.12, 0.05, 'sine', 0.06);
+    const ico = res.kind === 'silver' ? '🥈' : res.kind === 'bronze' ? '🥉' : '💎';
+    triggerItemAlert(ico, `+${res.pts} Poin! ${res.name}`);
+    R.me.lootPoints = (R.me.lootPoints || 0) + (res.pts || 0);
+  }
+  if (R.world && R.world.hideItem) R.world.hideItem(res.itemId);
+  if (R.world && R.world.openChestById) R.world.openChestById(res.itemId);
 }
 
 function triggerDecoyAlert() {
@@ -571,6 +677,48 @@ function drawArrow(v) {
   const side = (t.x - R.me.x) * Math.cos(yaw) - (t.z - R.me.z) * Math.sin(yaw);
   const deg = (Math.atan2(side, ahead) * 180) / Math.PI;
   a.firstChild.style.rotate = Math.round(deg) + 'deg';
+}
+
+function drawBuffs(v) {
+  const r = v.race;
+  if (!r) return;
+
+  if (Array.isArray(r.claimedItems)) {
+    for (const itemId of r.claimedItems) {
+      if (!R.claimedItems.has(itemId)) {
+        R.claimedItems.add(itemId);
+        if (R.world && R.world.hideItem) R.world.hideItem(itemId);
+        if (R.world && R.world.openChestById) R.world.openChestById(itemId);
+      }
+    }
+  }
+
+  const mine = r.racers.find((p) => p.id === v.you.id);
+  const flashLeft = Math.max(0, Math.ceil(((R.me.flashlightUntil || 0) - nowMs()) / 1000));
+  const isFlash = flashLeft > 0 || (mine && mine.flashlight);
+  const flPill = node('buffFlashlight');
+  if (flPill) {
+    flPill.classList.toggle('hidden', !isFlash);
+    if (isFlash) setTxt(node('buffFlashlightTime'), (flashLeft > 0 ? flashLeft : 30) + 's');
+  }
+  if (R.world && R.world.setFlashlight) {
+    R.world.setFlashlight(isFlash);
+  }
+
+  const speedLeft = Math.max(0, Math.ceil(((R.me.speedBoostUntil || 0) - nowMs()) / 1000));
+  const isSpeed = speedLeft > 0 || (mine && mine.speedBoost);
+  const spdPill = node('buffSpeed');
+  if (spdPill) {
+    spdPill.classList.toggle('hidden', !isSpeed);
+    if (isSpeed) setTxt(node('buffSpeedTime'), (speedLeft > 0 ? speedLeft : 10) + 's');
+  }
+
+  const loot = (mine && mine.lootPoints) || R.me.lootPoints || 0;
+  const lootPill = node('lootPoints');
+  if (lootPill) {
+    lootPill.classList.toggle('hidden', loot <= 0);
+    if (loot > 0) setTxt(node('lootPointsVal'), '+' + loot);
+  }
 }
 
 function drawHeat(v, dt) {
@@ -689,6 +837,7 @@ function updateHud(v, dt) {
   drawHeat(v, dt);
   drawCompass(v);
   drawArrow(v);
+  drawBuffs(v);
   buildTrack(v);
   buildReveal(v);
 
@@ -884,6 +1033,16 @@ export function attach(ctx) {
       compassRing: $('hrCompassRing'),
       radarWave: $('hrRadarWave'),
       pingDot: $('hrPingDot'),
+      buffBar: $('hrBuffBar'),
+      buffFlashlight: $('hrBuffFlashlight'),
+      buffFlashlightTime: $('hrBuffFlashlightTime'),
+      buffSpeed: $('hrBuffSpeed'),
+      buffSpeedTime: $('hrBuffSpeedTime'),
+      lootPoints: $('hrLootPoints'),
+      lootPointsVal: $('hrLootPointsVal'),
+      itemAlert: $('hrItemAlert'),
+      itemAlertIco: $('hrItemAlertIco'),
+      itemAlertTxt: $('hrItemAlertTxt'),
       decoyAlert: $('hrDecoyAlert'),
       timer: $('hrTimer'),
       timerTxt: $('hrTimerTxt'),
@@ -910,9 +1069,11 @@ export function attach(ctx) {
       mapPick: $('mapPick'),
       mapCard: $('mapCard'),
     },
-    me: { x: 0, z: 0, y: 0, sup: 0, vy: 0, a: 0, air: false, zone: 0 },
+    me: { x: 0, z: 0, y: 0, sup: 0, vy: 0, a: 0, air: false, zone: 0, flashlightUntil: 0, speedBoostUntil: 0, lootPoints: 0 },
     remote: new Map(),
     labels: new Map(),
+    claimedItems: new Set(),
+    itemTimer: null,
     size: { w: 0, h: 0 },
     viewAt: nowMs(),
     lastFeed: null,
@@ -966,11 +1127,15 @@ export function attach(ctx) {
       const openChat = () => {
         if (!R || !R.e.chatForm) return;
         R.e.chatForm.classList.remove('hidden');
+        if (R.e.chatWrap) R.e.chatWrap.classList.add('active');
+        if (R.e.chatToggle) R.e.chatToggle.classList.add('hidden');
         if (R.e.chatInput) R.e.chatInput.focus();
       };
       const closeChat = () => {
         if (!R || !R.e.chatForm) return;
         R.e.chatForm.classList.add('hidden');
+        if (R.e.chatWrap) R.e.chatWrap.classList.remove('active');
+        if (R.e.chatToggle) R.e.chatToggle.classList.remove('hidden');
         if (R.e.chatInput) R.e.chatInput.blur();
         if (R.e.canvas && R.e.canvas.focus) R.e.canvas.focus();
       };
@@ -1138,6 +1303,8 @@ export function onScreen(name) {
     node('arrow').classList.add('hidden');
     node('heat').classList.add('hidden');
     if (node('chatForm')) node('chatForm').classList.add('hidden');
+    if (node('chatWrap')) node('chatWrap').classList.remove('active');
+    if (node('chatToggle')) node('chatToggle').classList.remove('hidden');
     big(null);
   } else resize();
 }
@@ -1283,6 +1450,8 @@ export function dispose() {
       e[k].classList.add('hidden');
       delete e[k].dataset.sig;
     }
+  if (e.chatWrap) e.chatWrap.classList.remove('active');
+  if (e.chatToggle) e.chatToggle.classList.remove('hidden');
   if (e.load) e.load.classList.remove('hidden');
   if (e.stick) e.stick.style.cssText = '';
   if (e.knob) e.knob.style.transform = '';

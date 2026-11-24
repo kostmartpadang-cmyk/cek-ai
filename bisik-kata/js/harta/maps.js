@@ -1379,6 +1379,75 @@ export function buildLayout(map, rng) {
     cursor = pick;
   }
 
+  // Peti Harta Tambahan & Benda Koleksi (Multiple Treasures, Flashlight, Speed Boots, Gems, Coins)
+  const allOccupied = [{ x: treasure.x, z: treasure.z }, ...decoys];
+  const tooClose = (pt, minDist = 6.0) => allOccupied.some((o) => Math.hypot(o.x - pt.x, o.z - pt.z) < minDist);
+
+  // 1. Harta Sekunder (Peti Perak & Peti Perunggu)
+  const secondaryChests = [];
+  const secSpecs = [
+    { id: 'chest_silver', kind: 'silver', name: 'Peti Perak Kuno', pts: 60, icon: '🥈' },
+    { id: 'chest_bronze', kind: 'bronze', name: 'Peti Perunggu', pts: 40, icon: '🥉' },
+  ];
+  for (const spec of secSpecs) {
+    let best = null;
+    let bd = -1;
+    for (const p of spots) {
+      if (p.dmin < 7) continue;
+      if (tooClose(p, 6.2)) continue;
+      const d = rng();
+      if (d > bd) {
+        bd = d;
+        best = p;
+      }
+    }
+    if (best) {
+      secondaryChests.push({ ...spec, x: best.x, z: best.z });
+      allOccupied.push({ x: best.x, z: best.z });
+    }
+  }
+
+  const treasures = [
+    { id: 'gold', kind: 'gold', name: 'Peti Emas Murni', x: treasure.x, z: treasure.z, pts: 100, icon: '👑' },
+    ...secondaryChests,
+  ];
+
+  // 2. Elemen Interaktif & Barang yang Bisa di-Claim (Senter, Sepatu Kilat, Baterai Sonar, Permata, Koin, Relik)
+  const items = [];
+  const itemSpecs = [
+    { id: 'senter_1', kind: 'senter', name: 'Senter Penerang', icon: '🔦', dur: 40 },
+    { id: 'senter_2', kind: 'senter', name: 'Senter Penerang', icon: '🔦', dur: 40 },
+    { id: 'sepatu_1', kind: 'boots', name: 'Sepatu Kilat', icon: '⚡', dur: 12 },
+    { id: 'sepatu_2', kind: 'boots', name: 'Sepatu Kilat', icon: '⚡', dur: 12 },
+    { id: 'sonar_1', kind: 'sonar', name: 'Baterai Sonar', icon: '📡', add: 1 },
+    { id: 'sonar_2', kind: 'sonar', name: 'Baterai Sonar', icon: '📡', add: 1 },
+    { id: 'gem_1', kind: 'gem', name: 'Permata Zamrud', pts: 25, icon: '💎' },
+    { id: 'gem_2', kind: 'gem', name: 'Permata Safir', pts: 25, icon: '💎' },
+    { id: 'gem_3', kind: 'gem', name: 'Permata Ruby', pts: 25, icon: '💎' },
+    { id: 'coin_1', kind: 'coin', name: 'Koin Emas Kuno', pts: 15, icon: '🪙' },
+    { id: 'coin_2', kind: 'coin', name: 'Koin Emas Kuno', pts: 15, icon: '🪙' },
+    { id: 'coin_3', kind: 'coin', name: 'Koin Emas Kuno', pts: 15, icon: '🪙' },
+    { id: 'coin_4', kind: 'coin', name: 'Koin Emas Kuno', pts: 15, icon: '🪙' },
+    { id: 'relic_1', kind: 'relic', name: 'Artefak Kuno', pts: 35, icon: '🏺' },
+  ];
+
+  for (const it of itemSpecs) {
+    let best = null;
+    let bd = -1;
+    for (const p of spots) {
+      if (tooClose(p, 4.2)) continue;
+      const d = rng();
+      if (d > bd) {
+        bd = d;
+        best = p;
+      }
+    }
+    if (best) {
+      items.push({ ...it, x: best.x, z: best.z });
+      allOccupied.push({ x: best.x, z: best.z });
+    }
+  }
+
   return {
     map,
     boxes,
@@ -1387,6 +1456,9 @@ export function buildLayout(map, rng) {
     bounds: { w: W, d: D, hw: half(W), hd: half(D) },
     spawns,
     treasure,
+    treasures,
+    secondaryChests,
+    items,
     decoys,
     start,
   };

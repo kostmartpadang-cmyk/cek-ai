@@ -12,6 +12,7 @@ import {
   onMove,
   onFound,
   onSonar,
+  onClaimItem,
   tick,
   standings,
   toView,
@@ -441,4 +442,72 @@ test('view: posisi semua pemburu ikut terkirim supaya saling terlihat', () => {
   assert.equal(row.name, 'Buru2');
   assert.equal(typeof row.color, 'string');
   assert.equal(v.feed.length <= CFG.feedKeep, true);
+});
+
+test('multi-harta & barang klaim: senter, sepatu kilat, sonar, permata, koin dan peti sekunder', () => {
+  for (const map of MAPS) {
+    const L = layoutFor(map.id, 4242);
+    assert.ok(Array.isArray(L.treasures) && L.treasures.length >= 3, map.id + ' punya lebih dari 1 harta');
+    assert.equal(L.treasures[0].kind, 'gold');
+    assert.ok(L.secondaryChests.length >= 2, map.id + ' punya peti sekunder');
+    assert.ok(Array.isArray(L.items) && L.items.length >= 8, map.id + ' punya barang-barang koleksi');
+    assert.ok(L.items.some((it) => it.kind === 'senter'), map.id + ' ada senter');
+    assert.ok(L.items.some((it) => it.kind === 'boots'), map.id + ' ada sepatu kilat');
+    assert.ok(L.items.some((it) => it.kind === 'sonar'), map.id + ' ada baterai sonar');
+    assert.ok(L.items.some((it) => it.kind === 'gem'), map.id + ' ada permata');
+    assert.ok(L.items.some((it) => it.kind === 'coin'), map.id + ' ada koin');
+  }
+
+  const st = started(2);
+  tick(st, { now: GO });
+  const L = st.race.layout;
+  const senter = L.items.find((it) => it.kind === 'senter');
+  const boots = L.items.find((it) => it.kind === 'boots');
+  const coin = L.items.find((it) => it.kind === 'coin');
+  const silver = L.secondaryChests.find((it) => it.kind === 'silver');
+
+  assert.ok(senter && boots && coin && silver);
+
+  // Klaim dari jauh ditolak
+  place(st, 'p1', senter.x + 20, senter.z + 20);
+  assert.equal(onClaimItem(st, 'p1', { id: senter.id }, GO + 100).ok, false);
+
+  // Klaim senter
+  place(st, 'p1', senter.x, senter.z);
+  const claimSenter = onClaimItem(st, 'p1', { id: senter.id }, GO + 200);
+  assert.equal(claimSenter.ok, true);
+  assert.ok(st.race.racers.p1.flashlightUntil > GO + 200);
+
+  // Klaim ulang senter yang sama ditolak
+  assert.equal(onClaimItem(st, 'p1', { id: senter.id }, GO + 250).ok, false);
+
+  // Klaim sepatu kilat
+  place(st, 'p1', boots.x, boots.z);
+  const claimBoots = onClaimItem(st, 'p1', { id: boots.id }, GO + 300);
+  assert.equal(claimBoots.ok, true);
+  assert.ok(st.race.racers.p1.speedBoostUntil > GO + 300);
+
+  // Klaim koin untuk nambah poin
+  const scoreBefore = st.players.find((p) => p.id === 'p1').score;
+  place(st, 'p1', coin.x, coin.z);
+  const claimCoin = onClaimItem(st, 'p1', { id: coin.id }, GO + 400);
+  assert.equal(claimCoin.ok, true);
+  assert.equal(st.race.racers.p1.lootPoints, coin.pts);
+  assert.equal(st.players.find((p) => p.id === 'p1').score, scoreBefore + coin.pts);
+
+  // Klaim peti perak (harta sekunder) untuk poin besar
+  place(st, 'p1', silver.x, silver.z);
+  const claimSilver = onClaimItem(st, 'p1', { id: silver.id }, GO + 500);
+  assert.equal(claimSilver.ok, true);
+  assert.equal(st.players.find((p) => p.id === 'p1').score, scoreBefore + coin.pts + silver.pts);
+
+  // View menyertakan claimedItems dan status buff
+  const view = toView(st, 'p1', GO + 600);
+  assert.ok(view.race.claimedItems.includes(senter.id));
+  assert.ok(view.race.claimedItems.includes(coin.id));
+  assert.ok(view.race.claimedItems.includes(silver.id));
+  const mine = view.race.racers.find((r) => r.id === 'p1');
+  assert.equal(mine.flashlight, true);
+  assert.equal(mine.speedBoost, true);
+  assert.equal(mine.lootPoints, coin.pts + silver.pts);
 });

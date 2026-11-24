@@ -130,6 +130,10 @@ export function createWorld(THREE, canvas) {
   const boxGeo = geo(new THREE.BoxGeometry(1, 1, 1));
   const cylGeo = geo(new THREE.CylinderGeometry(0.5, 0.5, 1, 9));
   const studGeo = geo(new THREE.CylinderGeometry(0.13, 0.13, 0.13, 6));
+  const octGeo = geo(new THREE.OctahedronGeometry(0.35));
+  const icoGeo = geo(new THREE.IcosahedronGeometry(0.32));
+  const coinGeo = geo(new THREE.CylinderGeometry(0.32, 0.32, 0.08, 14));
+  const urnGeo = geo(new THREE.CylinderGeometry(0.2, 0.34, 0.54, 8));
   const partGeo = {
     leg: geo(new THREE.BoxGeometry(0.26, 0.9, 0.32).translate(0, -0.45, 0)),
     arm: geo(new THREE.BoxGeometry(0.24, 0.9, 0.28).translate(0, -0.45, 0)),
@@ -140,6 +144,10 @@ export function createWorld(THREE, canvas) {
     chestLip: geo(new THREE.BoxGeometry(1.56, 0.13, 1.06)),
     lock: geo(new THREE.BoxGeometry(0.26, 0.34, 0.14)),
   };
+
+  const flashLight = new THREE.SpotLight('#fffced', 0, 38, Math.PI / 3.8, 0.45, 1.4);
+  scene.add(flashLight);
+  scene.add(flashLight.target);
 
   const matCache = new Map();
   function paint(hex, emissive) {
@@ -176,6 +184,9 @@ export function createWorld(THREE, canvas) {
   let studs = null;
   let level = null;
   let decoys = [];
+  let secChests = [];
+  let itemMeshes = [];
+  let flashlightOn = false;
   let levelTex = [];
   let spot = 0;
   let opened = false;
@@ -194,7 +205,7 @@ export function createWorld(THREE, canvas) {
   }
 
   function disposeLevel() {
-    for (const o of [level, studs, chest, beam, halo, sparks, lamp, ...decoys])
+    for (const o of [level, studs, chest, beam, halo, sparks, lamp, ...decoys, ...secChests, ...itemMeshes.map((x) => x.group)])
       if (o) {
         scene.remove(o);
         throwAway(o);
@@ -203,6 +214,8 @@ export function createWorld(THREE, canvas) {
     levelTex = [];
     level = studs = chest = beam = halo = sparks = lamp = null;
     decoys = [];
+    secChests = [];
+    itemMeshes = [];
   }
 
   function buildLevel(l) {
@@ -441,26 +454,99 @@ export function createWorld(THREE, canvas) {
     return m;
   }
 
-  function buildChest(l, at, real) {
-    const gold = paint(real ? '#f4c943' : '#b89445', real ? '#4a2f00' : '#1a1204');
-    const wood = paint(real ? '#7d5330' : '#5f4632');
+  function buildChest(l, at, real, kind = 'gold') {
+    let mainColor = '#f4c943';
+    let lockColor = '#7d5330';
+    let emissiveColor = '#4a2f00';
+    if (!real) {
+      mainColor = '#b89445';
+      emissiveColor = '#1a1204';
+      lockColor = '#5f4632';
+    } else if (kind === 'silver') {
+      mainColor = '#c7d2dd';
+      emissiveColor = '#253243';
+      lockColor = '#4b5563';
+    } else if (kind === 'bronze') {
+      mainColor = '#cd7f32';
+      emissiveColor = '#3a1b0a';
+      lockColor = '#5c2c16';
+    }
+    const matMain = paint(mainColor, emissiveColor);
+    const matWood = paint(lockColor);
     const g = new THREE.Group();
-    const body = new THREE.Mesh(partGeo.chestBody, gold);
+    const body = new THREE.Mesh(partGeo.chestBody, matMain);
     body.position.y = 0.4;
     const lid = new THREE.Group();
-    const lidBox = new THREE.Mesh(partGeo.chestLid, gold);
+    const lidBox = new THREE.Mesh(partGeo.chestLid, matMain);
     lidBox.position.y = 0.22;
-    const lip = new THREE.Mesh(partGeo.chestLip, wood);
+    const lip = new THREE.Mesh(partGeo.chestLip, matWood);
     lip.position.y = 0.44;
     lid.add(lidBox, lip);
     lid.position.set(0, 0.8, -0.5);
-    const lock = new THREE.Mesh(partGeo.lock, wood);
+    const lock = new THREE.Mesh(partGeo.lock, matWood);
     lock.position.set(0, 0.7, 0.51);
     g.add(body, lid, lock);
     g.position.copy(at);
     g.userData.lid = lid;
     g.userData.real = real;
+    g.userData.kind = kind;
     g.userData.opened = false;
+    return g;
+  }
+
+  function buildItem(it) {
+    const g = new THREE.Group();
+    let col = '#fbbf24';
+    if (it.kind === 'senter') {
+      const body = new THREE.Mesh(cylGeo, paint('#262626', '#111111'));
+      body.scale.set(0.24, 0.65, 0.24);
+      body.rotation.z = Math.PI / 4;
+      const head = new THREE.Mesh(cylGeo, paint('#f59e0b', '#6b3c00'));
+      head.scale.set(0.38, 0.24, 0.38);
+      head.position.set(0.2, 0.2, 0);
+      head.rotation.z = Math.PI / 4;
+      const lens = new THREE.Mesh(geo(new THREE.CircleGeometry(0.18, 8)), paint('#ffffff', '#fff799'));
+      lens.position.set(0.3, 0.3, 0);
+      lens.rotation.y = Math.PI / 2;
+      g.add(body, head, lens);
+      col = '#fbbf24';
+    } else if (it.kind === 'boots') {
+      const b1 = new THREE.Mesh(octGeo, paint('#facc15', '#6b5400'));
+      b1.scale.set(0.9, 1.25, 0.9);
+      g.add(b1);
+      col = '#facc15';
+    } else if (it.kind === 'sonar') {
+      const crystal = new THREE.Mesh(icoGeo, paint('#38bdf8', '#0369a1'));
+      g.add(crystal);
+      col = '#38bdf8';
+    } else if (it.kind === 'gem') {
+      const isRuby = it.name && it.name.includes('Ruby');
+      const isSafir = it.name && it.name.includes('Safir');
+      const hex = isRuby ? '#f43f5e' : isSafir ? '#3b82f6' : '#10b981';
+      const em = isRuby ? '#881337' : isSafir ? '#1e3a8a' : '#064e3b';
+      const gem = new THREE.Mesh(octGeo, paint(hex, em));
+      gem.scale.set(1.1, 1.45, 1.1);
+      g.add(gem);
+      col = hex;
+    } else if (it.kind === 'coin') {
+      const coin = new THREE.Mesh(coinGeo, paint('#f59e0b', '#6b3c00'));
+      coin.rotation.x = Math.PI / 2;
+      g.add(coin);
+      col = '#f59e0b';
+    } else {
+      const urn = new THREE.Mesh(urnGeo, paint('#d97706', '#592c02'));
+      g.add(urn);
+      col = '#d97706';
+    }
+    const blob = new THREE.Mesh(blobGeo, blobMat);
+    blob.rotation.x = -Math.PI / 2;
+    blob.position.y = -0.48;
+    blob.scale.set(0.65, 0.65, 0.65);
+    g.add(blob);
+
+    g.position.set(it.x, 0.55, it.z);
+    g.userData.item = it;
+    g.userData.col = col;
     return g;
   }
 
@@ -546,8 +632,27 @@ export function createWorld(THREE, canvas) {
       scene.add(c);
       decoys.push(c);
     }
+
+    secChests = [];
+    for (const sc of l.secondaryChests || []) {
+      const c = buildChest(l, new THREE.Vector3(sc.x, 0, sc.z), true, sc.kind);
+      c.userData.chestId = sc.id;
+      c.userData.kind = sc.kind;
+      c.rotation.y = Math.random() * Math.PI;
+      scene.add(c);
+      secChests.push(c);
+    }
+
+    itemMeshes = [];
+    for (const it of l.items || []) {
+      const m = buildItem(it);
+      scene.add(m);
+      itemMeshes.push({ id: it.id, group: m, kind: it.kind, item: it, col: m.userData.col, baseY: 0.55, offset: Math.random() * 6 });
+    }
+
     spot = 0;
     opened = false;
+    flashlightOn = false;
     camPos.set(0, 8, 16);
   }
 
@@ -736,6 +841,35 @@ export function createWorld(THREE, canvas) {
       }
     }
 
+    for (const sc of secChests) {
+      if (sc.userData && sc.userData.opened && sc.userData.lid) {
+        sc.userData.lid.rotation.x += (-1.75 - sc.userData.lid.rotation.x) * Math.min(1, dt * 5);
+      }
+    }
+
+    for (const itm of itemMeshes) {
+      if (itm.group.visible) {
+        itm.group.rotation.y += dt * 2.2;
+        itm.group.position.y = itm.baseY + Math.sin(t * 3.4 + itm.offset) * 0.12;
+      }
+    }
+
+    if (flashlightOn) {
+      flashLight.intensity = Math.min(3.8, flashLight.intensity + dt * 10);
+      flashLight.position.set(lookAt.x, lookAt.y + 1.2, lookAt.z);
+      const fx = -Math.sin(camState.yaw);
+      const fz = -Math.cos(camState.yaw);
+      flashLight.target.position.set(lookAt.x + fx * 14, lookAt.y + 0.4, lookAt.z + fz * 14);
+      if (layout && layout.map) {
+        scene.fog.far += (layout.map.fog[1] * 1.65 - scene.fog.far) * Math.min(1, dt * 3.5);
+      }
+    } else {
+      flashLight.intensity = Math.max(0, flashLight.intensity - dt * 6);
+      if (layout && layout.map) {
+        scene.fog.far += (layout.map.fog[1] - scene.fog.far) * Math.min(1, dt * 3.5);
+      }
+    }
+
     if (confetti) {
       confetti.life -= dt;
       const arr = confetti.points.geometry.attributes.position.array;
@@ -845,7 +979,22 @@ export function createWorld(THREE, canvas) {
     burst,
     setQuality,
     setSpot: (v) => (spot = Math.max(0, Math.min(1, v))),
+    setFlashlight: (on) => (flashlightOn = !!on),
     openChest: () => (opened = true),
+    openChestById: (id) => {
+      const sc = secChests.find((x) => x.userData && x.userData.chestId === id);
+      if (sc && sc.userData && !sc.userData.opened) {
+        sc.userData.opened = true;
+        burst(sc.position, [sc.userData.kind === 'silver' ? '#c7d2dd' : '#cd7f32', '#ffffff']);
+      }
+    },
+    hideItem: (id) => {
+      const itm = itemMeshes.find((x) => x.id === id);
+      if (itm && itm.group.visible) {
+        itm.group.visible = false;
+        burst(itm.group.position, [itm.col || '#fbbf24', '#ffffff']);
+      }
+    },
     openDecoyAt: (x, z) => {
       for (const d of decoys) {
         if (Math.hypot(d.position.x - x, d.position.z - z) < 2.2) {

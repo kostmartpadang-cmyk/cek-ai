@@ -58,6 +58,9 @@ function racerAt(layout, slot) {
     lastAt: 0,
     sonar: CFG.sonarPerRound,
     sonarAt: 0,
+    flashlightUntil: 0,
+    speedBoostUntil: 0,
+    lootPoints: 0,
     finished: false,
     dnf: false,
   };
@@ -168,6 +171,7 @@ function openRound(state, { now, rng, index }) {
     claims: [],
     results: [],
     racers,
+    claimedItems: {},
   };
   state.phase = 'round';
   feed(state, 'sys', `Ronde ${index + 1}: ${layout.map.name}. Harta disembunyikan di suatu tempat.`, now);
@@ -247,7 +251,8 @@ export function onMove(state, id, msg, now) {
   const lub = zoneAt(r.layout, fixed.x, fixed.z) === 2;
   if (y > sup + M.jumpReach || y < (lub ? -M.pitDepth - 0.35 : -0.35)) return { ok: false };
   const dt = Math.max(0.08, (now - (p.lastAt || now)) / 1000);
-  if (Math.hypot(fixed.x - p.x, fixed.z - p.z) > CFG.runSpeed * 1.9 * dt) return { ok: false };
+  const speedMul = p.speedBoostUntil && now < p.speedBoostUntil ? 2.8 : 1.9;
+  if (Math.hypot(fixed.x - p.x, fixed.z - p.z) > CFG.runSpeed * speedMul * dt) return { ok: false };
   p.vx = (fixed.x - p.x) / dt;
   p.vz = (fixed.z - p.z) / dt;
   p.x = fixed.x;
@@ -287,6 +292,50 @@ export function onFound(state, id, msg, now) {
   }
   feed(state, 'found', `${nameOf(state, id)} menyentuh peti emas!`, now);
   return { ok: true };
+}
+
+export function onClaimItem(state, id, msg, now) {
+  const r = state.race;
+  if (!r) return { ok: false, error: 'Balapan belum dimulai.' };
+  if (r.status === 'countdown') return { ok: false, error: 'Tunggu hitungan mundur selesai.' };
+  if (r.status === 'done') return { ok: false, error: 'Ronde sudah selesai.' };
+  const p = r.racers[id];
+  if (!p || p.dnf) return { ok: false };
+  const itemId = String((msg && (msg.id || msg.itemId)) || '').trim();
+  if (!itemId) return { ok: false, error: 'ID barang tidak valid.' };
+  if (!r.claimedItems) r.claimedItems = {};
+  if (r.claimedItems[itemId]) return { ok: false, error: 'Barang sudah diambil pemburu lain.' };
+
+  const allItems = [...(r.layout.items || []), ...(r.layout.secondaryChests || [])];
+  const it = allItems.find((x) => x.id === itemId);
+  if (!it) return { ok: false, error: 'Barang tidak ditemukan.' };
+
+  const d = Math.hypot(p.x - it.x, p.z - it.z);
+  if (d > CFG.touchRadius * 3.0) return { ok: false, error: 'Barang terlalu jauh dari posisimu.' };
+
+  r.claimedItems[itemId] = { by: id, at: now, kind: it.kind, name: it.name, pts: it.pts || 0 };
+
+  const pl = findPlayer(state, id);
+  const name = nameOf(state, id);
+
+  if (it.kind === 'senter') {
+    p.flashlightUntil = Math.max(now, p.flashlightUntil || 0) + (it.dur ? it.dur * 1000 : 40000);
+    feed(state, 'loot', `🔦 ${name} mengambil Senter! Pandangan menembus kabut tebal.`, now);
+  } else if (it.kind === 'boots') {
+    p.speedBoostUntil = Math.max(now, p.speedBoostUntil || 0) + (it.dur ? it.dur * 1000 : 12000);
+    feed(state, 'loot', `⚡ ${name} memakai Sepatu Kilat! Kecepatan lari melonjak drastis.`, now);
+  } else if (it.kind === 'sonar') {
+    p.sonar = Math.min(4, (p.sonar || 0) + (it.add || 1));
+    feed(state, 'loot', `📡 ${name} mengisi Baterai Sonar (+${it.add || 1} radar ping)!`, now);
+  } else if (it.pts) {
+    p.lootPoints = (p.lootPoints || 0) + it.pts;
+    if (pl) pl.score += it.pts;
+    const ico = it.icon || (it.kind === 'silver' ? '🥈' : it.kind === 'bronze' ? '🥉' : '💎');
+    feed(state, 'loot', `${ico} ${name} menemukan ${it.name} (+${it.pts} poin)!`, now);
+  }
+
+  state.seq++;
+  return { ok: true, itemId, kind: it.kind, name: it.name, pts: it.pts || 0 };
 }
 
 export function onSonar(state, id, now) {
@@ -378,6 +427,7 @@ export function toView(state, viewerId, now) {
           winnerMs: r.winnerMs,
           results: r.results.map((x) => ({ id: x.id, name: nameOf(state, x.id), ms: x.ms, rank: x.rank })),
           treasure: revealed ? { x: r.treasure.x, z: r.treasure.z } : null,
+          claimedItems: r.claimedItems ? Object.keys(r.claimedItems) : [],
           racers: state.players.map((p) => {
             const q = r.racers[p.id];
             if (!q) return { id: p.id, name: p.name, color: p.color, x: 0, z: 0, a: 0, s: 0, j: 0, gone: true };
@@ -395,6 +445,9 @@ export function toView(state, viewerId, now) {
               dnf: !!q.dnf,
               sonar: q.sonar,
               sonarAt: q.sonarAt,
+              flashlight: (q.flashlightUntil || 0) > now,
+              speedBoost: (q.speedBoostUntil || 0) > now,
+              lootPoints: q.lootPoints || 0,
               ms: (r.results.find((x) => x.id === p.id) || {}).ms || 0,
             };
           }),

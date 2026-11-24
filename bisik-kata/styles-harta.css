@@ -58,7 +58,7 @@
 #race .hr-timer,
 #race .hr-compass,
 #race .hr-track,
-#race .hr-heat,
+#race .hr-item-sensor,
 #race .hr-arrow,
 #race .hr-feed,
 #race .hr-help,
@@ -533,72 +533,137 @@
 
 /* ------------------------------- 4. heat pill ---------------------------- */
 
-.hr-heat {
+/* ----------------------------- 4. item sensor ---------------------------- */
+
+.hr-item-sensor {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(96px + var(--hr-in-b));
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 13px;
-  max-width: 78vw;
-  background: var(--hr-panel);
+  gap: 10px;
+  padding: 6px 16px;
+  max-width: 86vw;
+  background: rgba(9, 21, 35, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid var(--hr-gold-2);
   border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65), 0 0 16px rgba(255, 214, 120, 0.25);
   pointer-events: none;
+  z-index: 4;
+  animation: hrSensorIn 0.25s cubic-bezier(0.18, 1.4, 0.4, 1) both;
 }
-.hr-heat-icon {
-  font-size: 15px;
+@keyframes hrSensorIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.92); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.hr-item-sensor.close {
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.45);
+  animation: hrSensorPulse 0.75s ease-in-out infinite alternate;
+}
+@keyframes hrSensorPulse {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.05); }
+}
+.hr-item-sensor-ico {
+  font-size: 19px;
   line-height: 1;
   display: inline-block;
-  filter: drop-shadow(0 0 4px rgba(255, 200, 90, 0.5));
-  transition: transform 0.2s ease;
+  filter: drop-shadow(0 0 6px rgba(255, 220, 100, 0.6));
+  animation: hrIcoFloat 1.1s ease-in-out infinite alternate;
 }
-.hr-heat.burn .hr-heat-icon {
-  animation: hrIconBounce 0.4s ease infinite alternate;
+@keyframes hrIcoFloat {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px) scale(1.1); }
 }
-@keyframes hrIconBounce {
-  from { transform: scale(1); }
-  to { transform: scale(1.3); }
+.hr-item-sensor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
-.hr-heat-bar {
-  position: relative;
-  width: clamp(90px, 26vw, 150px);
-  height: 10px;
-  flex: none;
-  overflow: hidden;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.35));
-  box-shadow: inset 0 0 0 1px var(--hr-edge-soft), inset 0 2px 4px rgba(0, 0, 0, 0.6);
-}
-.hr-heat-bar > i {
-  display: block;
-  width: 0;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #3fd2ff 0%, #74d69a 38%, var(--amber) 70%, var(--hr-danger) 100%);
-  box-shadow: 0 0 10px rgba(255, 180, 80, 0.5);
-  transition: width 0.25s ease-out;
-}
-.hr-heat > span {
-  font-size: 11px;
+.hr-item-sensor-name {
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
+  color: #ffffff;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
-.hr-heat.hot { border-color: rgba(245, 181, 68, 0.75); box-shadow: 0 0 18px rgba(245, 181, 68, 0.35), 0 6px 18px rgba(0, 0, 0, 0.5); }
-.hr-heat.hot > span { color: var(--hr-gold-1); }
-.hr-heat.burn {
-  border-color: rgba(255, 120, 70, 0.9);
-  box-shadow: 0 0 26px rgba(255, 90, 79, 0.5), 0 0 8px rgba(255, 224, 138, 0.6), 0 6px 18px rgba(0, 0, 0, 0.5);
-  animation: hrBeat 0.62s ease-in-out infinite;
+.hr-item-sensor-sub {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--hr-gold-1);
+  display: flex;
+  gap: 7px;
+  align-items: center;
 }
-.hr-heat.burn > span { color: #ffcaa0; }
-@keyframes hrBeat {
-  0%, 100% { transform: translateX(-50%) scale(1); }
-  45% { transform: translateX(-50%) scale(1.06); }
+.hr-item-sensor.close .hr-item-sensor-sub {
+  color: #7dd3fc;
+}
+.hr-item-sensor-dist {
+  font-weight: 800;
+  color: #ffffff;
+}
+.hr-item-sensor-hint {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 214, 120, 0.15);
+  border: 1px solid rgba(255, 214, 120, 0.3);
+  color: var(--hr-gold-1);
+  white-space: nowrap;
+}
+.hr-item-sensor.close .hr-item-sensor-hint {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #bae6fd;
+}
+
+/* -------------------------- 4.5 3d item tag ---------------------------- */
+
+.hr-item-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 3px 9px 3px 7px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(9, 21, 35, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid var(--hr-gold-1);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65), 0 0 12px rgba(255, 214, 120, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 5;
+}
+.hr-item-tag > i {
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1;
+}
+.hr-item-tag > span {
+  color: #f8fafc;
+}
+.hr-item-tag > b {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--hr-gold-1);
+  background: rgba(255, 214, 120, 0.15);
+  padding: 1px 4px;
+  border-radius: 4px;
 }
 
 /* ----------------------------- 5. sonar arrow ---------------------------- */
@@ -1690,7 +1755,7 @@ body.mode-harta #howHarta > .tip { padding: 0 4px; }
     gap: 3px;
   }
   .hr-tc { font-size: 11px; padding: 3px 6px; }
-  .hr-heat { bottom: calc(74px + var(--hr-in-b)); padding: 5px 11px; }
+  .hr-item-sensor { bottom: calc(74px + var(--hr-in-b)); padding: 5px 12px; }
   .hr-arrow { bottom: calc(118px + var(--hr-in-b)); }
   .hr-help { bottom: calc(42px + var(--hr-in-b)); font-size: 10.5px; }
   .hr-btns { right: calc(10px + var(--hr-in-r)); bottom: calc(10px + var(--hr-in-b)); gap: 8px; }
@@ -1714,7 +1779,7 @@ body.mode-harta #howHarta > .tip { padding: 0 4px; }
 
 @media (max-height: 520px) {
   .hr-track { max-height: 34vh; overflow: hidden; }
-  .hr-heat { bottom: calc(66px + var(--hr-in-b)); }
+  .hr-item-sensor { bottom: calc(66px + var(--hr-in-b)); }
   .hr-arrow { bottom: calc(108px + var(--hr-in-b)); }
   .hr-btns { gap: 9px; }
   .hr-skill { width: 76px; height: 56px; }
@@ -1739,8 +1804,8 @@ body.mode-harta #howHarta > .tip { padding: 0 4px; }
 @media (prefers-reduced-motion: reduce) {
   .hr-shine::before,
   .hr-arrow,
-  .hr-heat.burn,
-  .hr-heat.burn .hr-heat-icon,
+  .hr-item-sensor.close,
+  .hr-item-sensor-ico,
   .hr-decoy-alert.pop,
   .hr-bubble.pop,
   .hr-chat-bar,

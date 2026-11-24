@@ -544,6 +544,22 @@ export function createWorld(THREE, canvas) {
     blob.scale.set(0.65, 0.65, 0.65);
     g.add(blob);
 
+    const aura = new THREE.Mesh(
+      geo(new THREE.RingGeometry(0.48, 0.88, 20)),
+      new THREE.MeshBasicMaterial({
+        color: col,
+        transparent: true,
+        opacity: 0.45,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    );
+    aura.rotation.x = -Math.PI / 2;
+    aura.position.y = -0.47;
+    g.add(aura);
+    g.userData.aura = aura;
+
     g.position.set(it.x, 0.55, it.z);
     g.userData.item = it;
     g.userData.col = col;
@@ -639,6 +655,22 @@ export function createWorld(THREE, canvas) {
       c.userData.chestId = sc.id;
       c.userData.kind = sc.kind;
       c.rotation.y = Math.random() * Math.PI;
+      const scol = sc.kind === 'silver' ? '#c7d2dd' : '#cd7f32';
+      const aura = new THREE.Mesh(
+        geo(new THREE.RingGeometry(0.85, 1.35, 20)),
+        new THREE.MeshBasicMaterial({
+          color: scol,
+          transparent: true,
+          opacity: 0.38,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      aura.rotation.x = -Math.PI / 2;
+      aura.position.y = 0.05;
+      c.add(aura);
+      c.userData.aura = aura;
       scene.add(c);
       secChests.push(c);
     }
@@ -845,12 +877,20 @@ export function createWorld(THREE, canvas) {
       if (sc.userData && sc.userData.opened && sc.userData.lid) {
         sc.userData.lid.rotation.x += (-1.75 - sc.userData.lid.rotation.x) * Math.min(1, dt * 5);
       }
+      if (sc.userData && sc.userData.aura) {
+        const s = 1 + Math.sin(t * 3.5) * 0.15;
+        sc.userData.aura.scale.set(s, s, s);
+      }
     }
 
     for (const itm of itemMeshes) {
       if (itm.group.visible) {
-        itm.group.rotation.y += dt * 2.2;
-        itm.group.position.y = itm.baseY + Math.sin(t * 3.4 + itm.offset) * 0.12;
+        itm.group.rotation.y += dt * 2.4;
+        itm.group.position.y = itm.baseY + Math.sin(t * 3.6 + itm.offset) * 0.12;
+        if (itm.group.userData && itm.group.userData.aura) {
+          const s = 1 + Math.sin(t * 4.4 + itm.offset) * 0.22;
+          itm.group.userData.aura.scale.set(s, s, s);
+        }
       }
     }
 

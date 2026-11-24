@@ -236,6 +236,11 @@ function syncRound(v) {
   R.world.clearAvatars();
   R.remote.clear();
   R.claimedItems = new Set();
+  R.nearItemId = null;
+  if (R.itemTags) {
+    for (const tag of R.itemTags.values()) tag.remove();
+    R.itemTags.clear();
+  }
   R.claimed = false;
   R.winFx = false;
   R.cdShown = null;
@@ -663,6 +668,44 @@ function drawLabels(v, w, h) {
       np.remove();
       R.labels.delete(id);
     }
+
+  // 3D Projected Floating Labels di atas item & peti sekunder yang sedang didekati (< 8.5m)
+  if (R.layout && R.e.labels) {
+    const nearby = [
+      ...(R.layout.items || []),
+      ...(R.layout.secondaryChests || []),
+    ];
+    const active = new Set();
+    for (const it of nearby) {
+      if (R.claimedItems.has(it.id)) continue;
+      const dist = Math.hypot(it.x - R.me.x, it.z - R.me.z);
+      if (dist > 8.5) continue;
+      active.add(it.id);
+      let tag = R.itemTags.get(it.id);
+      if (!tag) {
+        tag = document.createElement('div');
+        tag.className = 'hr-item-tag';
+        const ptsTxt = it.pts ? `<b>+${it.pts}</b>` : '';
+        tag.innerHTML = `<i>${it.icon || '✨'}</i><span>${it.name}</span>${ptsTxt}`;
+        R.e.labels.appendChild(tag);
+        R.itemTags.set(it.id, tag);
+      }
+      const s = R.world.project(it.x, 1.35, it.z, w, h);
+      if (!s.vis) {
+        tag.style.opacity = '0';
+        continue;
+      }
+      const op = clamp(1.4 - dist / 7, 0, 1);
+      tag.style.opacity = String(op);
+      tag.style.transform = `translate3d(${Math.round(s.x)}px,${Math.round(s.y)}px,0) translate(-50%,-100%) scale(${dist <= 3.2 ? 1.08 : 0.95})`;
+    }
+    for (const [id, tag] of R.itemTags) {
+      if (!active.has(id)) {
+        tag.remove();
+        R.itemTags.delete(id);
+      }
+    }
+  }
 }
 
 function drawArrow(v) {
@@ -721,32 +764,55 @@ function drawBuffs(v) {
   }
 }
 
-function drawHeat(v, dt) {
-  const heat = node('heat');
-  const running = v.race.status === 'running' && !v.race.treasure;
-  if (heat) heat.classList.toggle('hidden', !running || R.meDist == null);
-  if (!running || R.meDist == null) {
-    R.world.setSpot(v.race.treasure ? 1 : 0);
+function drawItemSensor(v, dt) {
+  const sensor = node('itemSensor');
+  const running = v.race && v.race.status === 'running';
+
+  // Penanda dekat ke harta utama dihapus — harta hanya disorot lampu saat sudah ditemukan
+  R.world.setSpot(v.race && v.race.treasure ? 1 : 0);
+
+  if (!sensor) return;
+  if (!running || !R.layout) {
+    sensor.classList.add('hidden');
+    R.nearItemId = null;
     return;
   }
-  const d = R.meDist;
-  const band = BANDS.find((b) => d <= b.max) || BANDS[BANDS.length - 1];
-  node('heatFill').style.width = Math.round(band.k * 100) + '%';
-  setTxt(node('heatTxt'), band.label);
-  setTxt(node('heatIcon'), band.icon);
-  heat.classList.toggle('hot', band.k >= 0.6);
-  heat.classList.toggle('burn', band.k >= 0.8);
-  const spot = clamp(1 - (d - CFG.touchRadius) / (CFG.spotRadius - CFG.touchRadius), 0, 1);
-  R.world.setSpot(spot);
-  const gap = d < 4 ? 300 : d < 8 ? 600 : d < 14 ? 1050 : d < 24 ? 1800 : 0;
-  if (!gap) {
-    R.beat = 0;
-    return;
+
+  // Cari item atau peti sekunder terdekat yang belum diklaim
+  let nearest = null;
+  let minDist = Infinity;
+  const candidates = [
+    ...(R.layout.items || []),
+    ...(R.layout.secondaryChests || []),
+  ];
+
+  for (const it of candidates) {
+    if (R.claimedItems.has(it.id)) continue;
+    const d = Math.hypot(R.me.x - it.x, R.me.z - it.z);
+    if (d < minDist) {
+      minDist = d;
+      nearest = it;
+    }
   }
-  R.beat += dt * 1000;
-  if (R.beat >= gap) {
-    R.beat = 0;
-    beep(280 + (26 - Math.min(26, d)) * 20, 0.05, 0.03, 'sine');
+
+  // Jika dekat dengan item (radius <= 8.5 meter)
+  if (nearest && minDist <= 8.5) {
+    sensor.classList.remove('hidden');
+    sensor.classList.toggle('close', minDist <= 3.2);
+
+    setTxt(node('itemSensorIco'), nearest.icon || '✨');
+    setTxt(node('itemSensorName'), nearest.name);
+    setTxt(node('itemSensorDist'), minDist.toFixed(1) + ' m');
+
+    // Suara chime lembut ketika baru mendeteksi item terdekat
+    if (R.nearItemId !== nearest.id) {
+      R.nearItemId = nearest.id;
+      beep(784, 0.05, 0.03, 'sine');
+      beep(1046, 0.08, 0.04, 'triangle', 0.06);
+    }
+  } else {
+    sensor.classList.add('hidden');
+    R.nearItemId = null;
   }
 }
 
@@ -834,7 +900,7 @@ function updateHud(v, dt) {
   const cd = node('sonarCd');
   if (cd) cd.style.height = Math.round(clamp((R.cdUntil - nowMs()) / 1400, 0, 1) * 100) + '%';
 
-  drawHeat(v, dt);
+  drawItemSensor(v, dt);
   drawCompass(v);
   drawArrow(v);
   drawBuffs(v);
@@ -1024,10 +1090,10 @@ export function attach(ctx) {
       feed: $('hrFeed'),
       big: $('hrBig'),
       help: $('hrHelp'),
-      heat: $('hrHeat'),
-      heatFill: $('hrHeatFill'),
-      heatTxt: $('hrHeatTxt'),
-      heatIcon: $('hrHeatIcon'),
+      itemSensor: $('hrItemSensor'),
+      itemSensorIco: $('hrItemSensorIco'),
+      itemSensorName: $('hrItemSensorName'),
+      itemSensorDist: $('hrItemSensorDist'),
       arrow: $('hrArrow'),
       compass: $('hrCompass'),
       compassRing: $('hrCompassRing'),
@@ -1072,7 +1138,9 @@ export function attach(ctx) {
     me: { x: 0, z: 0, y: 0, sup: 0, vy: 0, a: 0, air: false, zone: 0, flashlightUntil: 0, speedBoostUntil: 0, lootPoints: 0 },
     remote: new Map(),
     labels: new Map(),
+    itemTags: new Map(),
     claimedItems: new Set(),
+    nearItemId: null,
     itemTimer: null,
     size: { w: 0, h: 0 },
     viewAt: nowMs(),
@@ -1301,7 +1369,7 @@ export function onScreen(name) {
     node('stick').classList.add('hidden');
     node('stick').style.cssText = '';
     node('arrow').classList.add('hidden');
-    node('heat').classList.add('hidden');
+    if (node('itemSensor')) node('itemSensor').classList.add('hidden');
     if (node('chatForm')) node('chatForm').classList.add('hidden');
     if (node('chatWrap')) node('chatWrap').classList.remove('active');
     if (node('chatToggle')) node('chatToggle').classList.remove('hidden');
@@ -1435,6 +1503,10 @@ export function dispose() {
   } catch (err) {}
   for (const np of R.labels.values()) np.remove();
   R.labels.clear();
+  if (R.itemTags) {
+    for (const tag of R.itemTags.values()) tag.remove();
+    R.itemTags.clear();
+  }
   for (const k of ['feed', 'track', 'mapPick', 'roundRank', 'big'])
     if (e[k]) {
       e[k].textContent = '';
@@ -1445,7 +1517,7 @@ export function dispose() {
     clearTimeout(R.decoyTimer);
     R.decoyTimer = null;
   }
-  for (const k of ['mapCard', 'reveal', 'heat', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'compass', 'chatForm'])
+  for (const k of ['mapCard', 'reveal', 'itemSensor', 'arrow', 'stick', 'help', 'nogl', 'decoyAlert', 'compass', 'chatForm'])
     if (e[k]) {
       e[k].classList.add('hidden');
       delete e[k].dataset.sig;

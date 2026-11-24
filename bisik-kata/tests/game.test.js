@@ -156,3 +156,14 @@ test('mask kata: jumlah huruf terlihat, petunjuk terakhir membuka huruf awal', (
   assert.equal(maskWord('Kopi', true)[0], 'K');
   assert.equal(maskWord('Kopi', true), 'K···');
 });
+
+test('pemain baru tetap bisa gabung saat permainan sedang berjalan', () => {
+  const st = room3();
+  startGame(st, { now: T0, words: WORDS, rng });
+  assert.equal(st.phase, 'round');
+  assert.equal(addPlayer(st, { id: 'late', name: 'Late', now: T0 + 1000 }).ok, true);
+  assert.equal(st.players.some((p) => p.id === 'late'), true);
+  assert.equal(st.order.includes('late'), true);
+  assert.equal(st.round.total, 4);
+  assert.equal(toView(st, 'late', T0 + 1000).you.id, 'late');
+});

@@ -92,7 +92,7 @@ export function addPlayer(state, { id, name, now }) {
   state.players.push({ id, name: clean, score: 0, bestMs: 0, color: freeColor(state), joinedAt: now });
   feed(state, 'join', `${clean} ikut berburu.`, now);
   const r = state.race;
-  if (r && r.status !== 'done' && !r.racers[id]) {
+  if (r && !r.racers[id]) {
     const q = racerAt(r.layout, state.players.length - 1);
     q.lastAt = now;
     r.racers[id] = q;

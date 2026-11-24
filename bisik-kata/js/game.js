@@ -94,6 +94,10 @@ export function addPlayer(state, { id, name, now }) {
     return { ok: false, error: `Nama "${clean}" sudah dipakai. Pakai nama lain ya.` };
   if (state.players.length >= CFG.maxPlayers) return { ok: false, error: 'Kamar penuh (maksimum 8 pemain).' };
   state.players.push({ id, name: clean, score: 0, joinedAt: now });
+  if (state.order && state.order.length > 0 && !state.order.includes(id)) {
+    state.order.push(id);
+    if (state.round) state.round.total = state.order.length;
+  }
   feed(state, 'join', `${clean} masuk kamar.`, now);
   return { ok: true };
 }

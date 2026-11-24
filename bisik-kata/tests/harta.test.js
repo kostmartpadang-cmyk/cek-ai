@@ -409,12 +409,18 @@ test('keluar saat ronde: dnf, peringkat naik, dan ruang tunggu jika tinggal satu
   assert.equal(st.race, null);
 });
 
-test('pemburu baru boleh masuk saat lobby/over tapi tidak saat ronde berjalan', () => {
+test('pemburu baru tetap boleh masuk saat lobby/over maupun saat ronde sedang berjalan', () => {
   const st = started(2);
   assert.equal(st.race.status, 'countdown');
   assert.equal(addPlayer(st, { id: 'late', name: 'Late', now: GO }).ok, true);
   assert.ok(st.race.racers.late, 'peserta telat ikut ronde yang sedang berjalan');
   assert.equal(toView(st, 'late', GO).you.id, 'late');
+
+  tick(st, { now: GO + 1000 });
+  assert.equal(st.race.status, 'running');
+  assert.equal(addPlayer(st, { id: 'late2', name: 'Late2', now: GO + 2000 }).ok, true);
+  assert.ok(st.race.racers.late2, 'peserta kedua yang telat ikut saat running');
+  assert.equal(toView(st, 'late2', GO + 2000).you.id, 'late2');
 });
 
 test('view: koordinat harta tidak pernah bocor sebelum ada yang menyentuh', () => {

@@ -279,7 +279,7 @@ function syncRound(v) {
   R.me.zone = 0;
   R.me.a = Math.atan2(R.layout.treasure.x - sp.x, R.layout.treasure.z - sp.z) + Math.PI;
   R.world.camState.yaw = R.me.a;
-  R.world.camState.pitch = 0.28;
+  R.world.camState.pitch = 0.20;
   R.meDist = Math.hypot(R.me.x - R.layout.treasure.x, R.me.z - R.layout.treasure.z);
   big(null);
 }

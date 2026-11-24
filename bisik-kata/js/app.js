@@ -253,10 +253,6 @@ function onHostData(id, msg) {
   const ts = now();
 
   if (msg.t === 'hello') {
-    if (S.game.phase !== 'lobby' && S.game.phase !== 'over') {
-      S.net.send(id, { t: 'no', msg: 'Kamar sedang dipakai main. Tunggu nanti atau bikin kamar sendiri.' });
-      return S.net.kill(id);
-    }
     const res = fn().addPlayer(S.game, { id, name: msg.name, now: ts });
     if (!res.ok) {
       S.net.send(id, { t: 'no', msg: res.error });
@@ -346,8 +342,13 @@ function onGuestData(msg) {
   if (!msg || typeof msg !== 'object') return;
   if (RT.message(null, msg)) return;
   if (msg.t === 'v') {
+    const wasLobby = !S.view || S.view.phase === 'lobby';
     S.view = msg.v;
     S.viewAt = now();
+    if (wasLobby && msg.v && msg.v.phase !== 'lobby' && msg.v.phase !== 'over' && !S._midGameNotified) {
+      S._midGameNotified = true;
+      toast('Permainan sudah dimulai! Kamu langsung bergabung.', false);
+    }
     render();
   } else if (msg.t === 'no') {
     S.connected = false;

@@ -89,12 +89,63 @@ const PALETTES = {
 
 export const MAPS = [
   {
+    id: 'hantu',
+    name: 'Mansion Berhantu',
+    sub: 'lorong angker gelap, kamar mayat, labirin terkutuk & jumpscare arwah',
+    kind: 'hantu',
+    size: { w: 76, d: 64 },
+    wallH: 14,
+    startAt: { x: 0.4, z: 0.02 },
+    sky: '#020105',
+    fog: [10, 34],
+    hemi: ['#1e1b4b', '#030712', 0.5],
+    key: ['#38bdf8', 0.5, 0.65],
+    theme: 'hantu',
+    recipes: [
+      { mode: 'random', n: 10, kinds: [{ s: 'cyl', c: 'blood', w: [4, 7], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
+      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'pit', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
+      { mode: 'rooms', depth: 4, min: [10, 9], door: 3.2, t: 1.4, h: 1.0 },
+      {
+        mode: 'rows',
+        n: 12,
+        lane: 'x',
+        aisle: 3.2,
+        band: 3.0,
+        avenue: 4.4,
+        max: 6.0,
+        gap: 2.4,
+        kinds: [{ s: 'box', c: 'decay', w: [3.2, 5.4], d: [1.3, 1.9], h: [4.2, 5.8], p: 'shelf' }],
+      },
+      {
+        mode: 'random',
+        n: 28,
+        kinds: [
+          { s: 'box', c: 'bone', w: [1.4, 2.4], d: [1.4, 2.4], h: [1.2, 2.6], p: 'crate' },
+          { s: 'box', c: 'blood', w: [1.2, 2.0], d: [1.2, 2.0], h: [1.0, 2.0], p: 'crate' },
+          { s: 'cyl', c: 'decay', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.4, 2.2], p: 'barrel' },
+        ],
+      },
+      { mode: 'random', n: 18, kinds: [{ s: 'box', c: 'cobweb', w: [1.8, 2.6], d: [1.2, 1.8], h: [0.4, 0.6], p: 'pallet' }] },
+      {
+        mode: 'clump',
+        n: 6,
+        rad: 2.4,
+        spread: 5,
+        rot: 0.8,
+        kinds: [
+          { s: 'box', c: 'decay', w: [1.2, 1.8], d: [1.2, 1.8], h: [1.2, 2.0], p: 'crate' },
+          { s: 'cyl', c: 'candle', w: [0.6, 0.9], d: [0.6, 0.9], h: [1.2, 1.8], p: 'barrel' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'gudang',
     name: 'Gudang Kuno',
     sub: 'kompleks ruangan bersekat, bilik tersembunyi, lorong berbelok',
     kind: 'gudang',
     size: { w: 80, d: 58 },
-    wallH: 10,
+    wallH: 13,
     startAt: { x: 0.4, z: 0.02 },
     sky: '#1b1409',
     fog: [16, 62],
@@ -116,7 +167,7 @@ export const MAPS = [
         avenue: 4.4,
         max: 6.2,
         gap: 2.2,
-        kinds: [{ s: 'box', c: 'woodDark', w: [1.3, 2.0], d: [3.4, 5.8], h: [3.6, 5.0], p: 'shelf' }],
+        kinds: [{ s: 'box', c: 'woodDark', w: [1.3, 2.0], d: [3.4, 5.8], h: [3.8, 5.4], p: 'shelf' }],
       },
       {
         mode: 'random',
@@ -158,7 +209,7 @@ export const MAPS = [
     sub: 'istana bermain bertingkat, bilik-bilik balok, lorong belokan siku',
     kind: 'mainan',
     size: { w: 70, d: 68 },
-    wallH: 9,
+    wallH: 12,
     startAt: { x: 0.0, z: 0.4 },
     sky: '#122436',
     fog: [18, 68],
@@ -222,7 +273,7 @@ export const MAPS = [
     sub: 'labirin katakomba batu, arca keramat, pilar kuno',
     kind: 'kuil',
     size: { w: 74, d: 64 },
-    wallH: 12,
+    wallH: 14,
     startAt: { x: -0.4, z: 0.0 },
     sky: '#101a16',
     fog: [15, 56],
@@ -237,7 +288,7 @@ export const MAPS = [
         mode: 'maze',
         aisle: 4.2,
         t: 1.4,
-        h: 12,
+        h: 14,
         color: 'stone',
         kind: 'pillar',
         braid: 0.38,
@@ -281,7 +332,7 @@ export const MAPS = [
     sub: 'bilik tambang bawah tanah, terowongan kayu, lorong berliku',
     kind: 'tambang',
     size: { w: 76, d: 62 },
-    wallH: 9,
+    wallH: 12,
     startAt: { x: -0.38, z: 0.34 },
     sky: '#0d0a08',
     fog: [17, 82],
@@ -347,7 +398,7 @@ export const MAPS = [
     sub: 'labirin pagar tanaman, kolam air, bangku batu',
     kind: 'kebun',
     size: { w: 68, d: 72 },
-    wallH: 7,
+    wallH: 10,
     startAt: { x: 0.0, z: -0.4 },
     sky: '#16241a',
     fog: [20, 90],
@@ -362,7 +413,7 @@ export const MAPS = [
         mode: 'maze',
         aisle: 4.2,
         t: 1.4,
-        h: 7,
+        h: 10,
         color: 'hedge',
         kind: 'hedge',
         braid: 0.36,
@@ -402,57 +453,6 @@ export const MAPS = [
           { s: 'cyl', c: 'flower', w: [1.0, 1.4], d: [1.0, 1.4], h: [1.2, 1.8], p: 'planter' },
           { s: 'box', c: 'stone', w: [2.0, 2.8], d: [0.7, 1.0], h: [0.5, 0.7], p: 'bench' },
           { s: 'box', c: 'hedgeDark', w: [1.2, 1.6], d: [1.2, 1.6], h: [1.6, 2.4], p: 'hedge' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'hantu',
-    name: 'Mansion Berhantu',
-    sub: 'lorong angker gelap, kamar mayat, labirin terkutuk & jumpscare arwah',
-    kind: 'hantu',
-    size: { w: 76, d: 64 },
-    wallH: 10,
-    startAt: { x: 0.4, z: 0.02 },
-    sky: '#020105',
-    fog: [12, 36],
-    hemi: ['#1e1b4b', '#030712', 0.5],
-    key: ['#38bdf8', 0.5, 0.65],
-    theme: 'hantu',
-    recipes: [
-      { mode: 'random', n: 10, kinds: [{ s: 'cyl', c: 'blood', w: [4, 7], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
-      { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'pit', w: [3.2, 4.4], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      { mode: 'rooms', depth: 4, min: [10, 9], door: 3.2, t: 1.4, h: 1.0 },
-      {
-        mode: 'rows',
-        n: 12,
-        lane: 'x',
-        aisle: 3.2,
-        band: 3.0,
-        avenue: 4.4,
-        max: 6.0,
-        gap: 2.4,
-        kinds: [{ s: 'box', c: 'decay', w: [3.2, 5.4], d: [1.3, 1.9], h: [3.6, 5.0], p: 'shelf' }],
-      },
-      {
-        mode: 'random',
-        n: 28,
-        kinds: [
-          { s: 'box', c: 'bone', w: [1.4, 2.4], d: [1.4, 2.4], h: [1.2, 2.6], p: 'crate' },
-          { s: 'box', c: 'blood', w: [1.2, 2.0], d: [1.2, 2.0], h: [1.0, 2.0], p: 'crate' },
-          { s: 'cyl', c: 'decay', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.4, 2.2], p: 'barrel' },
-        ],
-      },
-      { mode: 'random', n: 18, kinds: [{ s: 'box', c: 'cobweb', w: [1.8, 2.6], d: [1.2, 1.8], h: [0.4, 0.6], p: 'pallet' }] },
-      {
-        mode: 'clump',
-        n: 6,
-        rad: 2.4,
-        spread: 5,
-        rot: 0.8,
-        kinds: [
-          { s: 'box', c: 'decay', w: [1.2, 1.8], d: [1.2, 1.8], h: [1.2, 2.0], p: 'crate' },
-          { s: 'cyl', c: 'candle', w: [0.6, 0.9], d: [0.6, 0.9], h: [1.2, 1.8], p: 'barrel' },
         ],
       },
     ],
@@ -593,7 +593,11 @@ function scatter(rng, boxes, map, rec, pads) {
 function freeSpot(boxes, cand, pads, map) {
   const W = map.size.w;
   const D = map.size.d;
-  if (Math.abs(cand.x) + half(cand.w) > half(W) - 0.6 || Math.abs(cand.z) + half(cand.d) > half(D) - 0.6) return false;
+  if (cand.wall) {
+    if (Math.abs(cand.x) + half(cand.w) > half(W) + 0.1 || Math.abs(cand.z) + half(cand.d) > half(D) + 0.1) return false;
+  } else {
+    if (Math.abs(cand.x) + half(cand.w) > half(W) - 0.6 || Math.abs(cand.z) + half(cand.d) > half(D) - 0.6) return false;
+  }
   for (const b of boxes) {
     // Genangan dan lubang tidak boleh bertumpang tindih: satu sel cuma punya satu nilai zona, jadi
     // yang digambar belakangan akan menghapus yang di depannya. Selain itu benda zona boleh ditumpangi.
@@ -603,13 +607,24 @@ function freeSpot(boxes, cand, pads, map) {
       continue;
     }
     if (b.k === 'soft' || cand.k === 'soft') continue;
+    if (cand.wall && b.wall) {
+      // Dinding yang tegak lurus (pertemuan T-junction / sudut siku) diizinkan saling bertemu
+      const candHoriz = cand.w > cand.d;
+      const bHoriz = b.w > b.d;
+      if (candHoriz !== bHoriz) continue;
+      if (overlaps(cand, b, 0.2)) return false;
+      continue;
+    }
     if (overlaps(cand, b, 0.35)) return false;
   }
-  for (const pad of pads)
-    if (Math.hypot(cand.x - pad.x, cand.z - pad.z) < pad.r + Math.max(half(cand.w), half(cand.d))) {
+  for (const pad of pads) {
+    const dx = Math.max(0, Math.abs(pad.x - cand.x) - half(cand.w));
+    const dz = Math.max(0, Math.abs(pad.z - cand.z) - half(cand.d));
+    if (Math.hypot(dx, dz) < pad.r) {
       pad.hit = true;
       return false;
     }
+  }
   return true;
 }
 
@@ -755,7 +770,7 @@ function genRooms(rng, boxes, map, rec, pads) {
     for (const lf of pool) {
       const w = lf.x1 - lf.x0;
       const d = lf.z1 - lf.z0;
-      const splitZ = w >= d ? rng() < 0.85 : rng() < 0.15;
+      const splitZ = w >= d ? rng() < 0.15 : rng() < 0.85;
       const span = splitZ ? d : w;
       const need = (splitZ ? leafMin[1] : leafMin[0]) + door;
       if (span < need * 2) {
@@ -782,8 +797,8 @@ function genRooms(rng, boxes, map, rec, pads) {
   for (const w of walls) {
     const len = w.b - w.a;
     const doorAt = w.a + door / 2 + 1.4 + rng() * Math.max(0.1, len - door - 2.8);
-    const kisi = { x: w.axis === 'x' ? doorAt : w.at, z: w.axis === 'x' ? w.at : doorAt };
-    pads.push({ ...kisi, r: door / 2 + CFG.playerR + 0.6 });
+    const doorPads = [];
+    doorPads.push({ x: w.axis === 'x' ? doorAt : w.at, z: w.axis === 'x' ? w.at : doorAt, r: door / 2 + 0.2 });
 
     // Pada dinding panjang (>= 18m), buka pintu kedua (35% kemungkinan) untuk rute berbelok alternatif antar-ruangan
     let door2At = null;
@@ -794,8 +809,7 @@ function genRooms(rng, boxes, map, rec, pads) {
         door2At = doorAt + door + 1.2 + rng() * (w.b - doorAt - door - 2.4);
       }
       if (door2At != null) {
-        const kisi2 = { x: w.axis === 'x' ? door2At : w.at, z: w.axis === 'x' ? w.at : door2At };
-        pads.push({ ...kisi2, r: door / 2 + CFG.playerR + 0.6 });
+        doorPads.push({ x: w.axis === 'x' ? door2At : w.at, z: w.axis === 'x' ? w.at : door2At, r: door / 2 + 0.2 });
       }
     }
 
@@ -818,6 +832,8 @@ function genRooms(rng, boxes, map, rec, pads) {
         placed++;
       }
     }
+    // Daftarkan zona bebas pintu agar benda berikutnya (peti/rak/sub-bilik) tidak menyumbat pintu
+    pads.push(...doorPads);
   }
 
   // Sekat Siku & Bilik di Dalam Ruangan (Winding Sub-Chambers & Dogleg Dividers)

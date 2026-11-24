@@ -378,7 +378,7 @@ export function createWorld(THREE, canvas) {
     return c;
   }
 
-  const camState = { yaw: Math.PI, pitch: 0.32, dist: 5.6 };
+  const camState = { yaw: Math.PI, pitch: 0.20, dist: 5.0 };
   const orbit = { on: false, ang: 0 };
   const camPos = new THREE.Vector3(0, 8, 16);
   const lookAt = new THREE.Vector3();

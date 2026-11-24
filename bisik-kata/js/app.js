@@ -327,10 +327,17 @@ async function joinRoom() {
     S.isHost = false;
     S.me = net.self;
     S.connected = true;
+    setTxt('busyTxt', 'Memasuki kamar ' + code + '…');
     S.net.send({ t: 'hello', name });
     startPing();
-    show('lobby');
-    render();
+    let helloTries = 0;
+    const helloTimer = setInterval(() => {
+      if (S.connected && !S.isHost && !S.view && ++helloTries <= 6) {
+        S.net.send({ t: 'hello', name });
+      } else {
+        clearInterval(helloTimer);
+      }
+    }, 800);
   } catch (err) {
     if (seq !== S.seq) return;
     show('home');
@@ -342,10 +349,10 @@ function onGuestData(msg) {
   if (!msg || typeof msg !== 'object') return;
   if (RT.message(null, msg)) return;
   if (msg.t === 'v') {
-    const wasLobby = !S.view || S.view.phase === 'lobby';
+    const wasWaiting = !S.view;
     S.view = msg.v;
     S.viewAt = now();
-    if (wasLobby && msg.v && msg.v.phase !== 'lobby' && msg.v.phase !== 'over' && !S._midGameNotified) {
+    if (wasWaiting && msg.v && msg.v.phase !== 'lobby' && msg.v.phase !== 'over' && !S._midGameNotified) {
       S._midGameNotified = true;
       toast('Permainan sudah dimulai! Kamu langsung bergabung.', false);
     }
@@ -401,7 +408,11 @@ function render() {
 }
 
 function renderHarta(v) {
-  if (v.phase !== 'over' && !RT.ready()) RT.ensure(rtCtx());
+  if (v.phase !== 'over' && !RT.ready()) {
+    RT.ensure(rtCtx()).then((ok) => {
+      if (ok && S.connected) render();
+    });
+  }
   if (v.phase === 'lobby') {
     show('lobby');
     renderLobby(v);
@@ -614,8 +625,17 @@ for (const id of ['modeKata', 'modeHarta']) {
 $('hrNoglOut').onclick = leaveRoom;
 
 $('create').onclick = createRoom;
-$('join').onclick = joinRoom;$('code').addEventListener('input', () => {
+$('join').onclick = joinRoom;
+$('code').addEventListener('input', () => {
   $('code').value = $('code').value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+});
+$('code').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') joinRoom();
+});
+$('name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if ($('code').value.trim().length === 4) joinRoom();
+  }
 });
 
 $('busyCancel').onclick = () => {
@@ -718,9 +738,11 @@ if (urlCode.length === 4) {
 setInterval(() => {
   if (S.isHost && S.game) {
     const harta = S.game.mode === 'harta';
-    const changed = harta ? false : G.tick(S.game, { now: now(), words: WORDS, rng: Math.random });
+    const changed = harta
+      ? H.tick(S.game, { now: now() })
+      : G.tick(S.game, { now: now(), words: WORDS, rng: Math.random });
     pruneStale();
-    if (!harta && (changed || now() - S.lastBeat > 1500)) {
+    if (changed || now() - S.lastBeat > 1500) {
       S.lastBeat = now();
       broadcast();
     }

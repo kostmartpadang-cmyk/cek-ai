@@ -269,15 +269,20 @@ function syncRound(v) {
     decAlert.classList.remove('pop');
   }
   const i = v.players.findIndex((p) => p.id === v.you.id);
-  const sp = R.layout.spawns[Math.max(0, i) % R.layout.spawns.length];
+  const mine = v.race && v.race.racers ? v.race.racers.find((p) => p.id === v.you.id) : null;
+  const sp = mine && Number.isFinite(mine.x) && Number.isFinite(mine.z)
+    ? mine
+    : R.layout.spawns[Math.max(0, i) % R.layout.spawns.length];
   R.me.x = sp.x;
   R.me.z = sp.z;
-  R.me.y = 0;
+  R.me.y = mine && Number.isFinite(mine.y) ? mine.y : 0;
   R.me.sup = 0;
   R.me.vy = 0;
   R.me.air = false;
   R.me.zone = 0;
-  R.me.a = Math.atan2(R.layout.treasure.x - sp.x, R.layout.treasure.z - sp.z) + Math.PI;
+  R.me.a = mine && Number.isFinite(mine.a)
+    ? mine.a
+    : Math.atan2(R.layout.treasure.x - sp.x, R.layout.treasure.z - sp.z) + Math.PI;
   R.world.camState.yaw = R.me.a;
   R.world.camState.pitch = 0.20;
   R.meDist = Math.hypot(R.me.x - R.layout.treasure.x, R.me.z - R.layout.treasure.z);
@@ -1141,18 +1146,18 @@ let attaching = null;
 
 // Tamu yang masuk kamar harta tanpa berpindah mode tidak punya dunia 3D sama sekali.
 export function ensure(ctx) {
-  if (R) return Promise.resolve(R.ready);
-  if (!attaching)
-    attaching = attach(ctx).then(
-      (ok) => {
-        attaching = null;
-        return ok;
-      },
-      () => {
-        attaching = null;
-        return false;
-      },
-    );
+  if (R && R.ready) return Promise.resolve(true);
+  if (attaching) return attaching;
+  attaching = attach(ctx).then(
+    (ok) => {
+      attaching = null;
+      return ok;
+    },
+    () => {
+      attaching = null;
+      return false;
+    },
+  );
   return attaching;
 }
 
@@ -1290,6 +1295,14 @@ export function attach(ctx) {
       R.ready = true;
       R.e.load.classList.add('hidden');
       resize();
+      if (R.onScreen) {
+        R.paused = document.hidden;
+        if (!R.paused) R.last = performance.now();
+        if (R.controls) R.controls.setEnabled(true);
+      }
+      if (R.view) {
+        view(R.view);
+      }
 
       const openChat = () => {
         if (!R || !R.e.chatForm) return;

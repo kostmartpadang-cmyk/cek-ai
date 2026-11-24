@@ -97,6 +97,7 @@ export function addPlayer(state, { id, name, now }) {
     q.lastAt = now;
     r.racers[id] = q;
   }
+  state.seq++;
   return { ok: true };
 }
 

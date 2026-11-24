@@ -77,7 +77,7 @@ export const MAPS = [
   {
     id: 'gudang',
     name: 'Gudang Kuno',
-    sub: 'bilik kamar muatan, sekat ruangan, tumpukan peti',
+    sub: 'kompleks ruangan bersekat, bilik tersembunyi, lorong berbelok',
     kind: 'gudang',
     size: { w: 80, d: 58 },
     wallH: 10,
@@ -91,11 +91,11 @@ export const MAPS = [
       { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'dust', w: [5, 8], h: [0.05, 0.09], p: 'dust', k: 'soft' }] },
       // Ruang bawah tanah gudang: tiga mulut lubang yang cuma bisa keluar dengan lompatan.
       { mode: 'random', n: 3, kinds: [{ s: 'cyl', c: 'hole', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      // Kompleks gudang bersekat: ruang dibagi menjadi 6-8 kamar penyimpanan dengan dinding tinggi dan pintu lebar
-      { mode: 'rooms', depth: 3, min: [14, 11], door: 3.2, t: 1.3, h: 0.88 },
+      // Kompleks gudang bersekat: bilik-bilik penyimpanan dan lorong berbelok antar-ruangan
+      { mode: 'rooms', depth: 4, min: [11, 9], door: 3.2, t: 1.3, h: 0.88 },
       {
         mode: 'rows',
-        n: 20,
+        n: 14,
         lane: 'z',
         aisle: 3.2,
         band: 3.0,
@@ -106,7 +106,7 @@ export const MAPS = [
       },
       {
         mode: 'random',
-        n: 46,
+        n: 32,
         kinds: [
           { s: 'box', c: 'wood', w: [1.6, 2.8], d: [1.6, 2.8], h: [1.4, 3.0], p: 'crate' },
           { s: 'box', c: 'woodDark', w: [1.4, 2.2], d: [1.4, 2.2], h: [1.2, 2.4], p: 'crate' },
@@ -141,7 +141,7 @@ export const MAPS = [
   {
     id: 'mainan',
     name: 'Ruang Mainan',
-    sub: 'kamar-kamar balok raksasa, menara mainan, labirin pintu',
+    sub: 'istana bermain bertingkat, bilik-bilik balok, lorong belokan siku',
     kind: 'mainan',
     size: { w: 70, d: 68 },
     wallH: 9,
@@ -155,17 +155,17 @@ export const MAPS = [
       { mode: 'random', n: 7, kinds: [{ s: 'cyl', c: 'rug', w: [6, 9], h: [0.05, 0.09], p: 'rug', k: 'soft' }] },
       // Kamar bermain bersekat tinggi: dinding ruangan setinggi 7.6 meter membagi ruangan menjadi
       // bilik-bilik bermain yang harus dijelajahi lewat pintunya.
-      { mode: 'rooms', depth: 4, min: [12, 10], door: 3.0, t: 1.4, h: 0.85 },
+      { mode: 'rooms', depth: 4, min: [10, 8], door: 3.2, t: 1.4, h: 0.85 },
       // Menara balok melingkar: kolom tertinggi di ruangan, dengan dua pintu masuk berhadapan.
       {
         mode: 'ring',
-        n: 14,
+        n: 12,
         fx: 0.46,
         kinds: [{ s: 'brick', c: 'white', w: [1.3, 1.9], d: [1.3, 1.9], h: [3.2, 4.6], p: 'block' }],
       },
       {
         mode: 'random',
-        n: 46,
+        n: 36,
         kinds: [
           { s: 'brick', c: 'red', w: [1.8, 3.0], d: [1.8, 3.0], h: [1.2, 2.6], p: 'block' },
           { s: 'brick', c: 'blue', w: [1.8, 3.0], d: [1.8, 3.0], h: [1.2, 2.6], p: 'block' },
@@ -176,14 +176,14 @@ export const MAPS = [
       },
       {
         mode: 'random',
-        n: 20,
+        n: 18,
         kinds: [
           { s: 'brick', c: 'yellow', w: [0.95, 1.3], d: [0.95, 1.3], h: [0.95, 1.12], p: 'block' },
           { s: 'brick', c: 'red', w: [1.0, 1.4], d: [1.0, 1.4], h: [0.95, 1.1], p: 'block' },
         ],
       },
-      { mode: 'random', n: 14, kinds: [{ s: 'brick', c: 'blue', w: [2.6, 3.8], d: [2.0, 3.0], h: [0.3, 0.5], p: 'mat' }] },
-      { mode: 'random', n: 12, kinds: [{ s: 'cyl', c: 'red', w: [1.2, 1.6], d: [1.2, 1.6], h: [0.95, 1.12], p: 'block' }] },
+      { mode: 'random', n: 12, kinds: [{ s: 'brick', c: 'blue', w: [2.6, 3.8], d: [2.0, 3.0], h: [0.3, 0.5], p: 'mat' }] },
+      { mode: 'random', n: 10, kinds: [{ s: 'cyl', c: 'red', w: [1.2, 1.6], d: [1.2, 1.6], h: [0.95, 1.12], p: 'block' }] },
       // Menara yang sudah roboh
       {
         mode: 'clump',
@@ -262,7 +262,7 @@ export const MAPS = [
   {
     id: 'tambang',
     name: 'Tambang Tua',
-    sub: 'bilik bawah tanah, terowongan kayu, rel & gerobak bijih',
+    sub: 'bilik tambang bawah tanah, terowongan kayu, lorong berliku',
     kind: 'tambang',
     size: { w: 76, d: 62 },
     wallH: 9,
@@ -276,12 +276,12 @@ export const MAPS = [
       { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'grit', w: [5, 8], h: [0.05, 0.09], p: 'grit', k: 'soft' }] },
       // Sumur tua
       { mode: 'random', n: 6, kinds: [{ s: 'cyl', c: 'shaft', w: [3.0, 4.2], h: [0.06, 0.1], p: 'pit', k: 'pit' }] },
-      // Bilik-bilik tambang bawah tanah: ruangan kerja bersekat dinding kokoh dengan pintu terowongan
-      { mode: 'rooms', depth: 3, min: [14, 11], door: 3.0, t: 1.4, h: 0.88 },
+      // Bilik-bilik tambang bawah tanah: ruangan kerja bersekat dinding kokoh dengan lorong belokan antar-bilik
+      { mode: 'rooms', depth: 4, min: [11, 9], door: 3.2, t: 1.4, h: 0.88 },
       // Barisan penyangga: dinding kayu sejajar terowongan
       {
         mode: 'rows',
-        n: 18,
+        n: 14,
         lane: 'x',
         aisle: 3.2,
         band: 3.0,
@@ -293,7 +293,7 @@ export const MAPS = [
       },
       {
         mode: 'random',
-        n: 28,
+        n: 22,
         kinds: [
           { s: 'box', c: 'rock', w: [1.5, 2.4], d: [1.5, 2.4], h: [1.2, 2.4], p: 'block' },
           { s: 'box', c: 'rockLight', w: [1.2, 1.8], d: [1.2, 1.8], h: [0.8, 1.4], p: 'block' },
@@ -301,14 +301,14 @@ export const MAPS = [
       },
       {
         mode: 'random',
-        n: 16,
+        n: 14,
         rot: 0.5,
         kinds: [
           { s: 'box', c: 'ore', w: [1.4, 2.0], d: [1.0, 1.4], h: [0.95, 1.12], p: 'cart' },
           { s: 'box', c: 'timber', w: [1.8, 2.6], d: [1.2, 1.8], h: [0.35, 0.5], p: 'pallet' },
         ],
       },
-      { mode: 'random', n: 14, kinds: [{ s: 'cyl', c: 'coal', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.6, 2.4], p: 'barrel' }] },
+      { mode: 'random', n: 12, kinds: [{ s: 'cyl', c: 'coal', w: [1.1, 1.5], d: [1.1, 1.5], h: [1.6, 2.4], p: 'barrel' }] },
       // Longsor
       {
         mode: 'clump',
@@ -672,19 +672,18 @@ function genClump(rng, boxes, map, rec, pads) {
   return placed;
 }
 
-/* Kamar-kamar berpintu: ruang dibagi dua terus sampai daunnya cukup lega, tiap dinding internal
-   diberi satu pintu. Karena graf daun hasil pembagian itu sebuah pohon, menembus setiap dinding
-   internal sudah menjamin semuanya terhubung — tidak perlu BFS pintu lagi. Setiap pintu juga
-   didaftarkan sebagai pad supaya resep berikutnya tidak menaruh peti di ambangnya. */
+/* Kamar-kamar berpintu dan berbelok: ruang dibagi menjadi bilik-bilik dengan pintu utama
+   dan pintu alternatif (loops), serta sekat siku / bilik sayap (wing baffles & L-turns) di dalam
+   ruangan besar untuk menciptakan banyak belokan antar-ruangan yang saling terhubung. */
 function genRooms(rng, boxes, map, rec, pads) {
-  const leafMin = rec.min || [12, 10];
+  const leafMin = rec.min || [11, 9];
   const door = rec.door || 3.2;
   const t = rec.t || 1.1;
   const h = map.wallH * (rec.h || 0.86);
   const leaves = [{ x0: -half(map.size.w), z0: -half(map.size.d), x1: half(map.size.w), z1: half(map.size.d) }];
   const walls = [];
   let pool = leaves;
-  for (let depth = 0; depth < (rec.depth || 3); depth++) {
+  for (let depth = 0; depth < (rec.depth || 4); depth++) {
     const next = [];
     for (const lf of pool) {
       const w = lf.x1 - lf.x0;
@@ -717,17 +716,112 @@ function genRooms(rng, boxes, map, rec, pads) {
     const len = w.b - w.a;
     const doorAt = w.a + door / 2 + 1.4 + rng() * Math.max(0.1, len - door - 2.8);
     const kisi = { x: w.axis === 'x' ? doorAt : w.at, z: w.axis === 'x' ? w.at : doorAt };
-    pads.push({ ...kisi, r: door / 2 + CFG.playerR + 0.5 });
-    for (const [s0, s1] of [
-      [w.a, doorAt - door / 2],
-      [doorAt + door / 2, w.b],
-    ]) {
+    pads.push({ ...kisi, r: door / 2 + CFG.playerR + 0.6 });
+
+    // Pada dinding panjang (>= 18m), buka pintu kedua (35% kemungkinan) untuk rute berbelok alternatif antar-ruangan
+    let door2At = null;
+    if (len >= 18 && rng() < 0.38) {
+      if (doorAt - w.a > door * 2 + 2.4) {
+        door2At = w.a + door / 2 + 1.2 + rng() * (doorAt - w.a - door - 2.4);
+      } else if (w.b - doorAt > door * 2 + 2.4) {
+        door2At = doorAt + door + 1.2 + rng() * (w.b - doorAt - door - 2.4);
+      }
+      if (door2At != null) {
+        const kisi2 = { x: w.axis === 'x' ? door2At : w.at, z: w.axis === 'x' ? w.at : door2At };
+        pads.push({ ...kisi2, r: door / 2 + CFG.playerR + 0.6 });
+      }
+    }
+
+    const cuts = [w.a];
+    const dList = door2At != null ? (doorAt < door2At ? [doorAt, door2At] : [door2At, doorAt]) : [doorAt];
+    for (const d of dList) cuts.push(d - door / 2, d + door / 2);
+    cuts.push(w.b);
+
+    for (let i = 0; i < cuts.length; i += 2) {
+      const s0 = cuts[i];
+      const s1 = cuts[i + 1];
       if (s1 - s0 < 0.8) continue;
       const mid = (s0 + s1) / 2;
-      const cand = w.axis === 'x' ? mkBox(mid, w.at, s1 - s0, t, h, 'wallDark', 'box', true) : mkBox(w.at, mid, t, s1 - s0, h, 'wallDark', 'box', true);
+      const cand =
+        w.axis === 'x'
+          ? mkBox(mid, w.at, s1 - s0, t, h, 'wallDark', 'box', true)
+          : mkBox(w.at, mid, t, s1 - s0, h, 'wallDark', 'box', true);
       if (freeSpot(boxes, cand, pads, map)) {
         boxes.push(cand);
         placed++;
+      }
+    }
+  }
+
+  // Sekat Siku & Bilik di Dalam Ruangan (Winding Sub-Chambers & Dogleg Dividers)
+  for (const lf of pool) {
+    const rw = lf.x1 - lf.x0;
+    const rd = lf.z1 - lf.z0;
+    if (rw < 11 || rd < 9) continue;
+
+    const splitX = rw >= rd;
+    const opening = 3.4;
+    if (splitX) {
+      const wallX = lf.x0 + rw * (0.42 + rng() * 0.16);
+      const fromNorth = rng() < 0.5;
+      const spanZ = rd - opening - 1.2;
+      if (spanZ >= 4.0) {
+        const z0 = fromNorth ? lf.z0 : lf.z0 + opening + 1.2;
+        const z1 = fromNorth ? lf.z1 - opening - 1.2 : lf.z1;
+        const cand = mkBox(wallX, (z0 + z1) / 2, t, z1 - z0, h, 'wallDark', 'box', true);
+        if (freeSpot(boxes, cand, pads, map)) {
+          boxes.push(cand);
+          placed++;
+          const openZ = fromNorth ? lf.z1 - opening / 2 : lf.z0 + opening / 2;
+          pads.push({ x: wallX, z: openZ, r: opening / 2 + 0.6 });
+
+          // Belokan siku (L-turn wing)
+          if (rw >= 14 && rng() < 0.45) {
+            const turnLen = Math.min(3.8, (rw - opening) / 2);
+            if (turnLen >= 2.4) {
+              const turnDir = rng() < 0.5 ? 1 : -1;
+              const turnZ = fromNorth ? z1 : z0;
+              const turnX0 = turnDir > 0 ? wallX : wallX - turnLen;
+              const turnX1 = turnDir > 0 ? wallX + turnLen : wallX;
+              const candTurn = mkBox((turnX0 + turnX1) / 2, turnZ, turnLen, t, h, 'wallDark', 'box', true);
+              if (freeSpot(boxes, candTurn, pads, map)) {
+                boxes.push(candTurn);
+                placed++;
+              }
+            }
+          }
+        }
+      }
+    } else {
+      const wallZ = lf.z0 + rd * (0.42 + rng() * 0.16);
+      const fromWest = rng() < 0.5;
+      const spanX = rw - opening - 1.2;
+      if (spanX >= 4.0) {
+        const x0 = fromWest ? lf.x0 : lf.x0 + opening + 1.2;
+        const x1 = fromWest ? lf.x1 - opening - 1.2 : lf.x1;
+        const cand = mkBox((x0 + x1) / 2, wallZ, x1 - x0, t, h, 'wallDark', 'box', true);
+        if (freeSpot(boxes, cand, pads, map)) {
+          boxes.push(cand);
+          placed++;
+          const openX = fromWest ? lf.x1 - opening / 2 : lf.x0 + opening / 2;
+          pads.push({ x: openX, z: wallZ, r: opening / 2 + 0.6 });
+
+          // Belokan siku (L-turn wing)
+          if (rd >= 14 && rng() < 0.45) {
+            const turnLen = Math.min(3.8, (rd - opening) / 2);
+            if (turnLen >= 2.4) {
+              const turnDir = rng() < 0.5 ? 1 : -1;
+              const turnX = fromWest ? x1 : x0;
+              const turnZ0 = turnDir > 0 ? wallZ : wallZ - turnLen;
+              const turnZ1 = turnDir > 0 ? wallZ + turnLen : wallZ;
+              const candTurn = mkBox(turnX, (turnZ0 + turnZ1) / 2, t, turnLen, h, 'wallDark', 'box', true);
+              if (freeSpot(boxes, candTurn, pads, map)) {
+                boxes.push(candTurn);
+                placed++;
+              }
+            }
+          }
+        }
       }
     }
   }
